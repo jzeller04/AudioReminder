@@ -1,0 +1,60 @@
+/* Center the page */
+html, body {
+    text-align: center; /* Center text */
+    height: 100%; /* Full height */
+    margin: 0; /* Remove margin */
+    display: flex; /* Flexbox */
+    justify-content: center; /* Center horizontally */
+    align-items: center; /* Center vertically */
+    font-family: Arial, sans-serif; /* Set font */
+    background: white; /* White background */
+}
+
+/* Style the container */
+.App {
+    text-align: center; /* Center text */
+    padding: 20px; /* Padding */
+    max-width: 400px; /* Max width */
+    width: 100%; /* Full width */
+    border: 1px solid black; /* Border */
+}
+
+/* Style headings */
+h1 {
+    font-weight: bold; /* Bold text */
+    margin: 10px 0; /* Margin */
+}
+
+/* Style buttons */
+button {
+    margin: 10px 0; /* Margin */
+    padding: 10px 15px; /* Padding */
+    font-size: 16px; /* Font size */
+    background: none; /* No background */
+    color: black; /* Black text */
+    border: 1px solid black; /* Border */
+    cursor: pointer; /* Pointer cursor */
+    width: 100%; /* Full width */
+}
+
+/* Disabled button style */
+button:disabled {
+    background: lightgray; /* Light gray */
+    cursor: not-allowed; /* Not clickable */
+}
+
+/* Top-right button style */
+.top-right-button {
+    position: absolute; /* Absolute positioning */
+    top: 10px; /* Top position */
+    right: 10px; /* Right position */
+    padding: 5px 10px; /* Padding */
+    text-decoration: none; /* No underline */
+    border: 1px solid black; /* Border */
+}
+
+/* Remove default play button style */
+audio::-webkit-media-controls-play-button {
+    background: none; /* No background */
+    border: none; /* No border */
+}
