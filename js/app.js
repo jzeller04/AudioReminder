@@ -15,12 +15,30 @@ const server = http.createServer((request, response) => {
             path += 'index.html';
             response.statusCode = 200;
             break;
+            // change links in future
+        case '/index.html':
+            path += 'index.html';
+            response.statusCode = 200;
+            break;
+        case '/tasks.html':
+            path += 'tasks.html';
+            response.statusCode = 200;
+            break;
+        case '/settings.html':
+            path += 'settings.html';
+            response.statusCode = 200;
+            break;
+        case '/calendar.html':
+            path += 'calendar.html';
+            response.statusCode = 200;
+            break;
         default:
             path += '404.html';
             response.statusCode = 404;
             console.log(request.url);
             break;
     }
+    // sends html file
     fs.readFile(path, (err, data) => {
         if(err)
         {
@@ -29,7 +47,7 @@ const server = http.createServer((request, response) => {
         }
         else
         {
-            response.write(data);
+            //response.write(data);
             response.end(data);
         }
     })
@@ -43,7 +61,7 @@ mongoose.connect(dbURI)
     .catch((err) => console.log(err));
 
 // Mongoose and mongo sandbox routes
-let path = 'localhost/'
+
 /*
 server.getConnections('/add-reminder',
     (req, res) => {
