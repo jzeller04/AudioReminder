@@ -15,9 +15,7 @@ html, body {
     text-align: center; /* Center text */
     padding: 20px; /* Padding */
     max-width: 400px; /* Max width */
-    width: 100%; /* Full width */
-    border: 1px solid black; /* Border */
-}
+    width: 100%; /* Full width */}
 
 /* Style headings */
 h1 {
@@ -58,3 +56,56 @@ audio::-webkit-media-controls-play-button {
     background: none; /* No background */
     border: none; /* No border */
 }
+
+/* User info button */
+.user-info-button {
+    position: absolute; /* Absolute positioning */
+    top: 10px; /* Distance from the top */
+    left: 10px; /* Distance from the left */
+    display: flex; /* Flexbox for the profile picture and text */
+    align-items: center; /* Vertically center the content */
+    background-color: #f1f1f1; /* Background color */
+    padding: 8px 12px; /* Padding */
+    border-radius: 5px; /* Rounded corners */
+    margin-top: 10px; /* Margin */
+}
+
+/* Profile picture styling */
+.profile-picture {
+    width: 30px;
+    height: 30px;
+    margin-right: 10px;
+}
+
+/* Centered message */
+.centered-message {
+    text-align: center;
+    margin-top: 20px;
+}
+
+/* User info text styling */
+.user-info {
+    font-size: 25px;
+    font-weight: bold;
+    color: black;
+}
+/* Position the login button at the top-left */
+.login-button {
+    position: absolute; /* Absolute positioning */
+    top: 10px; /* Distance from the top */
+    left: 10px; /* Distance from the left */
+}
+
+/* Simple logout button style */
+.logout-button {
+    font-size: 14px;
+    padding: 5px 10px;
+    border: 1px solid #ccc; /* Light gray border */
+    
+    color: rgb(176, 58, 58); /* Text color */
+    cursor: pointer; /* Pointer cursor */
+    
+  }
+  
+
+  
