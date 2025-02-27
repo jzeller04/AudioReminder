@@ -1,0 +1,35 @@
+/* Center the page */
+html, body {
+    text-align: center; /* Center text */
+    height: 100%; /* Full height */
+    margin: 0; /* Remove margin */
+    display: flex; /* Use flexbox */
+    justify-content: center; /* Center horizontally */
+    align-items: center; /* Center vertically */
+    font-family: Arial, sans-serif; /* Set font */
+    background: white; /* White background */
+}
+
+/* Style the title */
+h1 {
+    font-size: 24px; /* Font size */
+    color: #444; /* Dark color */
+    margin-bottom: 20px; /* Margin below */
+    font-weight: bold; /* Bold title */
+}
+
+/* Remove default play button style */
+audio::-webkit-media-controls-play-button {
+    background: none; /* No background */
+    border: none; /* No border */
+}
+
+/* Style the top-right button */
+.top-right-button {
+    position: absolute; /* Absolute positioning */
+    top: 10px; /* Position at the top */
+    right: 10px; /* Position at the right */
+    padding: 5px 10px; /* Padding inside */
+    text-decoration: none; /* Remove underline */
+    border: 1px solid black; /* Border */
+}
