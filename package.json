@@ -1,0 +1,20 @@
+{
+  "name": "audioreminder",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+  "start": "node server.js",
+  "dev": "nodemon server.js",
+  "serve": "node server.js --open"
+  },
+  "dependencies": {
+    "cookie-parser": "~1.4.4",
+    "debug": "~2.6.9",
+    "express": "~4.16.1",
+    "http-errors": "~1.6.3",
+    "open": "^9.1.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}
