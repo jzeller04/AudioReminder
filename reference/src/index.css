@@ -41,15 +41,7 @@ button:disabled {
     cursor: not-allowed; /* Not clickable */
 }
 
-/* Top-right button style */
-.top-right-button {
-    position: absolute; /* Absolute positioning */
-    top: 10px; /* Top position */
-    right: 10px; /* Right position */
-    padding: 5px 10px; /* Padding */
-    text-decoration: none; /* No underline */
-    border: 1px solid black; /* Border */
-}
+
 
 /* Remove default play button style */
 audio::-webkit-media-controls-play-button {
