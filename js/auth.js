@@ -74,7 +74,7 @@ const GoogleAuth = {
           const userInfo = document.createElement('div');
           userInfo.id = 'userInfo';
           userInfo.style.display = 'none';
-          userInfo.innerHTML = 
+                userInfo.innerHTML = 
               `<p>Welcome, <span id="userName"></span></p>
                <p>Email: <span id="userEmail"></span></p>`;
           container.appendChild(userInfo);
