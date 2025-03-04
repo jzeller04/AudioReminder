@@ -1,0 +1,14 @@
+#logoutButton {
+  display: none;
+  padding: 8px 16px;
+  background-color: #f1f1f1;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+/* Container for login elements */
+.login-container {
+  margin: 20px 0;
+}

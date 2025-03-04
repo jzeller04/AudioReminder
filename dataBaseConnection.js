@@ -1,5 +1,5 @@
 
-// TDL: Add IPs for all group members to access database, or figure out how to not need a specific IP to connect to DB.
+// TDL: Add IPs for all group members to access database, or figure out how to not need a specific IP to connect to DB. AORN, this file does nothing.
 
 const { MongoClient, ServerApiVersion } = require('mongodb');
 const uri = "mongodb+srv://audioreminderadmin:UpeBennK0Ca4oDqg@cluster0.b6uj2.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
