@@ -1,6 +1,10 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 node_modules/
 =======
+=======
+
+>>>>>>> origin/main
 # Logs
 logs
 *.log
@@ -137,4 +141,10 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+<<<<<<< HEAD
 >>>>>>> origin/calendar
+=======
+=======
+node_modules/
+
+>>>>>>> origin/main
