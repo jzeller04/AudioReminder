@@ -1,5 +1,6 @@
 {
 <<<<<<< HEAD
+<<<<<<< HEAD
   "dependencies": {
     "express": "^4.21.2",
     "mongodb": "^6.13.1",
@@ -23,5 +24,9 @@
   "devDependencies": {
     "nodemon": "^3.0.1"
 >>>>>>> origin/calendar
+=======
+  "dependencies": {
+    "express": "^4.21.2"
+>>>>>>> origin/reference
   }
 }
