@@ -1,0 +1,90 @@
+/* Container for login elements */
+.login-container {
+  margin: 15px 0;
+  text-align: center;
+}
+
+/* Google Sign-In button container */
+.g_id_signin {
+  display: inline-block;
+  margin: 5px auto;
+}
+
+/* Dark theme overrides for the button */
+.nsm7Bb-HzV7m-LgbsSe.Bz112c-LgbsSe {
+  background-color: #202124 !important;
+  color: #fff !important;
+  border-color: #5f6368 !important;
+}
+
+/* Override default button size */
+.nsm7Bb-HzV7m-LgbsSe {
+  height: 50px !important;
+  min-width: 240px !important;
+  border-radius: 4px !important;
+}
+
+/* Style the button text */
+.nsm7Bb-HzV7m-LgbsSe .nsm7Bb-HzV7m-LgbsSe-BPrWId {
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  line-height: 50px !important;
+  color: #fff !important;
+}
+
+/* Hover effect */
+.nsm7Bb-HzV7m-LgbsSe:hover {
+  box-shadow: 0 2px 4px rgba(0,0,0,0.4) !important;
+  background-color: #303134 !important;
+}
+
+/* User info display after login */
+#userInfo {
+  margin-top: 10px;
+  font-size: 14px;
+  color: #333;
+  padding: 10px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  max-width: 240px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Logout button styling */
+#logoutButton {
+  display: none;
+  padding: 10px 20px;
+  background-color: #202124;
+  color: white;
+  border: 1px solid #5f6368;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 10px;
+  font-size: 14px;
+  transition: background-color 0.2s;
+  max-width: 240px;
+  width: 100%;
+}
+
+#logoutButton:hover {
+  background-color: #303134;
+}
+
+.login-container-index { /* Position for home page */
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+}
+
+.login-container-tasks{
+    /* Position for tasks page */
+}
+
+.login-container-calendar{
+    /* Position for calendar page */
+}
+
+.login-container-settings{
+    /* Position for settings page */
+}

@@ -1,7 +1,48 @@
 {
+
+  "name": "audioreminder",
+
+  "version": "0.0.0",
+
+  "private": true,
+
+  "scripts": {
+
+    "start": "node app.js",
+
+    "dev": "nodemon app.js",
+
+    "serve": "node app.js --open"
+
+  },
+
   "dependencies": {
-    "express": "^4.21.2",
+
+    "@google-cloud/local-auth": "^2.1.0",
+
+    "cookie-parser": "~1.4.4",
+
+    "debug": "~2.6.9",
+
+    "express": "~4.16.1",
+
+    "googleapis": "^105.0.0",
+
+    "http-errors": "~1.6.3",
+
     "mongodb": "^6.13.1",
-    "mongoose": "^8.11.0"
+
+    "mongoose": "^8.12.0",
+
+    "open": "^9.1.0"
+
+  },
+
+  "devDependencies": {
+
+    "nodemon": "^3.0.1"
+
   }
+
 }
+

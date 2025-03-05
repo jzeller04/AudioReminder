@@ -9,6 +9,7 @@ const dbURI = 'mongodb+srv://gmgadmin:RF8eo4JVyJ8JyPuq@cluster0.b6uj2.mongodb.ne
 const app = express();
 
 // listen for requests
+app.use(express.static(__dirname));
 
 app.get('/', (request, response) => 
     {
