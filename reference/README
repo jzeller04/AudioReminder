@@ -1,0 +1,6 @@
+1st Terminal : to run back-end (MUST do cd backend) (mongodb file upload buttom in Website not working so the audio isn't being saved anywhere)
+DO: node server.js
+2nd Terminal : to run front-end(src) 
+DO: npm start
+
+you can add a "base64.txt" file into the backend directory to then have it converted to a .mp3 file in the public directory
