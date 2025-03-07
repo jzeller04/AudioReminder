@@ -5,26 +5,37 @@
         <link rel="stylesheet" href="css/newtask.css">
     </head>
     <body>
-        <header>
-            <h1>New Task</h1>
-        </header>
-        <nav>
-            <button onclick="location.href='index.html';">Cancel</button>
-        </nav>
         <form action="/submit" method="POST">
-            <label for="title">Title:</label>
-            <input type="text" id="title" name="title">
+
+            <div class="titleDiv">
+                <label for="title" id= "titleLabel">Reminder Name</label><br>
+                <input type="text" id="title" name="title">
+            </div>
             
-            <label for="date">Date:</label>
-            <input type="date" id="date" name="date">
+           <div class= "datetimeDiv">
+                <div class="dateDiv">
+                    <label for="date" id= "dateLabel">Date:</label>
+                    <input type="date" id="date" name="date">
+                </div>
 
-            <label for="time">Time:</label>
-            <input type="time" id="time" name="time">
+                <div class="timeDiv">
+                    <label for="time" id= "timeLabel">Time:</label> 
+                    <input type="time" id="time" name="time">
+                </div>
+           </div>
 
-            <label for="memo">Message:</label>
-            <input type="text" id="memo" name="memo">
+           <div class="memoDiv">
+                <label for="memo" id="memoLabel">Description</label><br>
+                <textarea id="memo" name="memo"></textarea>
+           </div>
 
-            <input type="submit" value="Submit">
+           <div class="buttonDiv">
+                <nav>
+                    <button type="button" onclick="location.href='index.html';">Cancel</button>
+                </nav>
+
+                <button id= "save">Save</button>
+           </div>
         </form>
         <script src="js/app.js"></script>
     </body>
