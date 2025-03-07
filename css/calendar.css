@@ -30,3 +30,379 @@ button:hover {
   color: black;
   cursor: pointer;
 }
+
+/* Base calendar container */
+.calendar-container {
+  max-width: 800px;
+  margin: 20px auto;
+  font-family: Helvetica, Arial, sans-serif;
+  border: 1px solid black;
+  border-radius: 6px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  background-color: #fff;
+  padding: 15px;
+}
+
+/* Calendar header with navigation buttons */
+.calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.calendar-header h2 {
+  margin: 0;
+  font-size: 2rem;
+  text-transform: uppercase;
+}
+
+.calendar-nav-btn {
+  background-color: black;
+  border: 6px solid black;
+  border-radius: 6px;
+  color: white;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-family: Helvetica, Arial, sans-serif;
+  transition-duration: 0.1s;
+}
+
+.calendar-nav-btn:hover {
+  background-color: white;
+  color: black;
+}
+
+/* Days of the week header */
+.calendar-days-header {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+  font-weight: bold;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+}
+
+.calendar-days-header span {
+  padding: 8px;
+}
+
+/* Calendar days grid */
+.calendar-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 5px;
+}
+
+.calendar-day {
+  height: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 1px solid #eee;
+  border-radius: 4px;
+  cursor: pointer;
+  position: relative;
+}
+
+.calendar-day:hover {
+  background-color: #f5f5f5;
+}
+
+.calendar-day.empty {
+  border: none;
+  cursor: default;
+}
+
+.calendar-day.today {
+  background-color: #e6f7ff;
+  border-color: #1890ff;
+  font-weight: bold;
+}
+
+.calendar-day.selected {
+  background-color: #1890ff;
+  color: white;
+  border-color: #1890ff;
+}
+
+.calendar-day.has-events::after {
+  content: '';
+  position: absolute;
+  bottom: 3px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background-color: #1890ff;
+}
+
+.calendar-day.today.has-events::after {
+  background-color: white;
+}
+
+.calendar-day.selected.has-events::after {
+  background-color: white;
+}
+
+/* Events list */
+.events-container {
+  margin-top: 20px;
+  border-top: 1px solid #eee;
+  padding-top: 15px;
+}
+
+.events-container h3 {
+  margin-top: 0;
+  margin-bottom: 15px;
+}
+
+.events-list {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.event-item {
+  padding: 10px;
+  margin-bottom: 8px;
+  border-left: 3px solid #1890ff;
+  background-color: #f5f5f5;
+  border-radius: 0 4px 4px 0;
+  cursor: pointer;
+}
+
+.event-item:hover {
+  background-color: #e6f7ff;
+}
+
+.event-time {
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.event-title {
+  font-weight: bold;
+}
+
+.no-events, .loading {
+  padding: 20px;
+  text-align: center;
+  color: #666;
+}
+
+/* Add event button */
+.add-event-btn {
+  background-color: black;
+  border: 6px solid black;
+  border-radius: 6px;
+  color: white;
+  display: block;
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: 1.5rem;
+  height: 60px;
+  margin: 18px auto;
+  text-align: center;
+  transition-duration: 0.1s;
+  width: 260px;
+}
+
+.add-event-btn:hover {
+  background-color: white;
+  border: 6px solid black;
+  color: black;
+  cursor: pointer;
+}
+
+/* Event form */
+.event-form-container {
+  margin-top: 20px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 15px;
+  background-color: #f9f9f9;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+}
+
+.form-group input,
+.form-group textarea {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.form-group textarea {
+  height: 100px;
+  resize: vertical;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: space-between;
+}
+
+.form-actions button {
+  background-color: black;
+  border: 6px solid black;
+  border-radius: 6px;
+  color: white;
+  display: block;
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: 1.2rem;
+  height: 50px;
+  margin: 18px;
+  text-align: center;
+  transition-duration: 0.1s;
+  width: 200px;
+  cursor: pointer;
+}
+
+.form-actions button[type="button"] {
+  background-color: black;
+  border: 6px solid black;
+}
+
+.form-actions button[type="submit"] {
+  background-color: black;
+  color: white;
+  border: 6px solid black;
+}
+
+.form-actions button:hover {
+  background-color: white;
+  border: 6px solid black;
+  color: black;
+}
+
+/* Accessibility features for visually impaired users */
+@media (prefers-reduced-motion: reduce) {
+  * {
+      transition: none !important;
+  }
+}
+
+/* Add higher contrast for better visibility */
+.calendar-day {
+  font-size: 1rem;
+}
+
+.calendar-day.today {
+  border-width: 2px;
+}
+
+.calendar-day.selected {
+  border-width: 2px;
+}
+
+/* Additional styling to match the design */
+.calendar-days-header span {
+  font-size: 1.2rem;
+  font-family: Helvetica, Arial, sans-serif;
+  text-transform: uppercase;
+}
+
+.calendar-day {
+  font-size: 1.2rem;
+  font-family: Helvetica, Arial, sans-serif;
+  border: 2px solid black;
+}
+
+.calendar-day.today {
+  background-color: black;
+  color: white;
+  border-color: black;
+}
+
+.calendar-day.selected {
+  background-color: black;
+  color: white;
+  border-color: black;
+}
+
+/* Events styling */
+.events-container h3 {
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: 1.8rem;
+  text-transform: uppercase;
+  text-align: center;
+  margin-top: 40px;
+  margin-bottom: 20px;
+}
+
+.event-item {
+  border-left: 6px solid black;
+  padding: 15px;
+  margin-bottom: 12px;
+  font-family: Helvetica, Arial, sans-serif;
+}
+
+.event-title {
+  font-size: 1.3rem;
+}
+
+/* Form styling */
+.event-form-container h3 {
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: 1.8rem;
+  text-transform: uppercase;
+  text-align: center;
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: 1.2rem;
+}
+
+.form-group input,
+.form-group textarea {
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: 1.1rem;
+  padding: 12px;
+  border: 3px solid black;
+  border-radius: 6px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+  .calendar-container {
+      padding: 10px;
+  }
+  
+  .calendar-day {
+      height: 40px;
+      font-size: 1rem;
+  }
+  
+  .calendar-header h2 {
+      font-size: 1.5rem;
+  }
+  
+  .calendar-nav-btn {
+      padding: 6px 12px;
+      font-size: 1rem;
+      height: auto;
+      width: auto;
+  }
+  
+  .add-event-btn {
+      font-size: 1.2rem;
+      height: 50px;
+      width: 200px;
+  }
+}

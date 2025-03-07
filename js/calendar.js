@@ -1,10 +1,10 @@
 // Google Calendar
 const Calendar = {
-    // Stores calendar state and events
+    // Stores calendar state and events 
     events: [],
     isLoading: false,
     selectedDate: new Date(),
-    apiKey: 'API',
+    apiKey: 'AIzaSyCtL-BapQYQFN8kNz01qYUfSyiO9ElBwWc',
 
     // Initializes the calendar
     init: function() {
@@ -29,7 +29,7 @@ const Calendar = {
         if (!document.getElementById('calendar-container')){
             const container = document.createElement('div');
             container.id = 'calendar-container';
-            container.className = 'calendar-container'
+            container.className = 'calendar-container';
 
             // Find place to insert calendar
             const content = document.querySelector('nav').nextElementSibling || document.body;
@@ -99,8 +99,7 @@ const Calendar = {
             document.getElementById('next-month').addEventListener('click', () => this.changeMonth(1));
             document.getElementById('add-event-btn').addEventListener('click', () => this.showEventForm());
             document.getElementById('cancel-event-btn').addEventListener('click', () => this.hideEventForm());
-            // :::NOTE::: Might not be needed? Tasks should do this
-            document.getElementById('event-form').addEventListener('submit', () => this.handleEventSubmit(e));
+            document.getElementById('event-form').addEventListener('submit', (e) => this.handleEventSubmit(e));
         }
 
         // Initial calendar render
