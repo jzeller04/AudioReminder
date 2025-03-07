@@ -11,11 +11,11 @@ const reminderSchema = new Schema({
         type: String
     },
     time:{
-        type: Number, // will have to check if input is actually time/change this later
+        type: String, // will have to check if input is actually time/change this later
         required: true
     },
     date: {
-        type: Number,
+        type: String,
         required: true
     }
 }, {timestamps: true}); // saves the time when reminder is created

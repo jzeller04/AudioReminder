@@ -35,6 +35,12 @@ app.get('/settings.html', (request, response) =>
 
 app.get('/tasks.html', (request, response) => 
     {
+        response.sendFile('./tasks.html', { root: __dirname });
+    }
+)
+
+app.get('/newtask.html', (request, response) => 
+    {
         const title = request.body.title;
         console.log(title);
         response.sendFile('./tasks.html', { root: __dirname });
@@ -58,15 +64,17 @@ app.get('/titleform', (request, response) =>
 
 app.post('/submit', (request, response) => {
     const title = request.body.title; // as of right now, when you enter a title in the tasks screen, it will send a 'reminder' to the DB with the title entered
+    const description = request.body.memo;
+    const date = request.body.date;
+    const time = request.body.time;
     if (title) {
         response.redirect('/tasks.html');
-        console.log(title);
         const reminder = new Reminder(
             {
                 title: title,
-                description: 'description here',
-                date:13,
-                time:12
+                description: description,
+                date: date,
+                time: time
             }
         );
         
