@@ -15,6 +15,8 @@ app.use(express.static(__dirname));
 
 app.use(bodyParser.urlencoded({extended: true}));
 
+
+// send html pages back
 app.get('/', (request, response) => 
     {
         response.sendFile('./index.html', { root: __dirname });
