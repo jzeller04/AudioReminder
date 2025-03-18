@@ -117,11 +117,19 @@ const Calendar = {
         // Show loading state
         this.renderCalendar();
 
+        // Verify user is authenticated before continuing
+        if (!window.GoogleAuth || !window.GoogleAuth.isAuthenticated()) {
+            console.error('User not authenticated. Cannot load calendar events.');
+            this.isLoading = false;
+            this.renderCalendar();
+            return;
+        }
+
         // Load the Google Calendar API
         gapi.load('client', () => {
             gapi.client.init({
                 apiKey: 'AIzaSyCtL-BapQYQFN8kNz01qYUfSyiO9ElBwWc',
-                clientId: window.GoogleAuth.CLIENT_ID,
+                clientId: '1009864072987-cmpm10gg8f73q21uteji2suo7eoklsml.apps.googleusercontent.com',
                 discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest'],
                 scope: 'https://www.googleapis.com/auth/calendar'
             }).then(() => {
@@ -360,6 +368,9 @@ const Calendar = {
             'end': {
                 'dateTime': endDateTime.toISOString(),
                 'timeZone': Intl.DateTimeFormat().resolvedOptions().timeZone
+            },
+            'reminders': {
+                'useDefault': true
             }
         };
         
@@ -375,6 +386,7 @@ const Calendar = {
             
             // Provide feedback to the user
             alert('Event created successfully!');
+
         }).catch(error => {
             console.error('Error creating event:', error);
             alert('Error creating event. Please try again.');

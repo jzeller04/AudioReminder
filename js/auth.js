@@ -125,6 +125,11 @@ const GoogleAuth = {
       window.dispatchEvent(new CustomEvent('userLoggedIn', { 
           detail: this.userData 
       }));
+
+      // Initialize calendar if on calendar page
+    if (window.location.pathname.includes('calendar.html') && window.Calendar) {
+        window.Calendar.loadCalendarEvents();
+    }
       
       console.log("User successfully logged in:", this.userData);
   },
