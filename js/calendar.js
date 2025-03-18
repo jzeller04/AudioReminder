@@ -212,16 +212,33 @@ const Calendar = {
 
             // Check if day has events
             const date = new Date(year, month, i);
+
+            // Add click event listener to each day
+            dayElement.addEventListener('click', () => this.selectDate(date));
+
             const hasEvents = this.events.some(event => {
-                const eventDate = new Date(event.start.dateTime || event.start.date);
+                // Parse date from event's dateTime or date field
+                let eventDate;
+                if (event.start.dateTime) {
+                    eventDate = new Date(event.start.dateTime);
+                } else if (event.start.date) {
+                    eventDate = new Date(event.start.date);
+                } else {
+                    return false;
+                }
+
                 return eventDate.getDate() === i &&
                     eventDate.getMonth() === month &&
                     eventDate.getFullYear() === year;
-
             });
 
             if (hasEvents) {
                 dayElement.classList.add('has-events');
+                // Add an indicator dot or similar visual cue
+                const eventIndicator = document.createElement('span');
+                eventIndicator.className = 'event-indicator';
+                eventIndicator.setAttribute('aria-hidden', 'true');
+                dayElement.appendChild(eventIndicator);
             }
 
             //Check if this is today
@@ -317,6 +334,7 @@ const Calendar = {
         
         return `${hours}:${minutesStr} ${ampm}`;
     },
+
     // Show form to add a new event
     showEventForm: function() {
         // Set default date to selected date
@@ -395,8 +413,34 @@ const Calendar = {
     
     // Show details for an event
     showEventDetails: function(event) {
-        alert(`Event: ${event.summary}\n\nDescription: ${event.description || 'No description'}`);
-        // :::NOTE::: May need modal?
+        // Set default date to selected date
+        const eventDateInput = document.getElementById('event-date');
+        if (eventDateInput) {
+            const formattedDate = this.selectedDate.toISOString().split('T')[0]; // Format: YYYY-MM-DD
+            eventDateInput.value = formattedDate;
+        }
+        
+        // Set default time to current time + 1 hour
+        const eventTimeInput = document.getElementById('event-time');
+        if (eventTimeInput) {
+            const now = new Date();
+            const nextHour = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours() + 1, 0);
+            const formattedTime = `${String(nextHour.getHours()).padStart(2, '0')}:00`;
+            eventTimeInput.value = formattedTime;
+        }
+        
+        // Show the form
+        const formContainer = document.getElementById('event-form-container');
+        if (formContainer) {
+            formContainer.style.display = 'block';
+            // Focus on the title input for accessibility
+            const titleInput = document.getElementById('event-title');
+            if (titleInput) {
+                titleInput.focus();
+            }
+        } else {
+            console.error('Event form container not found');
+        }
     },
     
     // Function to speak event details
@@ -421,6 +465,25 @@ const Calendar = {
         speech.pitch = 1;
         
         window.speechSynthesis.speak(speech);
+    },
+
+    // Function to select dates
+    selectDate: function(date) {
+        // Update selected date
+        this.selectedDate = date;
+        
+        // Refresh the calendar to show the newly selected date
+        this.renderCalendar();
+        
+        // Render events for the selected date
+        this.renderEventsList();
+        
+        // If the form is visible, update the date in the form
+        const eventDateInput = document.getElementById('event-date');
+        if (eventDateInput) {
+            const formattedDate = date.toISOString().split('T')[0]; // Format: YYYY-MM-DD
+            eventDateInput.value = formattedDate;
+        }
     }
 };
 
