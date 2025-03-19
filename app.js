@@ -1,6 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
-const Reminder = require('./js/models/reminder');
+const Reminder = require('./backend/models/reminder');
+const fetch = require('./backend/fetchReminder');
 const bodyParser = require('body-parser');
 const { error } = require('console');
 
@@ -46,7 +47,6 @@ app.get('/newtask.html', (request, response) =>
         const title = request.body.title;
         console.log(title);
         response.sendFile('./tasks.html', { root: __dirname });
-        
     }
 )
 
