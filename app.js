@@ -1,13 +1,16 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const Reminder = require('./backend/models/reminder');
-const fetch = require('./backend/fetchReminder');
+const fetchReminder = require('./backend/fetchReminder');
 const bodyParser = require('body-parser');
 const { error } = require('console');
+const { title } = require('process');
+const fs = require('fs');
+
 
 
 // connect to mongodb
-const dbURI = 'mongodb+srv://gmgadmin:RF8eo4JVyJ8JyPuq@cluster0.b6uj2.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0'
+const dbURI = 'mongodb+srv://gmgadmin:RF8eo4JVyJ8JyPuq@cluster0.b6uj2.mongodb.net/gomeangreendb?retryWrites=true&w=majority&appName=Cluster0' 
 
 const app = express();
 
@@ -21,6 +24,7 @@ app.use(bodyParser.urlencoded({extended: true}));
 app.get('/', (request, response) => 
     {
         response.sendFile('./index.html', { root: __dirname });
+
     }
 )
 
@@ -53,6 +57,7 @@ app.get('/newtask.html', (request, response) =>
 
 app.get('/calendar.html', (request, response) => 
     {
+
         response.sendFile('./calendar.html', { root: __dirname });
     }
 )
@@ -60,8 +65,29 @@ app.get('/calendar.html', (request, response) =>
 app.get('/titleform', (request, response) =>
 {
     response.sendFile('./titleform.html', { root: __dirname });
-
+    fetchReminder.fetch();
 })
+
+app.get('/data', async (request, response) =>
+    {
+        try{
+            const data = await fs.promises.readFile((__dirname, 'getdata.html'), 'utf8');
+
+            const reminder = await fetchReminder.fetch('Title: i got this working');
+
+            const result = data.replace('{{TITLE}}', reminder ? reminder.title : 'no reminder found')
+                                .replace('{{DESCRIPTION}}', reminder ? reminder.description : 'no reminder found')
+                                .replace('{{DATE}}', reminder ? reminder.date : 'no reminder found')
+                                .replace('{{TIME}}', reminder ? reminder.time : 'no reminder found'); // if there is a reminder, show details, if not, show no reminder found
+
+            response.send(result);
+        }catch (err)
+        {
+            console.log(err);
+            response.sendFile('./titleform.html', { root: __dirname });
+        }
+        
+    });
 
 
 app.post('/submit', (request, response) => {
@@ -107,6 +133,7 @@ app.get('/add-task', (request,response) =>
 
 app.use((request, response) => 
     {
+        
         response.sendFile('./404.html', { root: __dirname });
     }
 )
