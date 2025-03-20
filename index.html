@@ -1,22 +1,61 @@
 <html>
-    <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>AudioReminder</title>
-        <link rel="stylesheet" href="css/main.css">
-    </head>
-    <body>
-        <header>
-            <h1>Home</h1>
-        </header>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AudioReminder</title>
+    <link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+    <header>
+        <h1>Home</h1>
+    </header>
+
+    <nav>
+        <button onclick="location.href='tasks.html';">Tasks</button>
+        <button onclick="location.href='calendar.html';">Calendar</button>
+        <button onclick="location.href='settings.html';">Settings</button>
+    </nav>
+    <script src="js/auth.js"></script>
+
+    <script>
         
-        <nav>
-            <button onclick="location.href='tasks.html';">Tasks</button>
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (SpeechRecognition) {
+            const recognition = new SpeechRecognition();
+            recognition.continuous = true;
+            recognition.interimResults = false;
 
-            <button onclick="location.href='calendar.html';">Calendar</button>
+            recognition.onresult = (event) => {
+                const transcript = event.results[event.results.length - 1][0].transcript.toLowerCase().trim();
+                console.log("Voice Command Detected:", transcript);
+                handleVoiceCommand(transcript);
+            };
 
-            <button onclick="location.href='settings.html';">Settings</button>
-        </nav>
+            recognition.onerror = (event) => console.error("Speech recognition error:", event.error);
 
-        <script src="js/auth.js"></script>
-    </body>
+            recognition.onend = () => {
+                console.log("Voice recognition ended, restarting...");
+                recognition.start();
+            };
+
+            recognition.start();
+        } else {
+            console.error("Speech recognition is not supported in this browser.");
+        }
+
+            function handleVoiceCommand(command) {
+        if (command.includes("open tasks") || command.includes("task") || command.includes("tasks")) {
+            location.href = "tasks.html";
+        } else if (command.includes("open calendar") || command.includes("calendar")) {
+            location.href = "calendar.html";
+        } else if (command.includes("open settings") || command.includes("setting") || command.includes("settings")) {
+            location.href = "settings.html";
+        } else if (command.includes("open voice") || command.includes("voice")) {
+            location.href = "voice.html";
+        } else {
+            console.log("Unknown command:", command);
+        }
+    }
+
+    </script>
+</body>
 </html>
