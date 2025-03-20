@@ -70,17 +70,22 @@ app.get('/titleform', (request, response) =>
 
 app.get('/data', async (request, response) =>
     {
+        // turn this into one easy function. Doesnt need to be all in app.js file. This is messy.
         try{
             const data = await fs.promises.readFile((__dirname, 'getdata.html'), 'utf8');
 
-            const reminder = await fetchReminder.fetch('Title: i got this working');
-
-            const result = data.replace('{{TITLE}}', reminder ? reminder.title : 'no reminder found')
+            const reminders = await fetchReminder.fetch();
+            let results = '';
+            reminders.forEach(reminder => {
+                results += data.replace('{{TITLE}}', reminder ? reminder.title : 'no reminder found')
                                 .replace('{{DESCRIPTION}}', reminder ? reminder.description : 'no reminder found')
                                 .replace('{{DATE}}', reminder ? reminder.date : 'no reminder found')
                                 .replace('{{TIME}}', reminder ? reminder.time : 'no reminder found'); // if there is a reminder, show details, if not, show no reminder found
+            });
 
-            response.send(result);
+            
+
+            response.send(results);
         }catch (err)
         {
             console.log(err);
