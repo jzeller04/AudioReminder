@@ -5,50 +5,55 @@
   "version": "0.0.0",
 
   "private": true,
+"main": "index.js",
+"scripts": {
 
-  "scripts": {
+"start": "node app.js",
 
-    "start": "node app.js",
+  "dev": "nodemon app.js",
 
-    "dev": "nodemon app.js",
+  "serve": "node app.js --open"
 
-    "serve": "node app.js --open"
+},
 
-  },
+"dependencies": {
 
-  "dependencies": {
+  "@google-cloud/local-auth": "^2.1.0",
 
-    "@google-cloud/local-auth": "^2.1.0",
+  "cookie-parser": "~1.4.4",
 
-    "cookie-parser": "~1.4.4",
+  "debug": "~2.6.9",
 
-    "debug": "~2.6.9",
+  "dependencies": "^0.0.1",
 
-    "dependencies": "^0.0.1",
+  "express": "^4.21.2",
 
-    "express": "^4.21.2",
+  "googleapis": "^105.0.0",
 
-    "googleapis": "^105.0.0",
+  "http-errors": "~1.6.3",
 
-    "http-errors": "~1.6.3",
+  "method-override": "^3.0.0",
 
-    "mongodb": "^6.14.2",
+  "mongodb": "^6.14.2",
 
-    "mongoose": "^8.12.1",
+  "mongoose": "^8.12.1",
 
-    "node": "^23.9.0",
+  "node": "^23.10.0",
 
-    "open": "^9.1.0",
+  "open": "^9.1.0",
 
-    "request": "^2.88.2"
+  "request": "^2.88.2"
 
-  },
+},
 
-  "devDependencies": {
+"devDependencies": {
 
-    "nodemon": "^3.0.1"
+  "nodemon": "^3.0.1"
 
-  }
+},
+"engines": {
+  "node": ">=18.0.0"
+}
 
 }
 
