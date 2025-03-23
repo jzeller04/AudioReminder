@@ -15,7 +15,32 @@
         <script src="js/calendar.js"></script>
         <script src="js/app.js"></script>
         <script>
-        
+                function speak(text) {
+            return new Promise((resolve) => {
+                const synth = window.speechSynthesis;
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.onend = () => resolve();
+                synth.speak(utterance);
+            });
+        }
+
+        window.onbeforeunload = () => {
+    window.speechSynthesis.cancel(); // Stops any ongoing speech synthesis
+};
+
+                    // Function to enable TTS when the page loads
+                    function enableTTS() {
+                // Trigger TTS every time the page loads
+                speak("Welcome to the calendar. You can navigate by saying Previous, Next, or Add Event, Cancel Event, Save Event, or Home.")
+                .then(() => {
+                    // Start speech recognition after TTS is spoken
+                    startSpeechRecognition();
+                });
+            }
+
+        // Automatically start speech recognition and set up TTS trigger for the first click
+        window.onload = enableTTS;
+
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
             if (SpeechRecognition) {
                 const recognition = new SpeechRecognition();
@@ -43,11 +68,21 @@
                 function handleVoiceCommand(command) {
             if (command.includes("open home") || command.includes("home")) {
                 location.href = "index.html";
-            } else {
-                console.log("Unknown command:", command);
-            }
-        }
+            }else if (command.includes("next")) {
+        document.getElementById('next-month').click();
+    } else if (command.includes("previous") || command.includes("back")) {
+        document.getElementById('prev-month').click();
+    } else if (command.includes("new event") || command.includes("event")) {
+        document.getElementById('add-event-btn').click();
+    } else if (command.includes("cancel event") || command.includes("cancel")) {
+        document.getElementById('cancel-event-btn').click();
+    } else if (command.includes("save event") || command.includes("save")) {
+        document.getElementById('event-form').click();
+    } else {
+        console.log("Unknown command:", command);
+    }
+}
     
         </script>
     </body>
-</html>
+</html>showEventForm

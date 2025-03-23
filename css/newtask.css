@@ -31,6 +31,29 @@ button:hover {
   cursor: pointer;
 }
 
+.readReminderBtn {
+  background-color: black;
+  border: 6px solid black;
+  border-radius: 6px;
+  color: white;
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: 40px;
+  height: 90px;
+  margin: 20px;
+  text-align: center;
+  transition-duration: 0.1s;
+  align-self: center;           
+  margin-left: auto;            
+  margin-right: auto;           
+  width: 400px;
+}
+.readReminderBtn:hover {
+  background-color: rgb(255, 255, 255);
+  border: 6px solid black;
+  color: black;
+  cursor: pointer;
+}
+
 .titleDiv {
   background-color: black;
   margin-top: 20px;

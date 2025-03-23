@@ -17,45 +17,82 @@
     <script src="js/auth.js"></script>
 
     <script>
-        
+        function speak(text) {
+            return new Promise((resolve) => {
+                const synth = window.speechSynthesis;
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.onend = () => resolve();
+                synth.speak(utterance);
+            });
+        }
+
+        function enableTTS() {
+            // Check if the TTS welcome message has been spoken before in this session
+            if (localStorage.getItem("ttsWelcomeSpoken") !== "true") {
+                // Trigger TTS after the click
+                speak("Welcome to AudioReminder. You can navigate by saying Open Tasks, Open Calendar, or Open Settings.").then(() => {
+                    // After speaking, set the flag so TTS doesn't play again this session
+                    localStorage.setItem("ttsWelcomeSpoken", "true");
+
+                    // Start speech recognition after TTS is spoken
+                    startSpeechRecognition();
+                });
+            }
+        }
+
+        // Automatically start speech recognition and set up TTS trigger for the first click
+        window.onload = () => {
+            // If it's the first time loading the session, enable TTS on the first click
+            if (localStorage.getItem("ttsWelcomeSpoken") !== "true") {
+                document.body.addEventListener("click", enableTTS, { once: true });
+            } else {
+                startSpeechRecognition();  // If TTS has been spoken, just start speech recognition
+            }
+        };
+        window.onbeforeunload = () => {
+    window.speechSynthesis.cancel(); // Stops any ongoing speech synthesis
+};
+
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (SpeechRecognition) {
-            const recognition = new SpeechRecognition();
-            recognition.continuous = true;
-            recognition.interimResults = false;
 
-            recognition.onresult = (event) => {
-                const transcript = event.results[event.results.length - 1][0].transcript.toLowerCase().trim();
-                console.log("Voice Command Detected:", transcript);
-                handleVoiceCommand(transcript);
-            };
+        function startSpeechRecognition() {
+            if (SpeechRecognition) {
+                const recognition = new SpeechRecognition();
+                recognition.continuous = true;
+                recognition.interimResults = false;
 
-            recognition.onerror = (event) => console.error("Speech recognition error:", event.error);
+                recognition.onresult = (event) => {
+                    const transcript = event.results[event.results.length - 1][0].transcript.toLowerCase().trim();
+                    console.log("Voice Command Detected:", transcript);
+                    handleVoiceCommand(transcript);
+                };
 
-            recognition.onend = () => {
-                console.log("Voice recognition ended, restarting...");
+                recognition.onerror = (event) => console.error("Speech recognition error:", event.error);
+
+                recognition.onend = () => {
+                    console.log("Voice recognition ended, restarting...");
+                    recognition.start();
+                };
+
                 recognition.start();
-            };
-
-            recognition.start();
-        } else {
-            console.error("Speech recognition is not supported in this browser.");
+            } else {
+                console.error("Speech recognition is not supported in this browser.");
+            }
         }
 
-            function handleVoiceCommand(command) {
-        if (command.includes("open tasks") || command.includes("task") || command.includes("tasks")) {
-            location.href = "tasks.html";
-        } else if (command.includes("open calendar") || command.includes("calendar")) {
-            location.href = "calendar.html";
-        } else if (command.includes("open settings") || command.includes("setting") || command.includes("settings")) {
-            location.href = "settings.html";
-        } else if (command.includes("open voice") || command.includes("voice")) {
-            location.href = "voice.html";
-        } else {
-            console.log("Unknown command:", command);
+        function handleVoiceCommand(command) {
+            if (command.includes("open tasks") || command.includes("task") || command.includes("tasks")) {
+                location.href = "tasks.html";
+            } else if (command.includes("open calendar") || command.includes("calendar")) {
+                location.href = "calendar.html";
+            } else if (command.includes("open settings") || command.includes("setting") || command.includes("settings")) {
+                location.href = "settings.html";
+            } else if (command.includes("open voice") || command.includes("voice")) {
+                location.href = "voice.html";
+            } else {
+                console.log("Unknown command:", command);
+            }
         }
-    }
-
     </script>
 </body>
 </html>
