@@ -1,7 +1,7 @@
 // Google Calendar
 const Calendar = {
-    // Stores calendar state and events 
-    events: [],
+    // Stores calendar state and tasks 
+    tasks: [],
     isLoading: false,
     selectedDate: new Date(),
     apiKey: 'AIzaSyCtL-BapQYQFN8kNz01qYUfSyiO9ElBwWc',
@@ -10,6 +10,10 @@ const Calendar = {
     init: function() {
         console.log('Calendar module initialized');
 
+        // Load tasks from MongoDB
+        this.loadTasks();
+
+        /*
         // Checks user authentication before loading
         if(window.GoogleAuth && window.GoogleAuth.isAuthenticated()){
             this.loadCalendarEvents();
@@ -18,12 +22,13 @@ const Calendar = {
         // Listens for auth changes
         window.addEventListener('userLoggedIn', () => {this.loadCalendarEvents();});
         window.addEventListener('userLoggedOut', () => {this.loadCalendarEvents();});
-        
+        */
+
         // Initialize calendar UI elements
         this.initCalendarUI();
     },
 
-    // Initializes calendar UI and attach event listeners
+    // Initializes calendar UI and attach task listeners
     initCalendarUI: function() {
         // Create calendar container if it doesn't exist
         if (!document.getElementById('calendar-container')){
@@ -56,56 +61,98 @@ const Calendar = {
                         <!-- Days will be generated here -->
                     </div>
                 </div>
-                <div id="events-container" class="events-container">
-                    <h3>Events for <span id="selected-date">today</span></h3>
-                    <div id="events-list" class="events-list">
-                        <!-- Events will be listed here -->
+                <div id="tasks-container" class="tasks-container">
+                    <h3>Tasks for <span id="selected-date">today</span></h3>
+                    <div id="tasks-list" class="tasks-list">
+                        <!-- Tasks will be listed here -->
                     </div>
-                    <button id="add-event-btn" class="add-event-btn">Add Event</button>
+                    <button id="add-task-btn" class="add-task-btn">New Task</button>
                 </div>
-                <div id="event-form-container" class="event-form-container" style="display: none;">
-                    <h3>Add New Event</h3>
-                    <form id="event-form">
+                <div id="task-form-container" class="task-form-container" style="display: none;">
+                    <h3>Add New task</h3>
+                    <form id="Task-form">
                         <div class="form-group">
-                            <label for="event-title">Title:</label>
-                            <input type="text" id="event-title" required>
+                            <label for="title">Title:</label>
+                            <input type="text" id="title" name="title" required>
                         </div>
                         <div class="form-group">
-                            <label for="event-date">Date:</label>
-                            <input type="date" id="event-date" required>
+                            <label for="date">Date:</label>
+                            <input type="date" id="date" name="date" required>
                         </div>
                         <div class="form-group">
-                            <label for="event-time">Time:</label>
-                            <input type="time" id="event-time" required>
+                            <label for="time">Time:</label>
+                            <input type="time" id="time" name="time" required>
                         </div>
                         <div class="form-group">
-                            <label for="event-duration">Duration (minutes):</label>
-                            <input type="number" id="event-duration" min="15" step="15" value="60">
-                        </div>
-                        <div class="form-group">
-                            <label for="event-description">Description:</label>
-                            <textarea id="event-description"></textarea>
+                            <label for="memo">Description:</label>
+                            <textarea id="memo" name="memo"></textarea>
                         </div>
                         <div class="form-actions">
-                            <button type="button" id="cancel-event-btn">Cancel</button>
-                            <button type="submit">Save Event</button>
+                            <button type="button" id="cancel-Task-btn">Cancel</button>
+                            <button type="submit">Save Task</button>
                         </div>
                     </form>
                 </div>
             `;
 
-            // Add event listeners
+            // Add task listeners
             document.getElementById('prev-month').addEventListener('click', () => this.changeMonth(-1));
             document.getElementById('next-month').addEventListener('click', () => this.changeMonth(1));
-            document.getElementById('add-event-btn').addEventListener('click', () => this.showEventForm());
-            document.getElementById('cancel-event-btn').addEventListener('click', () => this.hideEventForm());
-            document.getElementById('event-form').addEventListener('submit', (e) => this.handleEventSubmit(e));
+            document.getElementById('add-task-btn').addEventListener('click', () => this.showTaskForm());
+            document.getElementById('cancel-task-btn').addEventListener('click', () => this.hideTaskForm());
+            document.getElementById('task-form').addEventListener('submit', (e) => this.handleTaskSubmit(e));
         }
 
         // Initial calendar render
         this.renderCalendar();
     },
 
+    // Load tasks from server using regular fetch
+    loadTasks: function() {
+        this.isLoading = true;
+        this.renderCalendar();
+        
+        // Get tasks from the server
+        fetch('/data')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.text();
+            })
+            .then(htmlText => {
+                // Parse tasks from the HTML response
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = htmlText;
+                
+                // Extract tasks
+                const tasks = [];
+                const taskElements = tempDiv.querySelectorAll('p');
+                
+                // Group elements by 4s (title, description, date, time)
+                for (let i = 0; i < taskElements.length; i += 4) {
+                    if (i + 3 < taskElements.length) {
+                        tasks.push({
+                            title: taskElements[i].textContent,
+                            description: taskElements[i+1].textContent,
+                            date: taskElements[i+2].textContent,
+                            time: taskElements[i+3].textContent
+                        });
+                    }
+                }
+                // Store tasks
+                this.tasks = tasks;
+                
+                this.isLoading = false;
+                this.renderCalendar();
+            }).catch(error => {
+                console.error('Error loading tasks:', error);
+                this.isLoading = false;
+                this.renderCalendar();
+            });
+    },
+
+    /*
     // Load calendar events from Google Calendar API
     loadCalendarEvents: function() {
         if (!window.gapi) {
@@ -160,6 +207,7 @@ const Calendar = {
         script.onload = callback;
         document.head.appendChild(script);
     },
+    */
 
     // Change month and update calendar
     changeMonth: function(delta) {
@@ -168,7 +216,7 @@ const Calendar = {
             this.selectedDate.getMonth() + delta,
             1
         );
-        this.loadCalendarEvents();
+        this.loadTasks();
     },
 
     // Render the calendar UI
@@ -176,8 +224,11 @@ const Calendar = {
         // Update month /year display
         const monthNames = ['January','February','March','April','May','June','July',
                             'July','August','September','October','November','December'];
-        document.getElementById('current-month').textContent = 
-            `${monthNames[this.selectedDate.getMonth()]} ${this.selectedDate.getFullYear()}`;
+
+        const currentMonthEl = document.getElementById('current-month');
+        if (currentMonthEl) {
+            currentMonthEl.textContent = `${monthNames[this.selectedDate.getMonth()]} ${this.selectedDate.getFullYear()}`;
+        }
         
         // Get calendar info for the month
         const year = this.selectedDate.getFullYear();
@@ -195,6 +246,9 @@ const Calendar = {
 
         // Clear existing calendar days
         const calendarDays = document.getElementById('calendar-days');
+        // Exit if element doesn't exist yet
+        if (!calendarDays) return;
+
         calendarDays.innerHTML = '';
 
         // Add empty cells for days before the first day of month
@@ -210,35 +264,32 @@ const Calendar = {
             dayElement.className = 'calendar-day';
             dayElement.textContent = i;
 
-            // Check if day has events
+            // Check if day has tasks
             const date = new Date(year, month, i);
 
             // Add click event listener to each day
             dayElement.addEventListener('click', () => this.selectDate(date));
 
-            const hasEvents = this.events.some(event => {
-                // Parse date from event's dateTime or date field
-                let eventDate;
-                if (event.start.dateTime) {
-                    eventDate = new Date(event.start.dateTime);
-                } else if (event.start.date) {
-                    eventDate = new Date(event.start.date);
-                } else {
+            const hasTasks = this.tasks.some(task => {
+                try {
+                    // Try to parse the date from the task
+                    const taskDate = new Date(task.date);
+                    return taskDate.getDate() === i &&
+                           taskDate.getMonth() === month &&
+                           taskDate.getFullYear() === year;
+                } catch (error) {
+                    console.error('Error parsing date:', error);
                     return false;
                 }
-
-                return eventDate.getDate() === i &&
-                    eventDate.getMonth() === month &&
-                    eventDate.getFullYear() === year;
             });
 
-            if (hasEvents) {
-                dayElement.classList.add('has-events');
+            if (hasTasks) {
+                dayElement.classList.add('has-tasks');
                 // Add an indicator dot or similar visual cue
-                const eventIndicator = document.createElement('span');
-                eventIndicator.className = 'event-indicator';
-                eventIndicator.setAttribute('aria-hidden', 'true');
-                dayElement.appendChild(eventIndicator);
+                const taskIndicator = document.createElement('span');
+                taskIndicator.className = 'task-indicator';
+                taskIndicator.setAttribute('aria-hidden', 'true');
+                dayElement.appendChild(taskIndicator);
             }
 
             //Check if this is today
@@ -259,212 +310,192 @@ const Calendar = {
             calendarDays.appendChild(dayElement);
         }  
 
-        // Render events list for selected date
-        this.renderEventsList();
+        // Render tasks list for selected date
+        this.renderTasksList();
     },
 
-    // Render events list for the selected date
-    renderEventsList: function() {
-        const eventsList = document.getElementById('events-list');
+    // Render tasks list for the selected date
+    renderTasksList: function() {
+        const tasksList = document.getElementById('tasks-list');
         const selectedDateSpan = document.getElementById('selected-date');
         
+         // Exit if elements don't exist yet
+        if (!tasksList || !selectedDateSpan) return;
+
         // Format the selected date
         const options = { weekend: 'long', year: 'numeric', month: 'long', day: 'Numeric' };
         selectedDateSpan.textContent = this.selectedDate.toLocaleDateString(undefined, options);
 
-        // Clear events list
-        eventsList.innerHTML = '';
+        // Clear tasks list
+        tasksList.innerHTML = '';
 
         // Show loading state if needed
         if (this.isLoading) {
-            eventsList.innerHTML = '<div class="loading">Loading events...</div>';
+            tasksList.innerHTML = '<div class="loading">Loading tasks...</div>';
             return;
         }
 
-        // Filter events for the selected date
-        const eventsForDay = this.events.filter(event => {
-            const eventDate = new Date(event.start.dateTime || event.start.date);
-            return eventDate.getDate() === this.selectedDate.getDate() &&
-                   eventDate.getMonth() === this.selectedDate.getMonth() &&
-                   eventDate.getFullYear() === this.selectedDate.getFullYear();
+        // Filter tasks for the selected date
+        const tasksForDay = this.tasks.filter(task => {
+            try {
+                // Try to parse the date from the task
+                const taskDate = new Date(task.date);
+                return taskDate.getDate() === this.selectedDate.getDate() &&
+                       taskDate.getMonth() === this.selectedDate.getMonth() &&
+                       taskDate.getFullYear() === this.selectedDate.getFullYear();
+            } catch (error) {
+                console.error('Error parsing date:', error);
+                return false;
+            }
         });
 
-        // Display events or "no events" message
-        if (eventsForDay.length === 0) {
-            eventsList.innerHTML = '<div class="no-events">No events for this day</div>';
+        // Display tasks or "no tasks" message
+        if (tasksForDay.length === 0) {
+            tasksList.innerHTML = '<div class="no-tasks">No tasks for this day</div>';
         } else {
-            eventsForDay.forEach(event => {
-                const eventElement = document.createElement('div');
-                eventElement.className = 'event-item';
+            tasksForDay.forEach(task => {
+                const taskElement = document.createElement('div');
+                taskElement.className = 'task-item';
                 
                 // Format time
                 let timeStr = 'All day';
-                if (event.start.dateTime) {
-                    const startTime = new Date(event.start.dateTime);
-                    const endTime = new Date(event.end.dateTime);
-                    timeStr = `${this.formatTime(startTime)} - ${this.formatTime(endTime)}`;
+                if (task.time) {
+                    timeStr = this.formatTime(task.time);
                 }
                 
-                eventElement.innerHTML = `
-                    <div class="event-time">${timeStr}</div>
-                    <div class="event-title">${event.summary}</div>
+                taskElement.innerHTML = `
+                    <div class="task-time">${timeStr}</div>
+                    <div class="task-title">${task.title}</div>
                 `;
                 
-                // Add click handler to show event details
-                eventElement.addEventListener('click', () => {
-                    this.showEventDetails(event);
+                // Add click handler to show task details
+                taskElement.addEventListener('click', () => {
+                    this.showTaskDetails(task);
                 });
                 
-                eventsList.appendChild(eventElement);
+                tasksList.appendChild(taskElement);
             });
         }
     },
     
+    
     // Format time twelve hour format with AM/PM
-    formatTime: function(date) {
-        let hours = date.getHours();
-        const minutes = date.getMinutes();
-        const ampm = hours >= 12 ? 'PM' : 'AM';
+    formatTime: function(timeStr) {
+        // Check if timeStr is already a Date object
+        if (timeStr instanceof Date) {
+            const hours = timeStr.getHours();
+            const minutes = timeStr.getMinutes();
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            
+            const displayHours = hours % 12 || 12; // Convert 0 to 12
+            const displayMinutes = minutes < 10 ? '0' + minutes : minutes;
+            
+            return `${displayHours}:${displayMinutes} ${ampm}`;
+        }
         
-        hours = hours % 12;
-        hours = hours ? hours : 12; // 12 for midnight instead of 0
-        
-        // Ensure two digit minutes
-        const minutesStr = minutes < 10 ? '0' + minutes : minutes;
-        
-        return `${hours}:${minutesStr} ${ampm}`;
+        // Otherwise, parse the time string
+        try {
+            // If timeStr is like "13:45" format
+            const [hours, minutes] = timeStr.split(':').map(Number);
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            
+            const displayHours = hours % 12 || 12; // Convert 0 to 12
+            const displayMinutes = minutes < 10 ? '0' + minutes : minutes;
+            
+            return `${displayHours}:${displayMinutes} ${ampm}`;
+        } catch (error) {
+            console.error('Error formatting time:', error);
+            return timeStr; // Return original if can't parse
+        }
     },
 
-    // Show form to add a new event
-    showEventForm: function() {
+    // Show form to add a new task
+    showTaskForm: function() {
         // Set default date to selected date
-        document.getElementById('event-date').valueAsDate = this.selectedDate;
+        document.getElementById('date').valueAsDate = this.selectedDate;
         
         // Set default time to next hour
         const now = new Date();
         const nextHour = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours() + 1, 0);
-        document.getElementById('event-time').value = `${String(nextHour.getHours()).padStart(2, '0')}:00`;
+        document.getElementById('time').value = `${String(nextHour.getHours()).padStart(2, '0')}:00`;
         
         // Show the form
-        document.getElementById('event-form-container').style.display = 'block';
+        document.getElementById('task-form-container').style.display = 'block';
     },
     
-    // Hide the event form
-    hideEventForm: function() {
-        document.getElementById('event-form-container').style.display = 'none';
+    // Hide the task form
+    hideTaskForm: function() {
+        document.getElementById('task-form-container').style.display = 'none';
     },
     
-    // Handle event form submission
-    handleEventSubmit: function(e) {
+    // Handle task form submission
+    handleTaskSubmit: function(e) {
         e.preventDefault();
         
+        /*
         // Check if user is authenticated
         if (!window.GoogleAuth || !window.GoogleAuth.isAuthenticated()) {
             alert('Please sign in with Google to add events');
             return;
         }
+        */
+
+        const form = document.getElementById('task-form');
+        const formData = new FormData(form);
         
-        // Get form values
-        const title = document.getElementById('event-title').value;
-        const dateStr = document.getElementById('event-date').value;
-        const timeStr = document.getElementById('event-time').value;
-        const duration = parseInt(document.getElementById('event-duration').value);
-        const description = document.getElementById('event-description').value;
-        
-        // Create start and end times
-        const startDateTime = new Date(`${dateStr}T${timeStr}`);
-        const endDateTime = new Date(startDateTime.getTime() + duration * 60000); // Add minutes
-        
-        // Create event object
-        const event = {
-            'summary': title,
-            'description': description,
-            'start': {
-                'dateTime': startDateTime.toISOString(),
-                'timeZone': Intl.DateTimeFormat().resolvedOptions().timeZone
-            },
-            'end': {
-                'dateTime': endDateTime.toISOString(),
-                'timeZone': Intl.DateTimeFormat().resolvedOptions().timeZone
-            },
-            'reminders': {
-                'useDefault': true
-            }
-        };
-        
-        // Call Google Calendar API to add event
-        gapi.client.calendar.events.insert({
-            'calendarId': 'primary',
-            'resource': event
+        // Use fetch to submit the form
+        fetch('/submit', {
+            method: 'POST',
+            body: formData
         }).then(response => {
-            // Add the new event to our local array and refresh the calendar
-            this.events.push(response.result);
-            this.hideEventForm();
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            
+            // Hide the form
+            this.hideTaskForm();
+            
+            // Add the new task to the tasks array
+            const title = formData.get('title');
+            const date = formData.get('date');
+            const time = formData.get('time');
+            const description = formData.get('memo');
+            
+            this.tasks.push({
+                title: title,
+                description: description,
+                date: date,
+                time: time
+            });
+            
+            // Refresh the calendar display
             this.renderCalendar();
             
-            // Provide feedback to the user
-            alert('Event created successfully!');
-
+            // Show success message
+            alert('Task added successfully!');
         }).catch(error => {
-            console.error('Error creating event:', error);
-            alert('Error creating event. Please try again.');
+            console.error('Error adding task:', error);
+            alert('Error adding task. Please try again.');
         });
     },
     
-    // Show details for an event
-    showEventDetails: function(event) {
-        // Set default date to selected date
-        const eventDateInput = document.getElementById('event-date');
-        if (eventDateInput) {
-            const formattedDate = this.selectedDate.toISOString().split('T')[0]; // Format: YYYY-MM-DD
-            eventDateInput.value = formattedDate;
+    // Show details for a task
+    showTaskDetails: function(task) {
+        // Create a details message
+        let details = `Task: ${task.title}\n`;
+        
+        // Add time information
+        if (task.time) {
+            details += `Time: ${this.formatTime(task.time)}\n`;
         }
         
-        // Set default time to current time + 1 hour
-        const eventTimeInput = document.getElementById('event-time');
-        if (eventTimeInput) {
-            const now = new Date();
-            const nextHour = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours() + 1, 0);
-            const formattedTime = `${String(nextHour.getHours()).padStart(2, '0')}:00`;
-            eventTimeInput.value = formattedTime;
+        // Add description if available
+        if (task.description) {
+            details += `Description: ${task.description}`;
         }
         
-        // Show the form
-        const formContainer = document.getElementById('event-form-container');
-        if (formContainer) {
-            formContainer.style.display = 'block';
-            // Focus on the title input for accessibility
-            const titleInput = document.getElementById('event-title');
-            if (titleInput) {
-                titleInput.focus();
-            }
-        } else {
-            console.error('Event form container not found');
-        }
-    },
-    
-    // Function to speak event details
-    speakEventDetails: function(event) {
-        if (!('speechSynthesis' in window)) {
-            console.error('Speech synthesis not supported');
-            return;
-        }
-        
-        let speech = new SpeechSynthesisUtterance();
-        
-        // Format time for speech
-        let timeInfo = 'all day';
-        if (event.start.dateTime) {
-            const startTime = new Date(event.start.dateTime);
-            timeInfo = `at ${this.formatTime(startTime)}`;
-        }
-        
-        speech.text = `Event: ${event.summary}, ${timeInfo}. ${event.description || ''}`;
-        speech.volume = 1;
-        speech.rate = 1;
-        speech.pitch = 1;
-        
-        window.speechSynthesis.speak(speech);
+        // Display details in an alert
+        alert(details);
     },
 
     // Function to select dates
@@ -475,14 +506,23 @@ const Calendar = {
         // Refresh the calendar to show the newly selected date
         this.renderCalendar();
         
-        // Render events for the selected date
-        this.renderEventsList();
+        // Check if the task form is currently open
+        const taskFormContainer = document.getElementById('task-form-container');
+
+        // Only update the date in the form if the form is visible
+        if (taskFormContainer && taskFormContainer.style.display === 'block') {
+            const taskDateInput = document.getElementById('date');
         
-        // If the form is visible, update the date in the form
-        const eventDateInput = document.getElementById('event-date');
-        if (eventDateInput) {
-            const formattedDate = date.toISOString().split('T')[0]; // Format: YYYY-MM-DD
-            eventDateInput.value = formattedDate;
+            if (taskDateInput) {
+                // Format the date as YYYY-MM-DD
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
+                const day = String(date.getDate()).padStart(2, '0');
+                const formattedDate = `${year}-${month}-${day}`;
+                
+                // Update the date input value
+                taskDateInput.value = formattedDate;
+            }
         }
     }
 };

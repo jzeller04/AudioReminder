@@ -13,41 +13,5 @@
         </nav>
         <script src="js/auth.js"></script>
         <script src="js/calendar.js"></script>
-        <script src="js/app.js"></script>
-        <script>
-        
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            if (SpeechRecognition) {
-                const recognition = new SpeechRecognition();
-                recognition.continuous = true;
-                recognition.interimResults = false;
-    
-                recognition.onresult = (event) => {
-                    const transcript = event.results[event.results.length - 1][0].transcript.toLowerCase().trim();
-                    console.log("Voice Command Detected:", transcript);
-                    handleVoiceCommand(transcript);
-                };
-    
-                recognition.onerror = (event) => console.error("Speech recognition error:", event.error);
-    
-                recognition.onend = () => {
-                    console.log("Voice recognition ended, restarting...");
-                    recognition.start();
-                };
-    
-                recognition.start();
-            } else {
-                console.error("Speech recognition is not supported in this browser.");
-            }
-    
-                function handleVoiceCommand(command) {
-            if (command.includes("open home") || command.includes("home")) {
-                location.href = "index.html";
-            } else {
-                console.log("Unknown command:", command);
-            }
-        }
-    
-        </script>
     </body>
 </html>

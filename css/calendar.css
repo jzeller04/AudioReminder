@@ -133,7 +133,7 @@ button:hover {
   font-weight: bold;
 }
 
-.calendar-day.has-events::after {
+.calendar-day.has-tasks::after {
   content: '';
   position: absolute;
   bottom: 3px;
@@ -145,11 +145,11 @@ button:hover {
   background-color: #1890ff;
 }
 
-.calendar-day.today.has-events::after {
+.calendar-day.today.has-tasks::after {
   background-color: white;
 }
 
-.calendar-day.selected.has-events::after {
+.calendar-day.selected.has-tasks::after {
   background-color: white;
 }
 
