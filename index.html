@@ -28,11 +28,11 @@
 
         function enableTTS() {
             // Check if the TTS welcome message has been spoken before in this session
-            if (localStorage.getItem("ttsWelcomeSpoken") !== "true") {
+            if (sessionStorage.getItem("ttsWelcomeSpoken") !== "true") {
                 // Trigger TTS after the click
                 speak("Welcome to AudioReminder. You can navigate by saying Open Tasks, Open Calendar, or Open Settings.").then(() => {
                     // After speaking, set the flag so TTS doesn't play again this session
-                    localStorage.setItem("ttsWelcomeSpoken", "true");
+                    sessionStorage.setItem("ttsWelcomeSpoken", "true");
 
                     // Start speech recognition after TTS is spoken
                     startSpeechRecognition();
@@ -43,7 +43,7 @@
         // Automatically start speech recognition and set up TTS trigger for the first click
         window.onload = () => {
             // If it's the first time loading the session, enable TTS on the first click
-            if (localStorage.getItem("ttsWelcomeSpoken") !== "true") {
+            if (sessionStorage.getItem("ttsWelcomeSpoken") !== "true") {
                 document.body.addEventListener("click", enableTTS, { once: true });
             } else {
                 startSpeechRecognition();  // If TTS has been spoken, just start speech recognition

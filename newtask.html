@@ -38,6 +38,8 @@
        </div>
        <div class="buttonDiv">
         <button type="button" class="readReminderBtn" onclick="readReminder()">Read Reminder</button>
+        <button type="button" class="clearReminderBtn" onclick="clearReminder()">Clear Reminder</button>
+
     </div>
     
     
@@ -155,7 +157,7 @@ async function promptUserForInputs() {
     const memo = await startRecognition();
     document.getElementById("memo").value = memo;
 
-    await speak("Reminder has been set. You can now save it or have it read back to you.");
+    await speak("Reminder has been set. You can now save it, clear it, cancel it or have it read back to you.");
     listenForFinalCommand();
 
 }
@@ -167,8 +169,10 @@ async function listenForFinalCommand() {
         window.location.href = "index.html"; // Redirects to home page (Cancel action)
     } else if (command.toLowerCase().includes("read reminder")) {
         await readReminder(); // Calls the readReminder function
+    } else if (command.toLowerCase().includes("clear reminder")) {
+        await clearReminder(); // Calls the clearReminder function
     } else {
-        await speak("I didn't understand that. Please say one of the commands 'Save', 'Cancel', or 'Read Reminder'.");
+        await speak("I didn't understand that. Please say one of the commands 'Save', 'Cancel', 'Clear Reminder', or 'Read Reminder'.");
         listenForFinalCommand(); // Repeats listening if unrecognized
     }
 }
@@ -208,8 +212,28 @@ window.onbeforeunload = () => {
     const formattedTime = convertTo12Hour(time);
     const reminderText = `Your reminder is titled: ${title}. Scheduled for ${date} at ${formattedTime}. Description: ${memo}.`;
     await speak(reminderText);
+    // Keep listening for more commands after reading
+    await speak("Would you like to do anything else?");
+    listenForFinalCommand();
 }
 
+function clearReminder() {
+    document.getElementById("title").value = "";
+    document.getElementById("date").value = "";
+    document.getElementById("time").value = "";
+    document.getElementById("memo").value = "";
+        // Ask if the user wants to redo the reminder
+        speak("The reminder has been cleared. Would you like to redo it?").then(async () => {
+            const command = await startRecognition();
+            if (command.toLowerCase().includes("yes")) {
+                // Restart the process of setting a new reminder
+                promptUserForInputs();
+            } else {
+                await speak("Okay, the reminder won't be redone.");
+                window.location.href = "index.html"
+            }
+        });
+}
 
     </script>
 </body>
