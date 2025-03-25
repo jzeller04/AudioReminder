@@ -15,18 +15,33 @@ const dbURI = 'mongodb+srv://gmgadmin:RF8eo4JVyJ8JyPuq@cluster0.b6uj2.mongodb.ne
 const app = express();
 
 // listen for requests
+// send html pages back
+app.get('/', async (request, response) => {
+    try {
+        const template = await fs.promises.readFile(__dirname + '/index.html', 'utf8');
+        const reminders = await fetchReminder.fetch();
+
+        let reminderHTML = reminders.map(reminder => 
+            `<p>${reminder.title || 'No reminder found'}</p>
+            <p>${reminder.description || 'No reminder found'}</p>
+            <p>${reminder.date || 'No reminder found'}</p>
+            <p>${reminder.time || 'No reminder found'}</p><hr>`
+        ).join('');
+
+        const finalHTML = template.replace('{{REMINDERS}}', reminderHTML);
+
+        response.send(finalHTML);
+    } catch (err) {
+        console.log(err);
+        response.sendFile('./titleform.html', { root: __dirname });
+    }
+});
 app.use(express.static(__dirname));
 
 app.use(bodyParser.urlencoded({extended: true}));
 
 
-// send html pages back
-app.get('/', (request, response) => 
-    {
-        response.sendFile('./index.html', { root: __dirname });
 
-    }
-)
 
 app.get('/index.html', (request, response) => 
     {
@@ -70,28 +85,7 @@ app.get('/titleform', (request, response) =>
 
 app.get('/data', async (request, response) =>
     {
-        // turn this into one easy function. Doesnt need to be all in app.js file. This is messy.
-        try{
-            const data = await fs.promises.readFile((__dirname, 'getdata.html'), 'utf8');
 
-            const reminders = await fetchReminder.fetch();
-            let results = '';
-            reminders.forEach(reminder => {
-                results += data.replace('{{TITLE}}', reminder ? reminder.title : 'no reminder found')
-                                .replace('{{DESCRIPTION}}', reminder ? reminder.description : 'no reminder found')
-                                .replace('{{DATE}}', reminder ? reminder.date : 'no reminder found')
-                                .replace('{{TIME}}', reminder ? reminder.time : 'no reminder found'); // if there is a reminder, show details, if not, show no reminder found
-            });
-
-            
-
-            response.send(results);
-        }catch (err)
-        {
-            console.log(err);
-            response.sendFile('./titleform.html', { root: __dirname });
-        }
-        
     });
 
 
