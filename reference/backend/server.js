@@ -57,6 +57,17 @@ app.post('/upload-audio', upload.single('audio'), async (req, res) => {
   }
 });
 
+app.get('/install', (req, res) => {
+  exec('install.bat', (error, stdout, stderr) => {
+    if (error) {
+      console.error(`Error executing batch file: ${error.message}`);
+      return res.status(500).send('Error running batch file.');
+    }
+    console.log(`Batch file output: ${stdout}`);
+    res.send('Batch file executed successfully!');
+  });
+});
+
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);
 });
