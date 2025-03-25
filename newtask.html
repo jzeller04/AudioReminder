@@ -163,7 +163,7 @@ async function promptUserForInputs() {
 }
 async function listenForFinalCommand() {
     const command = await startRecognition();
-    if (command.toLowerCase().includes("save")) {
+    if (command.toLowerCase().includes("save reminder")) {
         document.getElementById("save").click(); // Simulates clicking the Save button
     } else if (command.toLowerCase().includes("cancel")) {
         window.location.href = "index.html"; // Redirects to home page (Cancel action)
