@@ -32,7 +32,7 @@
 
        <div class="buttonDiv">
             <nav>
-                <button type="button" onclick="location.href='index';">Cancel</button>
+                <button type="button" onclick="location.href='index.html';">Cancel</button>
             </nav>
             <button id="save">Save</button>
        </div>
@@ -166,7 +166,7 @@ async function listenForFinalCommand() {
     if (command.toLowerCase().includes("save reminder")) {
         document.getElementById("save").click(); // Simulates clicking the Save button
     } else if (command.toLowerCase().includes("cancel")) {
-        window.location.href = "index"; // Redirects to home page (Cancel action)
+        window.location.href = "index.html"; // Redirects to home page (Cancel action)
     } else if (command.toLowerCase().includes("read reminder")) {
         await readReminder(); // Calls the readReminder function
     } else if (command.toLowerCase().includes("clear reminder")) {
@@ -230,7 +230,7 @@ function clearReminder() {
                 promptUserForInputs();
             } else {
                 await speak("Okay, the reminder won't be redone.");
-                window.location.href = "index"
+                window.location.href = "index.html"
             }
         });
 }
