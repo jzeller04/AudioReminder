@@ -10,9 +10,9 @@
     </header>
 
     <nav>
-        <button onclick="location.href='tasks.html';">Tasks</button>
-        <button onclick="location.href='calendar.html';">Calendar</button>
-        <button onclick="location.href='settings.html';">Settings</button>
+        <button onclick="location.href='tasks';">Tasks</button>
+        <button onclick="location.href='calendar';">Calendar</button>
+        <button onclick="location.href='settings';">Settings</button>
     </nav>
 
     <r>Upcoming Reminders</r>
@@ -124,13 +124,13 @@
             if (isSpeaking) return;
             
             if (command.includes("open tasks") || command.includes("task") || command.includes("tasks")) {
-                location.href = "tasks.html";
+                location.href = "tasks";
             } else if (command.includes("open calendar") || command.includes("calendar")) {
-                location.href = "calendar.html";
+                location.href = "calendar";
             } else if (command.includes("open settings") || command.includes("setting") || command.includes("settings")) {
-                location.href = "settings.html";
+                location.href = "settings";
             } else if (command.includes("open voice") || command.includes("voice")) {
-                location.href = "voice.html";
+                location.href = "voice";
             } else if (command.includes("read reminders") || command.includes("reminders")) {
                 readReminders();
             } else {
