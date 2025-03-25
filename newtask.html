@@ -1,41 +1,241 @@
-<html>
-    <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>AudioReminder - New Task</title>
-        <link rel="stylesheet" href="css/newtask.css">
-    </head>
-    <body>
-        <form action="/submit" method="POST">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AudioReminder - New Task</title>
+    <link rel="stylesheet" href="css/newtask.css">
+</head>
+<body>
+    <form action="/submit" method="POST">
 
-            <div class="titleDiv">
-                <label for="title" id= "titleLabel">Reminder Name</label><br>
-                <input type="text" id="title" name="title">
+        <div class="titleDiv">
+            <label for="title" id="titleLabel">Reminder Name</label><br>
+            <input type="text" id="title" name="title">
+        </div>
+        
+       <div class="datetimeDiv">
+            <div class="dateDiv">
+                <label for="date" id="dateLabel">Date:</label>
+                <input type="date" id="date" name="date">
             </div>
-            
-           <div class= "datetimeDiv">
-                <div class="dateDiv">
-                    <label for="date" id= "dateLabel">Date:</label>
-                    <input type="date" id="date" name="date">
-                </div>
 
-                <div class="timeDiv">
-                    <label for="time" id= "timeLabel">Time:</label> 
-                    <input type="time" id="time" name="time">
-                </div>
-           </div>
+            <div class="timeDiv">
+                <label for="time" id="timeLabel">Time:</label> 
+                <input type="time" id="time" name="time">
+            </div>
+       </div>
 
-           <div class="memoDiv">
-                <label for="memo" id="memoLabel">Description</label><br>
-                <textarea id="memo" name="memo"></textarea>
-           </div>
+       <div class="memoDiv">
+            <label for="memo" id="memoLabel">Description</label><br>
+            <textarea id="memo" name="memo"></textarea>
+       </div>
 
-           <div class="buttonDiv">
-                <nav>
-                    <button type="button" onclick="location.href='index.html';">Cancel</button>
-                </nav>
+       <div class="buttonDiv">
+            <nav>
+                <button type="button" onclick="location.href='index.html';">Cancel</button>
+            </nav>
+            <button id="save">Save</button>
+       </div>
+       <div class="buttonDiv">
+        <button type="button" class="readReminderBtn" onclick="readReminder()">Read Reminder</button>
+        <button type="button" class="clearReminderBtn" onclick="clearReminder()">Clear Reminder</button>
 
-                <button id= "save">Save</button>
-           </div>
-        </form>
-    </body>
+    </div>
+    
+    
+    </form>
+
+    <script>
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.lang = "en-US";
+
+        function speak(text) {
+            return new Promise((resolve) => {
+                const synth = window.speechSynthesis;
+                const utterance = new SpeechSynthesisUtterance(text);
+                
+                // Ensure voices are loaded before speaking
+                const voices = synth.getVoices();
+                if (voices.length > 0) {
+                    utterance.voice = voices[0]; // Set a default voice
+                } else {
+                    synth.onvoiceschanged = () => {
+                        utterance.voice = synth.getVoices()[0];
+                        synth.speak(utterance);
+                    };
+                }
+
+                utterance.onend = () => resolve();
+                synth.speak(utterance);
+            });
+        }
+
+        function startRecognition() {
+            return new Promise((resolve) => {
+                recognition.onresult = (event) => {
+                    const transcript = event.results[0][0].transcript.trim();
+                    console.log("Speech input:", transcript);
+                    resolve(transcript);
+                };
+                recognition.onerror = (event) => {
+                    console.error("Speech recognition error:", event.error);
+                    resolve("");
+                };
+                recognition.start();
+            });
+        }
+        function parseDate(input) {
+    // Try to parse common date formats (like "March 10", "March 10, 2024", "10/03/2024", etc.)
+    let parsedDate = new Date(input);
+    if (!isNaN(parsedDate.getTime())) {
+        return parsedDate.toISOString().split("T")[0]; // Extract YYYY-MM-DD
+    }
+
+    // Additional check for natural language formats (e.g., "next Monday")
+    const today = new Date();
+    let dayOfWeek = today.getDay();
+    let targetDate;
+
+    // Handle "next" + day of the week (e.g., "next Monday")
+    const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    const nextMatch = input.match(/next\s+(Sunday|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday)/i);
+    if (nextMatch) {
+        const targetDay = daysOfWeek.indexOf(nextMatch[1]);
+        const daysToAdd = (targetDay - dayOfWeek + 7) % 7;
+        targetDate = new Date(today.setDate(today.getDate() + daysToAdd));
+        return targetDate.toISOString().split("T")[0];
+    }
+
+    return ""; // If no valid date format is found
+}
+
+function parseTime(input) {
+    let match = input.match(/(\d{1,2}):?(\d{2})?\s?(AM|PM)?/i);
+    if (match) {
+        let hours = parseInt(match[1]);
+        let minutes = match[2] ? parseInt(match[2]) : 0;
+        let period = match[3] ? match[3].toUpperCase() : "";
+
+        if (period === "PM" && hours !== 12) {
+            hours += 12;
+        } else if (period === "AM" && hours === 12) {
+            hours = 0;
+        }
+
+        return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+    }
+    return "";
+}
+
+async function promptUserForInputs() {
+    await speak("What is the title of your reminder?");
+    const title = await startRecognition();
+    document.getElementById("title").value = title;
+
+    await speak("What date should I set the reminder for?");
+    const dateInput = await startRecognition();
+    const formattedDate = parseDate(dateInput);
+    if (formattedDate) {
+        document.getElementById("date").value = formattedDate;
+    } else {
+        await speak("I couldn't understand the date. Please try again.");
+    }
+
+    await speak("What time should I set the reminder for?");
+    const timeInput = await startRecognition();
+    const formattedTime = parseTime(timeInput);
+    if (formattedTime) {
+        document.getElementById("time").value = formattedTime;
+    } else {
+        await speak("I couldn't understand the time. Please try again.");
+    }
+
+    await speak("What is the description of the reminder?");
+    const memo = await startRecognition();
+    document.getElementById("memo").value = memo;
+
+    await speak("Reminder has been set. You can now save it, clear it, cancel it or have it read back to you.");
+    listenForFinalCommand();
+
+}
+async function listenForFinalCommand() {
+    const command = await startRecognition();
+    if (command.toLowerCase().includes("save reminder")) {
+        document.getElementById("save").click(); // Simulates clicking the Save button
+    } else if (command.toLowerCase().includes("cancel")) {
+        window.location.href = "index.html"; // Redirects to home page (Cancel action)
+    } else if (command.toLowerCase().includes("read reminder")) {
+        await readReminder(); // Calls the readReminder function
+    } else if (command.toLowerCase().includes("clear reminder")) {
+        await clearReminder(); // Calls the clearReminder function
+    } else {
+        await speak("I didn't understand that. Please say one of the commands 'Save', 'Cancel', 'Clear Reminder', or 'Read Reminder'.");
+        listenForFinalCommand(); // Repeats listening if unrecognized
+    }
+}
+
+window.onbeforeunload = () => {
+    window.speechSynthesis.cancel(); // Stops any ongoing speech synthesis
+};
+
+
+        function enableTTS() {
+            const unlockTTS = new SpeechSynthesisUtterance("");
+            unlockTTS.onend = () => {
+                console.log("TTS unlocked, starting prompts...");
+                promptUserForInputs();
+            };
+            window.speechSynthesis.speak(unlockTTS);
+        }
+
+        window.onload = () => {
+            document.body.addEventListener("click", enableTTS, { once: true });
+        };
+        async function readReminder() {
+    const title = document.getElementById("title").value || "No title";
+    const date = document.getElementById("date").value || "No date";
+    const time = document.getElementById("time").value || "No time";
+    const memo = document.getElementById("memo").value || "No description";
+
+    // Convert military time to 12-hour format
+    function convertTo12Hour(timeStr) {
+        if (timeStr === "No time") return timeStr;
+        let [hours, minutes] = timeStr.split(":").map(Number);
+        let period = hours >= 12 ? "PM" : "AM";
+        hours = hours % 12 || 12; // Convert 0 to 12 for midnight
+        return `${hours}:${String(minutes).padStart(2, "0")} ${period}`;
+    }
+
+    const formattedTime = convertTo12Hour(time);
+    const reminderText = `Your reminder is titled: ${title}. Scheduled for ${date} at ${formattedTime}. Description: ${memo}.`;
+    await speak(reminderText);
+    // Keep listening for more commands after reading
+    await speak("Would you like to do anything else?");
+    listenForFinalCommand();
+}
+
+function clearReminder() {
+    document.getElementById("title").value = "";
+    document.getElementById("date").value = "";
+    document.getElementById("time").value = "";
+    document.getElementById("memo").value = "";
+        // Ask if the user wants to redo the reminder
+        speak("The reminder has been cleared. Would you like to redo it?").then(async () => {
+            const command = await startRecognition();
+            if (command.toLowerCase().includes("yes")) {
+                // Restart the process of setting a new reminder
+                promptUserForInputs();
+            } else {
+                await speak("Okay, the reminder won't be redone.");
+                window.location.href = "index.html"
+            }
+        });
+}
+
+    </script>
+</body>
 </html>
+
