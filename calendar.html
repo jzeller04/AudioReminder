@@ -9,7 +9,7 @@
             <h1>Calendar</h1>
         </header>
         <nav>
-            <button onclick="location.href='index.html';">Home</button>
+            <button onclick="location.href='index';">Home</button>
         </nav>
         <script src="js/auth.js"></script>
         <script src="js/calendar.js"></script>
@@ -66,7 +66,7 @@
     
                 function handleVoiceCommand(command) {
             if (command.includes("open home") || command.includes("home")) {
-                location.href = "index.html";
+                location.href = "index";
             }else if (command.includes("next")) {
         document.getElementById('next-month').click();
     } else if (command.includes("previous") || command.includes("back")) {
