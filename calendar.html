@@ -73,10 +73,6 @@
         document.getElementById('prev-month').click();
     } else if (command.includes("new event") || command.includes("event")) {
         document.getElementById('add-event-btn').click();
-    } else if (command.includes("cancel event") || command.includes("cancel")) {
-        document.getElementById('cancel-event-btn').click();
-    } else if (command.includes("save event") || command.includes("save")) {
-        document.getElementById('event-form').click();
     } else {
         console.log("Unknown command:", command);
     }
