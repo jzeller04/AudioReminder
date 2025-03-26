@@ -77,7 +77,7 @@ const Calendar = {
         this.renderCalendar();
         
         // Get tasks from the server
-        fetch('/data')
+        fetch('/')
             .then(response => {
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
@@ -89,23 +89,35 @@ const Calendar = {
                 const tempDiv = document.createElement('div');
                 tempDiv.innerHTML = htmlText;
                 
-                // Extract tasks
+                // Extract tasks from reminder_container
                 const tasks = [];
-                const taskElements = tempDiv.querySelectorAll('p');
+                const reminderContainer = tempDiv.querySelector('#reminder_container');
                 
-                // Group elements by 4s (title, description, date, time)
-                for (let i = 0; i < taskElements.length; i += 4) {
-                    if (i + 3 < taskElements.length) {
-                        tasks.push({
-                            title: taskElements[i].textContent,
-                            description: taskElements[i+1].textContent,
-                            date: taskElements[i+2].textContent,
-                            time: taskElements[i+3].textContent
-                        });
+                if (reminderContainer) {
+                    // Each group of 4 paragraphs represents a single reminder
+                    const paragraphs = reminderContainer.querySelectorAll('p');
+                    
+                    for (let i = 0; i < paragraphs.length; i += 4) {
+                        if (i + 3 < paragraphs.length) {
+                            const title = paragraphs[i].textContent.replace('No reminder found', '').trim();
+                            const description = paragraphs[i+1].textContent.replace('No reminder found', '').trim();
+                            const date = paragraphs[i+2].textContent.replace('No reminder found', '').trim();
+                            const time = paragraphs[i+3].textContent.replace('No reminder found', '').trim();
+                            
+                            // Only add if we have at least a title and date
+                            if (title && date) {
+                                tasks.push({
+                                    title: title,
+                                    description: description,
+                                    date: new Date(date), // Convert to Date object
+                                    time: time
+                                });
+                            }
+                        }
                     }
                 }
-                // Store tasks
-                this.tasks = tasks;
+
+                console.log("Parsed tasks:", tasks);
                 
                 this.isLoading = false;
                 this.renderCalendar();
@@ -177,17 +189,18 @@ const Calendar = {
             // Add click event listener to each day
             dayElement.addEventListener('click', () => this.selectDate(date));
 
+            // Check if day has tasks - improved version with better date comparison
             const hasTasks = this.tasks.some(task => {
-                try {
-                    // Try to parse the date from the task
-                    const taskDate = new Date(task.date);
+                // Make sure task.date is a Date object
+                const taskDate = task.date instanceof Date ? task.date : new Date(task.date);
+                
+                // Only compare if taskDate is valid
+                if (!isNaN(taskDate.getTime())) {
                     return taskDate.getDate() === i &&
-                           taskDate.getMonth() === month &&
-                           taskDate.getFullYear() === year;
-                } catch (error) {
-                    console.error('Error parsing date:', error);
-                    return false;
+                        taskDate.getMonth() === month &&
+                        taskDate.getFullYear() === year;
                 }
+                return false;
             });
 
             if (hasTasks) {
@@ -230,7 +243,7 @@ const Calendar = {
         if (!tasksList || !selectedDateSpan) return;
 
         // Format the selected date
-        const options = { weekend: 'long', year: 'numeric', month: 'long', day: 'Numeric' };
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'Numeric' };
         selectedDateSpan.textContent = this.selectedDate.toLocaleDateString(undefined, options);
 
         // Clear tasks list
@@ -244,16 +257,16 @@ const Calendar = {
 
         // Filter tasks for the selected date
         const tasksForDay = this.tasks.filter(task => {
-            try {
-                // Try to parse the date from the task
-                const taskDate = new Date(task.date);
+            // Make sure task.date is a Date object
+            const taskDate = task.date instanceof Date ? task.date : new Date(task.date);
+        
+            // Only compare if taskDate is valid
+            if (!isNaN(taskDate.getTime())) {
                 return taskDate.getDate() === this.selectedDate.getDate() &&
-                       taskDate.getMonth() === this.selectedDate.getMonth() &&
-                       taskDate.getFullYear() === this.selectedDate.getFullYear();
-            } catch (error) {
-                console.error('Error parsing date:', error);
-                return false;
+                    taskDate.getMonth() === this.selectedDate.getMonth() &&
+                    taskDate.getFullYear() === this.selectedDate.getFullYear();
             }
+            return false;
         });
 
         // Display tasks or "no tasks" message
@@ -266,7 +279,7 @@ const Calendar = {
                 
                 // Format time
                 let timeStr = 'All day';
-                if (task.time) {
+                if (task.time && task.time !== 'No reminder found') {
                     timeStr = this.formatTime(task.time);
                 }
                 
