@@ -141,7 +141,7 @@ const Calendar = {
     renderCalendar: function() {
         // Update month /year display
         const monthNames = ['January','February','March','April','May','June','July',
-                            ,'August','September','October','November','December'];
+                            'August','September','October','November','December'];
 
         const currentMonthEl = document.getElementById('current-month');
         if (currentMonthEl) {
@@ -237,7 +237,7 @@ const Calendar = {
         if (!tasksList || !selectedDateSpan) return;
 
         // Format the selected date
-        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'Numeric' };
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
         selectedDateSpan.textContent = this.selectedDate.toLocaleDateString(undefined, options);
 
         // Clear tasks list
@@ -284,6 +284,7 @@ const Calendar = {
                 
                 // Add click handler to show task details
                 taskElement.addEventListener('click', () => {
+                    console.log('Task clicked:', task); // Add debug logging
                     this.showTaskDetails(task);
                 });
                 
@@ -343,6 +344,7 @@ const Calendar = {
     
     // Show details for a task
     showTaskDetails: function(task) {
+        console.log('showTaskDetails called with task:', task);
         // Create a details message
         let details = `Task: ${task.title}\n`;
         
@@ -356,8 +358,15 @@ const Calendar = {
             details += `Description: ${task.description}`;
         }
         
+        console.log('Showing alert with details:', details);
+        
         // Display details in an alert
         alert(details);
+
+        // Announce details using text-to-speech if speak function is available
+        if (typeof speak === 'function') {
+            speak(details);
+        }
     },
 
     // Function to select dates
