@@ -12,17 +12,6 @@ const Calendar = {
         // Load tasks from MongoDB
         this.loadTasks();
 
-        /*
-        // Checks user authentication before loading
-        if(window.GoogleAuth && window.GoogleAuth.isAuthenticated()){
-            this.loadCalendarEvents();
-        }
-
-        // Listens for auth changes
-        window.addEventListener('userLoggedIn', () => {this.loadCalendarEvents();});
-        window.addEventListener('userLoggedOut', () => {this.loadCalendarEvents();});
-        */
-
         // Initialize calendar UI elements
         this.initCalendarUI();
     },
@@ -126,63 +115,6 @@ const Calendar = {
                 this.renderCalendar();
             });
     },
-
-    /*
-    // Load calendar events from Google Calendar API
-    loadCalendarEvents: function() {
-        if (!window.gapi) {
-            this.loadGoogleAPI(() => this.loadCalendarEvents());
-            return;
-        }
-
-        this.isLoading = true;
-        // Show loading state
-        this.renderCalendar();
-
-        // Verify user is authenticated before continuing
-        if (!window.GoogleAuth || !window.GoogleAuth.isAuthenticated()) {
-            console.error('User not authenticated. Cannot load calendar events.');
-            this.isLoading = false;
-            this.renderCalendar();
-            return;
-        }
-
-        // Load the Google Calendar API
-        gapi.load('client', () => {
-            gapi.client.init({
-                apiKey: 'AIzaSyCtL-BapQYQFN8kNz01qYUfSyiO9ElBwWc',
-                clientId: '1009864072987-cmpm10gg8f73q21uteji2suo7eoklsml.apps.googleusercontent.com',
-                discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest'],
-                scope: 'https://www.googleapis.com/auth/calendar'
-            }).then(() => {
-                // Get events from the primary calendar
-                return gapi.client.calendar.events.list({
-                    'calendarId': 'primary',
-                    'timeMin': new Date(this.selectedDate.getFullYear(), this.selectedDate.getMonth(), 1).toISOString(),
-                    'timeMax': new Date(this.selectedDate.getFullYear(), this.selectedDate.getMonth() + 1, 0).toISOString(),
-                    'singleEvents': true,
-                    'orderBy': 'startTime'
-                });
-            }).then(response => {
-                this.events = response.result.items;
-                this.isLoading = false;
-                this.renderCalendar();
-            }).catch(error => {
-                console.error('Error loading calendar events:', error);
-                this.isLoading = false;
-                this.renderCalendar();
-            });
-        });
-    },
-
-    // Load Google API script
-    loadGoogleAPI: function(callback) {
-        const script = document.createElement('script');
-        script.src = 'https://apis.google.com/js/api.js';
-        script.onload = callback;
-        document.head.appendChild(script);
-    },
-    */
 
     // Change month and update calendar
     changeMonth: function(delta) {
