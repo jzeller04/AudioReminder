@@ -63,8 +63,6 @@ const Calendar = {
             document.getElementById('prev-month').addEventListener('click', () => this.changeMonth(-1));
             document.getElementById('next-month').addEventListener('click', () => this.changeMonth(1));
             document.getElementById('add-task-btn').addEventListener('click', () => this.showTaskForm());
-            document.getElementById('cancel-task-btn').addEventListener('click', () => this.hideTaskForm());
-            document.getElementById('task-form').addEventListener('submit', (e) => this.handleTaskSubmit(e));
         }
 
         // Initial calendar render
@@ -118,7 +116,8 @@ const Calendar = {
                 }
 
                 console.log("Parsed tasks:", tasks);
-                
+
+                this.tasks = tasks;
                 this.isLoading = false;
                 this.renderCalendar();
             }).catch(error => {
@@ -142,7 +141,7 @@ const Calendar = {
     renderCalendar: function() {
         // Update month /year display
         const monthNames = ['January','February','March','April','May','June','July',
-                            'July','August','September','October','November','December'];
+                            ,'August','September','October','November','December'];
 
         const currentMonthEl = document.getElementById('current-month');
         if (currentMonthEl) {
@@ -205,11 +204,6 @@ const Calendar = {
 
             if (hasTasks) {
                 dayElement.classList.add('has-tasks');
-                // Add an indicator dot or similar visual cue
-                const taskIndicator = document.createElement('span');
-                taskIndicator.className = 'task-indicator';
-                taskIndicator.setAttribute('aria-hidden', 'true');
-                dayElement.appendChild(taskIndicator);
             }
 
             //Check if this is today
