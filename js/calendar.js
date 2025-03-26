@@ -4,7 +4,6 @@ const Calendar = {
     tasks: [],
     isLoading: false,
     selectedDate: new Date(),
-    apiKey: 'AIzaSyCtL-BapQYQFN8kNz01qYUfSyiO9ElBwWc',
 
     // Initializes the calendar
     init: function() {
@@ -530,7 +529,7 @@ const Calendar = {
 // Initialize the calendar when the DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize calendar if on the calendar page
-    if (window.location.pathname.includes('calendar.html')) {
+    if (window.location.pathname.includes('/calendar')) {
         Calendar.init();
     }
 });
