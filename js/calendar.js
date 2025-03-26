@@ -12,17 +12,6 @@ const Calendar = {
         // Load tasks from MongoDB
         this.loadTasks();
 
-        /*
-        // Checks user authentication before loading
-        if(window.GoogleAuth && window.GoogleAuth.isAuthenticated()){
-            this.loadCalendarEvents();
-        }
-
-        // Listens for auth changes
-        window.addEventListener('userLoggedIn', () => {this.loadCalendarEvents();});
-        window.addEventListener('userLoggedOut', () => {this.loadCalendarEvents();});
-        */
-
         // Initialize calendar UI elements
         this.initCalendarUI();
     },
@@ -74,8 +63,6 @@ const Calendar = {
             document.getElementById('prev-month').addEventListener('click', () => this.changeMonth(-1));
             document.getElementById('next-month').addEventListener('click', () => this.changeMonth(1));
             document.getElementById('add-task-btn').addEventListener('click', () => this.showTaskForm());
-            document.getElementById('cancel-task-btn').addEventListener('click', () => this.hideTaskForm());
-            document.getElementById('task-form').addEventListener('submit', (e) => this.handleTaskSubmit(e));
         }
 
         // Initial calendar render
@@ -88,7 +75,7 @@ const Calendar = {
         this.renderCalendar();
         
         // Get tasks from the server
-        fetch('/data')
+        fetch('/')
             .then(response => {
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
@@ -100,24 +87,37 @@ const Calendar = {
                 const tempDiv = document.createElement('div');
                 tempDiv.innerHTML = htmlText;
                 
-                // Extract tasks
+                // Extract tasks from reminder_container
                 const tasks = [];
-                const taskElements = tempDiv.querySelectorAll('p');
+                const reminderContainer = tempDiv.querySelector('#reminder_container');
                 
-                // Group elements by 4s (title, description, date, time)
-                for (let i = 0; i < taskElements.length; i += 4) {
-                    if (i + 3 < taskElements.length) {
-                        tasks.push({
-                            title: taskElements[i].textContent,
-                            description: taskElements[i+1].textContent,
-                            date: taskElements[i+2].textContent,
-                            time: taskElements[i+3].textContent
-                        });
+                if (reminderContainer) {
+                    // Each group of 4 paragraphs represents a single reminder
+                    const paragraphs = reminderContainer.querySelectorAll('p');
+                    
+                    for (let i = 0; i < paragraphs.length; i += 4) {
+                        if (i + 3 < paragraphs.length) {
+                            const title = paragraphs[i].textContent.replace('No reminder found', '').trim();
+                            const description = paragraphs[i+1].textContent.replace('No reminder found', '').trim();
+                            const date = paragraphs[i+2].textContent.replace('No reminder found', '').trim();
+                            const time = paragraphs[i+3].textContent.replace('No reminder found', '').trim();
+                            
+                            // Only add if we have at least a title and date
+                            if (title && date) {
+                                tasks.push({
+                                    title: title,
+                                    description: description,
+                                    date: new Date(date), // Convert to Date object
+                                    time: time
+                                });
+                            }
+                        }
                     }
                 }
-                // Store tasks
+
+                console.log("Parsed tasks:", tasks);
+
                 this.tasks = tasks;
-                
                 this.isLoading = false;
                 this.renderCalendar();
             }).catch(error => {
@@ -126,63 +126,6 @@ const Calendar = {
                 this.renderCalendar();
             });
     },
-
-    /*
-    // Load calendar events from Google Calendar API
-    loadCalendarEvents: function() {
-        if (!window.gapi) {
-            this.loadGoogleAPI(() => this.loadCalendarEvents());
-            return;
-        }
-
-        this.isLoading = true;
-        // Show loading state
-        this.renderCalendar();
-
-        // Verify user is authenticated before continuing
-        if (!window.GoogleAuth || !window.GoogleAuth.isAuthenticated()) {
-            console.error('User not authenticated. Cannot load calendar events.');
-            this.isLoading = false;
-            this.renderCalendar();
-            return;
-        }
-
-        // Load the Google Calendar API
-        gapi.load('client', () => {
-            gapi.client.init({
-                apiKey: 'AIzaSyCtL-BapQYQFN8kNz01qYUfSyiO9ElBwWc',
-                clientId: '1009864072987-cmpm10gg8f73q21uteji2suo7eoklsml.apps.googleusercontent.com',
-                discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest'],
-                scope: 'https://www.googleapis.com/auth/calendar'
-            }).then(() => {
-                // Get events from the primary calendar
-                return gapi.client.calendar.events.list({
-                    'calendarId': 'primary',
-                    'timeMin': new Date(this.selectedDate.getFullYear(), this.selectedDate.getMonth(), 1).toISOString(),
-                    'timeMax': new Date(this.selectedDate.getFullYear(), this.selectedDate.getMonth() + 1, 0).toISOString(),
-                    'singleEvents': true,
-                    'orderBy': 'startTime'
-                });
-            }).then(response => {
-                this.events = response.result.items;
-                this.isLoading = false;
-                this.renderCalendar();
-            }).catch(error => {
-                console.error('Error loading calendar events:', error);
-                this.isLoading = false;
-                this.renderCalendar();
-            });
-        });
-    },
-
-    // Load Google API script
-    loadGoogleAPI: function(callback) {
-        const script = document.createElement('script');
-        script.src = 'https://apis.google.com/js/api.js';
-        script.onload = callback;
-        document.head.appendChild(script);
-    },
-    */
 
     // Change month and update calendar
     changeMonth: function(delta) {
@@ -198,7 +141,7 @@ const Calendar = {
     renderCalendar: function() {
         // Update month /year display
         const monthNames = ['January','February','March','April','May','June','July',
-                            'July','August','September','October','November','December'];
+                            'August','September','October','November','December'];
 
         const currentMonthEl = document.getElementById('current-month');
         if (currentMonthEl) {
@@ -245,26 +188,22 @@ const Calendar = {
             // Add click event listener to each day
             dayElement.addEventListener('click', () => this.selectDate(date));
 
+            // Check if day has tasks - improved version with better date comparison
             const hasTasks = this.tasks.some(task => {
-                try {
-                    // Try to parse the date from the task
-                    const taskDate = new Date(task.date);
+                // Make sure task.date is a Date object
+                const taskDate = task.date instanceof Date ? task.date : new Date(task.date);
+                
+                // Only compare if taskDate is valid
+                if (!isNaN(taskDate.getTime())) {
                     return taskDate.getDate() === i &&
-                           taskDate.getMonth() === month &&
-                           taskDate.getFullYear() === year;
-                } catch (error) {
-                    console.error('Error parsing date:', error);
-                    return false;
+                        taskDate.getMonth() === month &&
+                        taskDate.getFullYear() === year;
                 }
+                return false;
             });
 
             if (hasTasks) {
                 dayElement.classList.add('has-tasks');
-                // Add an indicator dot or similar visual cue
-                const taskIndicator = document.createElement('span');
-                taskIndicator.className = 'task-indicator';
-                taskIndicator.setAttribute('aria-hidden', 'true');
-                dayElement.appendChild(taskIndicator);
             }
 
             //Check if this is today
@@ -298,7 +237,7 @@ const Calendar = {
         if (!tasksList || !selectedDateSpan) return;
 
         // Format the selected date
-        const options = { weekend: 'long', year: 'numeric', month: 'long', day: 'Numeric' };
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
         selectedDateSpan.textContent = this.selectedDate.toLocaleDateString(undefined, options);
 
         // Clear tasks list
@@ -312,16 +251,16 @@ const Calendar = {
 
         // Filter tasks for the selected date
         const tasksForDay = this.tasks.filter(task => {
-            try {
-                // Try to parse the date from the task
-                const taskDate = new Date(task.date);
+            // Make sure task.date is a Date object
+            const taskDate = task.date instanceof Date ? task.date : new Date(task.date);
+        
+            // Only compare if taskDate is valid
+            if (!isNaN(taskDate.getTime())) {
                 return taskDate.getDate() === this.selectedDate.getDate() &&
-                       taskDate.getMonth() === this.selectedDate.getMonth() &&
-                       taskDate.getFullYear() === this.selectedDate.getFullYear();
-            } catch (error) {
-                console.error('Error parsing date:', error);
-                return false;
+                    taskDate.getMonth() === this.selectedDate.getMonth() &&
+                    taskDate.getFullYear() === this.selectedDate.getFullYear();
             }
+            return false;
         });
 
         // Display tasks or "no tasks" message
@@ -334,7 +273,7 @@ const Calendar = {
                 
                 // Format time
                 let timeStr = 'All day';
-                if (task.time) {
+                if (task.time && task.time !== 'No reminder found') {
                     timeStr = this.formatTime(task.time);
                 }
                 
@@ -345,6 +284,7 @@ const Calendar = {
                 
                 // Add click handler to show task details
                 taskElement.addEventListener('click', () => {
+                    console.log('Task clicked:', task); // Add debug logging
                     this.showTaskDetails(task);
                 });
                 
@@ -404,6 +344,7 @@ const Calendar = {
     
     // Show details for a task
     showTaskDetails: function(task) {
+        console.log('showTaskDetails called with task:', task);
         // Create a details message
         let details = `Task: ${task.title}\n`;
         
@@ -417,8 +358,15 @@ const Calendar = {
             details += `Description: ${task.description}`;
         }
         
+        console.log('Showing alert with details:', details);
+        
         // Display details in an alert
         alert(details);
+
+        // Announce details using text-to-speech if speak function is available
+        if (typeof speak === 'function') {
+            speak(details);
+        }
     },
 
     // Function to select dates
