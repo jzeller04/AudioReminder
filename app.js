@@ -57,7 +57,7 @@ app.get('/newtask', (request, response) =>
     {
         const title = request.body.title;
         console.log(title);
-        response.sendFile('./tasks.html', { root: __dirname });
+        response.sendFile('./newtask.html', { root: __dirname });
     }
 )
 

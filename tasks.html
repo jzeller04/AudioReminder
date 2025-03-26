@@ -10,8 +10,7 @@
         </header>
         <nav>
             <button onclick="location.href='newtask';">New Task</button>
-
-            <button onclick="location.href='index';">Home</button>
+            <button onclick="location.href='/';">Home</button>
         </nav>
         <script>
         
@@ -79,10 +78,10 @@ function speak(text) {
 
 
                          function handleVoiceCommand(command) {
-           if (command.includes("new task") || command.includes("task") || command.includes("new task")) {
-               location.href = "newtask";
+                            if (command.includes("new task") || command.includes("task")) {
+                                location.href = "newtask";
            } else if (command.includes("open home") || command.includes("home")) {
-               location.href = "index";
+               location.href = "/";
            } else {
                console.log("Unknown command:", command);
            }
