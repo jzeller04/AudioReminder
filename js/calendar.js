@@ -67,31 +67,7 @@ const Calendar = {
                     </div>
                     <button id="add-task-btn" class="add-task-btn">New Task</button>
                 </div>
-                <div id="task-form-container" class="task-form-container" style="display: none;">
-                    <h3>Add New task</h3>
-                    <form id="Task-form">
-                        <div class="form-group">
-                            <label for="title">Title:</label>
-                            <input type="text" id="title" name="title" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="date">Date:</label>
-                            <input type="date" id="date" name="date" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="time">Time:</label>
-                            <input type="time" id="time" name="time" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="memo">Description:</label>
-                            <textarea id="memo" name="memo"></textarea>
-                        </div>
-                        <div class="form-actions">
-                            <button type="button" id="cancel-Task-btn">Cancel</button>
-                            <button type="submit">Save Task</button>
-                        </div>
-                    </form>
-                </div>
+                
             `;
 
             // Add task listeners
@@ -410,72 +386,20 @@ const Calendar = {
 
     // Show form to add a new task
     showTaskForm: function() {
-        // Set default date to selected date
-        document.getElementById('date').valueAsDate = this.selectedDate;
-        
-        // Set default time to next hour
-        const now = new Date();
-        const nextHour = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours() + 1, 0);
-        document.getElementById('time').value = `${String(nextHour.getHours()).padStart(2, '0')}:00`;
-        
-        // Show the form
-        document.getElementById('task-form-container').style.display = 'block';
-    },
+        // Get the selected date in proper format for URL parameter
+        const year = this.selectedDate.getFullYear();
+        const month = String(this.selectedDate.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
+        const day = String(this.selectedDate.getDate()).padStart(2, '0');
+        const formattedDate = `${year}-${month}-${day}`;
     
-    // Hide the task form
-    hideTaskForm: function() {
-        document.getElementById('task-form-container').style.display = 'none';
+        // Redirect to newtask page with the date parameter
+        window.location.href = `newtask?date=${formattedDate}`;
     },
     
     // Handle task form submission
     handleTaskSubmit: function(e) {
-        e.preventDefault();
-        
-        /*
-        // Check if user is authenticated
-        if (!window.GoogleAuth || !window.GoogleAuth.isAuthenticated()) {
-            alert('Please sign in with Google to add events');
-            return;
-        }
-        */
-
-        const form = document.getElementById('task-form');
-        const formData = new FormData(form);
-        
-        // Use fetch to submit the form
-        fetch('/submit', {
-            method: 'POST',
-            body: formData
-        }).then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            
-            // Hide the form
-            this.hideTaskForm();
-            
-            // Add the new task to the tasks array
-            const title = formData.get('title');
-            const date = formData.get('date');
-            const time = formData.get('time');
-            const description = formData.get('memo');
-            
-            this.tasks.push({
-                title: title,
-                description: description,
-                date: date,
-                time: time
-            });
-            
-            // Refresh the calendar display
-            this.renderCalendar();
-            
-            // Show success message
-            alert('Task added successfully!');
-        }).catch(error => {
-            console.error('Error adding task:', error);
-            alert('Error adding task. Please try again.');
-        });
+        // No longer needed - leaving empty to avoid breaking existing code
+        if (e) e.preventDefault();
     },
     
     // Show details for a task
