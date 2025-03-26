@@ -41,53 +41,33 @@ app.use(express.static(__dirname));
 app.use(bodyParser.urlencoded({extended: true}));
 
 
-
-
-app.get('/index.html', (request, response) => 
-    {
-        response.redirect('/')
-    }
-)
-
-app.get('/settings.html', (request, response) => 
+app.get('/settings', (request, response) => 
     {
         response.sendFile('./settings.html', { root: __dirname });
     }
 )
 
-app.get('/tasks.html', (request, response) => 
+app.get('/tasks', (request, response) => 
     {
         response.sendFile('./tasks.html', { root: __dirname });
     }
 )
 
-app.get('/newtask.html', (request, response) => 
+app.get('/newtask', (request, response) => 
     {
         const title = request.body.title;
         console.log(title);
-        response.sendFile('./tasks.html', { root: __dirname });
+        response.sendFile('./newtask.html', { root: __dirname });
     }
 )
 
 
-app.get('/calendar.html', (request, response) => 
+app.get('/calendar', (request, response) => 
     {
 
         response.sendFile('./calendar.html', { root: __dirname });
     }
 )
-
-app.get('/titleform', (request, response) =>
-{
-    response.sendFile('./titleform.html', { root: __dirname });
-    fetchReminder.fetch();
-})
-
-app.get('/data', async (request, response) =>
-    {
-
-    });
-
 
 app.post('/submit', (request, response) => {
     const title = request.body.title; // as of right now, when you enter a title in the tasks screen, it will send a 'reminder' to the DB with the title entered
@@ -119,13 +99,6 @@ app.post('/submit', (request, response) => {
 mongoose.connect(dbURI)
     .then((result) => app.listen(3000), console.log('Successfully connected to DB ... listening on port 3000')) // will change localhost later when server is online, 3000 port is for local web dev)
     .catch((err) => console.log(err));
-
-// mongoose/mongo sandbox routes
-app.get('/add-task', (request,response) =>
-    {
-        
-    }
-);
 
 
 // 404 page

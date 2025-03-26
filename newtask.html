@@ -1,5 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AudioReminder - New Task</title>
@@ -30,17 +29,16 @@
             <textarea id="memo" name="memo"></textarea>
        </div>
 
-       <div class="buttonDiv">
+        <div class="buttonDiv">
             <nav>
-                <button type="button" onclick="location.href='index.html';">Cancel</button>
+                <button type="button" onclick="location.href='/';">Cancel</button>
             </nav>
-            <button id="save">Save</button>
-       </div>
-       <div class="buttonDiv">
-        <button type="button" class="readReminderBtn" onclick="readReminder()">Read Reminder</button>
-        <button type="button" class="clearReminderBtn" onclick="clearReminder()">Clear Reminder</button>
-
-    </div>
+            <button id="save" type="submit">Save</button>
+        </div>
+        <div class="buttonDiv">
+            <button type="button" class="readReminderBtn" onclick="readReminder()">Read Reminder</button>
+            <button type="button" class="clearReminderBtn" onclick="clearReminder()">Clear Reminder</button>
+        </div>
     
     
     </form>
@@ -166,13 +164,13 @@ async function listenForFinalCommand() {
     if (command.toLowerCase().includes("save reminder")) {
         document.getElementById("save").click(); // Simulates clicking the Save button
     } else if (command.toLowerCase().includes("cancel")) {
-        window.location.href = "index.html"; // Redirects to home page (Cancel action)
+        window.location.href = "/"; // Redirects to home page (Cancel action)
     } else if (command.toLowerCase().includes("read reminder")) {
         await readReminder(); // Calls the readReminder function
     } else if (command.toLowerCase().includes("clear reminder")) {
         await clearReminder(); // Calls the clearReminder function
     } else {
-        await speak("I didn't understand that. Please say one of the commands 'Save', 'Cancel', 'Clear Reminder', or 'Read Reminder'.");
+        await speak("I didn't understand that. Please say one of the commands 'Save Reminder', 'Cancel', 'Clear Reminder', or 'Read Reminder'.");
         listenForFinalCommand(); // Repeats listening if unrecognized
     }
 }
@@ -222,20 +220,23 @@ function clearReminder() {
     document.getElementById("date").value = "";
     document.getElementById("time").value = "";
     document.getElementById("memo").value = "";
-        // Ask if the user wants to redo the reminder
-        speak("The reminder has been cleared. Would you like to redo it?").then(async () => {
-            const command = await startRecognition();
+
+    // Ask if the user wants to redo the reminder
+    speak("The reminder has been cleared. Would you like to redo it?")
+        .then(() => startRecognition())  // Ensure it waits for the speech recognition result
+        .then((command) => {
             if (command.toLowerCase().includes("yes")) {
-                // Restart the process of setting a new reminder
-                promptUserForInputs();
+                promptUserForInputs(); // Restart the reminder input process
             } else {
-                await speak("Okay, the reminder won't be redone.");
-                window.location.href = "index.html"
+                speak("Okay. Let me know if you need anything else.");
             }
+        })
+        .catch(() => {
+            speak("I didn't get that. Please try again.");
         });
 }
+
 
     </script>
 </body>
 </html>
-
