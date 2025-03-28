@@ -24,10 +24,13 @@ app.get('/', async (request, response) => {
         const reminders = await fetchReminder.fetch();
 
         let reminderHTML = reminders.map(reminder => 
-            `<p>${reminder.title || 'No reminder found'}</p>
-            <p>${reminder.description || 'No reminder found'}</p>
-            <p>${reminder.date || 'No reminder found'}</p>
-            <p>${reminder.time || 'No reminder found'}</p><hr>`
+            `<hr> 
+            <div class="reminder-item">          
+                <p>${reminder.title || 'No reminder found'}</p>
+                <p>${reminder.description || 'No reminder found'}</p>
+                <p>${reminder.date || 'No reminder found'}</p>
+                <p>${reminder.time || 'No reminder found'}</p>
+            </div>`
         ).join('');
 
         const finalHTML = template.replace('{{REMINDERS}}', reminderHTML);
@@ -49,11 +52,33 @@ app.get('/settings', (request, response) =>
     }
 );
 
-app.get('/tasks', (request, response) => 
-    {
+// Does the same thing as the home page (Maybe we can combine these later)
+app.get('/tasks', async (request, response) => {
+    try {
+        const template = await fs.promises.readFile(__dirname + '/tasks.html', 'utf8');
+        const reminders = await fetchReminder.fetch();
+
+        let reminderHTML = reminders.map(reminder =>
+            `<hr>
+            <div class="reminder-item"> 
+                <div class="reminder-content">
+                    <p>${reminder.title || 'No reminder found'}</p>
+                    <p>${reminder.description || 'No reminder found'}</p>
+                    <p>${reminder.date || 'No reminder found'}</p>
+                    <p>${reminder.time || 'No reminder found'}</p>
+                </div>
+            <button class="done-btn" data-id="${reminder._id}">Done</button>
+            </div>`
+        ).join('');
+
+        const finalHTML = template.replace('{{REMINDERS}}', reminderHTML);
+
+        response.send(finalHTML);
+    } catch (err) {
+        console.log(err);
         response.sendFile('./tasks.html', { root: __dirname });
     }
-);
+});
 
 app.get('/newtask', (request, response) => 
     {
