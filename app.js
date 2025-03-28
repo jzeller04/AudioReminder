@@ -49,11 +49,26 @@ app.get('/settings', (request, response) =>
     }
 );
 
-app.get('/tasks', (request, response) => 
-    {
+app.get('/tasks', async (request, response) => {
+    try {
+        const template = await fs.promises.readFile(__dirname + '/tasks.html', 'utf8');
+        const reminders = await fetchReminder.fetch();
+
+        let reminderHTML = reminders.map(reminder => 
+            `<p>${reminder.title || 'No reminder found'}</p>
+            <p>${reminder.description || 'No reminder found'}</p>
+            <p>${reminder.date || 'No reminder found'}</p>
+            <p>${reminder.time || 'No reminder found'}</p><hr>`
+        ).join('');
+
+        const finalHTML = template.replace('{{REMINDERS}}', reminderHTML);
+
+        response.send(finalHTML);
+    } catch (err) {
+        console.log(err);
         response.sendFile('./tasks.html', { root: __dirname });
     }
-);
+});
 
 app.get('/newtask', (request, response) => 
     {
