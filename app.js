@@ -6,6 +6,8 @@ const bodyParser = require('body-parser');
 const { error } = require('console');
 const { title } = require('process');
 const fs = require('fs');
+const {signInSuccess} = require('./backend/signIn.js');
+const {createUserWithSignUp} = require('./backend/signUp.js');
 
 // TDL: All of this needs to be refactored. It's hard to read for literally no reason. There isnt anything complicated happening in this file.
 
@@ -45,13 +47,13 @@ app.get('/settings', (request, response) =>
     {
         response.sendFile('./settings.html', { root: __dirname });
     }
-)
+);
 
 app.get('/tasks', (request, response) => 
     {
         response.sendFile('./tasks.html', { root: __dirname });
     }
-)
+);
 
 app.get('/newtask', (request, response) => 
     {
@@ -59,7 +61,7 @@ app.get('/newtask', (request, response) =>
         console.log(title);
         response.sendFile('./newtask.html', { root: __dirname });
     }
-)
+);
 
 
 app.get('/calendar', (request, response) => 
@@ -67,7 +69,41 @@ app.get('/calendar', (request, response) =>
 
         response.sendFile('./calendar.html', { root: __dirname });
     }
-)
+);
+// login routes to signin link
+app.get('/login', (request, response) => 
+    {
+
+        response.sendFile('./login.html', { root: __dirname });
+    }
+);
+app.post('/signin', async (request, response) => 
+    {
+        console.log('debug');
+        console.log(request.body);
+        if(await signInSuccess(request.body.email, request.body.password))
+        {
+            response.redirect('/');
+        }
+        else
+        {
+            response.redirect('/login');
+        }
+
+    }
+);
+app.get('/signup', (request, response) => 
+    {
+        console.log('fsdhfsdf');
+        response.sendFile('./signup.html', { root: __dirname });
+    }
+);
+app.post('/newuser', (request, response) => 
+    {
+        createUserWithSignUp(request.body.email, request.body.password);
+        response.redirect('/login');
+    }
+);
 
 app.post('/submit', (request, response) => {
     const title = request.body.title; // as of right now, when you enter a title in the tasks screen, it will send a 'reminder' to the DB with the title entered
@@ -75,7 +111,7 @@ app.post('/submit', (request, response) => {
     const date = request.body.date;
     const time = request.body.time;
     if (title) {
-        response.redirect('/tasks.html');
+        response.redirect('/tasks');
         const reminder = new Reminder(
             {
                 title: title,
@@ -108,4 +144,4 @@ app.use((request, response) =>
         
         response.sendFile('./404.html', { root: __dirname });
     }
-)
+);
