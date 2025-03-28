@@ -1,0 +1,74 @@
+body {
+    background-color: #f2ede9;
+    font-family: Helvetica, Arial, sans-serif;
+}
+
+#header {
+    color: #3e220d;
+    font-size: 50px;
+}
+
+.leftWrapper {
+    float: left;
+    font-size: 40px;
+    width: 50%;
+}
+
+.loginWrapper {
+    border:10px solid #3e220d;
+    border-radius: 50px;
+}
+
+.rightBox {
+    background-color: #a54907;
+    border-top-left-radius: 50px;
+    border-bottom-left-radius: 50px;
+    float: right;
+    font-size: 40px;
+    height: 100%;
+    width: 50%;
+}
+
+#login {
+    background-color: #3e220d;
+    border: none;
+    border-radius: 45px;
+    color: #f2ede9;
+    font-size: 40px;
+    height: 80px;
+    transition-duration: 0.1s;
+    width: 180px;
+}
+
+#login:hover {
+    background-color: rgb(32, 17, 7);
+    cursor: pointer;
+}
+
+#signup {
+    background-color: #f2ede9;
+    border: none;
+    border-radius: 45px;
+    color: #3e220d;
+    font-size: 40px;
+    height: 80px;
+    transition-duration: 0.1s;
+    width: 180px;
+}
+
+#signup:hover {
+    background-color: #cecac7;
+    cursor: pointer;
+}
+
+#emailLabel, #passwordLabel {
+    color: #3e220d;
+}
+
+#para1 {
+    color:#f2ede9;
+}
+
+#para2 {
+    color:#f2ede9;
+}
