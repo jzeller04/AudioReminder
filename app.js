@@ -73,14 +73,11 @@ app.get('/calendar', (request, response) =>
 // login routes to signin link
 app.get('/login', (request, response) => 
     {
-
         response.sendFile('./login.html', { root: __dirname });
     }
 );
 app.post('/signin', async (request, response) => 
     {
-        console.log('debug');
-        console.log(request.body);
         if(await signInSuccess(request.body.email, request.body.password))
         {
             response.redirect('/');
@@ -94,7 +91,6 @@ app.post('/signin', async (request, response) =>
 );
 app.get('/signup', (request, response) => 
     {
-        console.log('fsdhfsdf');
         response.sendFile('./signup.html', { root: __dirname });
     }
 );
