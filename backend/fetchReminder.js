@@ -10,14 +10,20 @@ async function fetch(userId)
         nextWeek.setDate(today.getDate() + 6); // add 6 days to next week date
         const user = await User.findOne(
             {_id: userId, "reminders.date": {$gte: today, $lt: nextWeek}},
-            {"reminders.$": 1}
+            {"reminders": 1}
     );
         if(!user)
         {
             return [];
         }
         // console.log(reminders); // log the array
-        return user.reminders; // return array of reminders to be sent to front end
+        
+        const reminders = user.reminders.filter(reminder =>
+            reminder.date >= today && reminder.date < nextWeek
+        );
+
+        return reminders;
+
     } catch {
         console.log('error');
     }
