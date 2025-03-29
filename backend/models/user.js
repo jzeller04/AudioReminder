@@ -11,10 +11,7 @@ const userSchema = new Schema({
     password: {
         type: String
     },
-    reminders: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Reminder'
-    }],
+    reminders: [Reminder.schema],
 }, {timestamps: true}); // saves the time when reminder is created
 
 const User = mongoose.model('User', userSchema, 'users'); // has to be the same name as the collection in the DB

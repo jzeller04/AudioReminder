@@ -21,6 +21,7 @@ async function signInSuccess(email, password)
 
     } catch (error) {
         console.log(error);
+        return false;
     }
 }
 module.exports = {signInSuccess};

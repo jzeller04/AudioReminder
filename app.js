@@ -8,22 +8,47 @@ const { title } = require('process');
 const fs = require('fs');
 const {signInSuccess} = require('./backend/signIn.js');
 const {createUserWithSignUp} = require('./backend/signUp.js');
+const session = require('express-session');
+const { request } = require('http');
+const User = require('./backend/models/user.js');
+const {saveReminderToUser} = require('./backend/saveReminderToUser.js');
 
 // TDL: All of this needs to be refactored. It's hard to read for literally no reason. There isnt anything complicated happening in this file.
 
 // connect to mongodb
-const dbURI = 'mongodb+srv://gmgadmin:RF8eo4JVyJ8JyPuq@cluster0.b6uj2.mongodb.net/gomeangreendb?retryWrites=true&w=majority&appName=Cluster0' 
+const dbURI = 'mongodb+srv://gmgadmin:RF8eo4JVyJ8JyPuq@cluster0.b6uj2.mongodb.net/gomeangreendb?retryWrites=true&w=majority&appName=Cluster0' // TODO: MAKE THIS PRIVATE!!!!!!!!!
 
 const app = express();
+
+app.use(session({
+    secret: 'test',
+    resave: false,
+    saveUninitialized: true,
+    cookie: {secure: false}
+}));
+// no idea why, but this code is required for the logging in to work. :shrug:
+const isAuthentic = (request, response, next) =>
+{
+    if(request.session.userId)
+    {
+        return next();
+    }else{
+        response.redirect('/login');
+    }
+}
 
 // listen for requests
 // send html pages back
 app.get('/', async (request, response) => {
+    if(!request.session.userId)
+    {
+        response.redirect('/login');
+    }
     try {
         const template = await fs.promises.readFile(__dirname + '/index.html', 'utf8');
-        const reminders = await fetchReminder.fetch();
+        const userReminders = await fetchReminder.fetch(request.session.userId);
 
-        let reminderHTML = reminders.map(reminder => 
+        let reminderHTML = userReminders.map(reminder => 
             `<hr> 
             <div class="reminder-item">          
                 <p>${reminder.title || 'No reminder found'}</p>
@@ -48,15 +73,23 @@ app.use(bodyParser.urlencoded({extended: true}));
 
 app.get('/settings', (request, response) => 
     {
+    if(!request.session.userId)
+    {
+        return response.redirect('/login');
+    }
         response.sendFile('./settings.html', { root: __dirname });
     }
 );
 
 // Does the same thing as the home page (Maybe we can combine these later)
 app.get('/tasks', async (request, response) => {
+    if(!request.session.userId)
+    {
+        return response.redirect('/login');
+    }
     try {
         const template = await fs.promises.readFile(__dirname + '/tasks.html', 'utf8');
-        const reminders = await fetchReminder.fetch();
+        const reminders = await fetchReminder.fetch(request.session.userId);
 
         let reminderHTML = reminders.map(reminder =>
             `<hr>
@@ -82,6 +115,10 @@ app.get('/tasks', async (request, response) => {
 
 app.get('/newtask', (request, response) => 
     {
+    if(!request.session.userId)
+    {
+        return response.redirect('/login');
+    }
         const title = request.body.title;
         console.log(title);
         response.sendFile('./newtask.html', { root: __dirname });
@@ -91,7 +128,10 @@ app.get('/newtask', (request, response) =>
 
 app.get('/calendar', (request, response) => 
     {
-
+        if(!request.session.userId)
+        {
+            return response.redirect('/login');
+        }
         response.sendFile('./calendar.html', { root: __dirname });
     }
 );
@@ -103,15 +143,26 @@ app.get('/login', (request, response) =>
 );
 app.post('/signin', async (request, response) => 
     {
-        if(await signInSuccess(request.body.email, request.body.password))
-        {
-            response.redirect('/');
-        }
-        else
-        {
-            response.redirect('/login');
-        }
+        const {email, password} = request.body;
 
+        try {
+
+            const isLoggedIn = await signInSuccess(email, password);
+
+            if(isLoggedIn)
+            {
+                const user = await User.findOne({userEmail: email});
+                request.session.userId = user._id; // store user ID in session
+                console.log('session created: ' + request.session.userId);
+                return response.redirect('/');
+            }
+            else
+            {
+                return response.redirect('/login');
+            }
+        } catch (error) {
+            response.redirect('404');
+        }
     }
 );
 app.get('/signup', (request, response) => 
@@ -126,6 +177,19 @@ app.post('/newuser', (request, response) =>
     }
 );
 
+app.get('/logout', (request, response) => {
+    request.session.destroy(err =>{
+        if(err)
+        {
+            response.redirect('404');
+        }
+        else
+        {
+            response.redirect('/login');
+        }
+    })
+})
+
 app.post('/submit', (request, response) => {
     const title = request.body.title; // as of right now, when you enter a title in the tasks screen, it will send a 'reminder' to the DB with the title entered
     const description = request.body.memo;
@@ -133,19 +197,7 @@ app.post('/submit', (request, response) => {
     const time = request.body.time;
     if (title) {
         response.redirect('/tasks');
-        const reminder = new Reminder(
-            {
-                title: title,
-                description: description,
-                date: date,
-                time: time
-            }
-        );
-        
-        reminder.save()
-            .then((result) => {
-                console.log(result);
-            }).catch((err) => console.log(err));
+        saveReminderToUser(title,description,time,date, request.session.userId);
     } else {
         response.status(400).send("No title received");
     }
