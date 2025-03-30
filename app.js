@@ -42,7 +42,7 @@ const isAuthentic = (request, response, next) =>
 app.get('/', async (request, response) => {
     if(!request.session.userId)
     {
-        response.redirect('/login');
+        return response.redirect('/login');
     }
     try {
         const template = await fs.promises.readFile(__dirname + '/index.html', 'utf8');
@@ -60,10 +60,10 @@ app.get('/', async (request, response) => {
 
         const finalHTML = template.replace('{{REMINDERS}}', reminderHTML);
 
-        response.send(finalHTML);
+        return response.send(finalHTML);
     } catch (err) {
         console.log(err);
-        response.sendFile('./titleform.html', { root: __dirname });
+        return response.sendFile('./titleform.html', { root: __dirname });
     }
 });
 app.use(express.static(__dirname));
@@ -106,10 +106,10 @@ app.get('/tasks', async (request, response) => {
 
         const finalHTML = template.replace('{{REMINDERS}}', reminderHTML);
 
-        response.send(finalHTML);
+        return response.send(finalHTML);
     } catch (err) {
         console.log(err);
-        response.sendFile('./tasks.html', { root: __dirname });
+        return response.sendFile('./tasks.html', { root: __dirname });
     }
 });
 
@@ -196,10 +196,10 @@ app.post('/submit', (request, response) => {
     const date = request.body.date;
     const time = request.body.time;
     if (title) {
-        response.redirect('/tasks');
         saveReminderToUser(title,description,time,date, request.session.userId);
+        return response.redirect('/tasks');
     } else {
-        response.status(400).send("No title received");
+        return response.status(400).send("No title received");
     }
 });
 
