@@ -33,7 +33,7 @@ const isAuthentic = (request, response, next) =>
     {
         return next();
     }else{
-        response.redirect('/login');
+        return response.redirect('/login');
     }
 }
 
@@ -77,7 +77,7 @@ app.get('/settings', (request, response) =>
     {
         return response.redirect('/login');
     }
-        response.sendFile('./settings.html', { root: __dirname });
+        return response.sendFile('./settings.html', { root: __dirname });
     }
 );
 
@@ -121,7 +121,7 @@ app.get('/newtask', (request, response) =>
     }
         const title = request.body.title;
         console.log(title);
-        response.sendFile('./newtask.html', { root: __dirname });
+        return response.sendFile('./newtask.html', { root: __dirname });
     }
 );
 
@@ -132,13 +132,13 @@ app.get('/calendar', (request, response) =>
         {
             return response.redirect('/login');
         }
-        response.sendFile('./calendar.html', { root: __dirname });
+            return response.sendFile('./calendar.html', { root: __dirname });
     }
 );
 // login routes to signin link
 app.get('/login', (request, response) => 
     {
-        response.sendFile('./login.html', { root: __dirname });
+        return response.sendFile('./login.html', { root: __dirname });
     }
 );
 app.post('/signin', async (request, response) => 
@@ -161,19 +161,19 @@ app.post('/signin', async (request, response) =>
                 return response.redirect('/login');
             }
         } catch (error) {
-            response.redirect('404');
+            return response.redirect('404');
         }
     }
 );
 app.get('/signup', (request, response) => 
     {
-        response.sendFile('./signup.html', { root: __dirname });
+        return response.sendFile('./signup.html', { root: __dirname });
     }
 );
 app.post('/newuser', (request, response) => 
     {
         createUserWithSignUp(request.body.email, request.body.password);
-        response.redirect('/login');
+        return response.redirect('/login');
     }
 );
 
@@ -181,11 +181,11 @@ app.get('/logout', (request, response) => {
     request.session.destroy(err =>{
         if(err)
         {
-            response.redirect('404');
+            return response.redirect('404');
         }
         else
         {
-            response.redirect('/login');
+            return response.redirect('/login');
         }
     })
 })
@@ -215,6 +215,6 @@ mongoose.connect(dbURI)
 app.use((request, response) => 
     {
         
-        response.sendFile('./404.html', { root: __dirname });
+        return response.sendFile('./404.html', { root: __dirname });
     }
 );
