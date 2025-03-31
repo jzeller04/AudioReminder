@@ -25,7 +25,7 @@
             // Function to enable TTS when the page loads
             function enableTTS() {
                 // Trigger TTS every time the page loads
-                speak("Settings page. You can navigate by saying Open Home.")
+                speak("Settings - You can navigate by Open Home.")
                 .then(() => {
                     // Start speech recognition after TTS is spoken
                     startSpeechRecognition();
@@ -70,7 +70,12 @@
             function handleVoiceCommand(command) {
                 if (command.includes("open home") || command.includes("home")) {
                     location.href = "/";
-                } else {
+                } 
+                else if (command.includes("page")) {
+        const pageTitle = document.title;
+        speak("You are currently on the " + pageTitle + " page.");}
+                else if (command.includes("help")) {
+    speak("You can say 'Open home' to go to the home page or 'Help' to hear this list of commands again.");
                     console.log("Unknown command:", command);
                 }
             }

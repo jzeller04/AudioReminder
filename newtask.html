@@ -134,6 +134,7 @@ async function promptUserForInputs() {
     const title = await startRecognition();
     document.getElementById("title").value = title;
     document.getElementById("title").dispatchEvent(new Event("input"));
+    await speak(`You said: ${title}`);
 
     let formattedDate = "";
     while (!formattedDate) {
@@ -146,6 +147,7 @@ async function promptUserForInputs() {
     }
     document.getElementById("date").value = formattedDate;
     document.getElementById("date").dispatchEvent(new Event("change"));
+    await speak(`You set the date as: ${formattedDate}`);
 
     let formattedTime = "";
     while (!formattedTime) {
@@ -158,11 +160,13 @@ async function promptUserForInputs() {
     }
     document.getElementById("time").value = formattedTime;
     document.getElementById("time").dispatchEvent(new Event("change"));
+    await speak(`You set the time as: ${formattedTime}`);
 
     await speak("What is the description of the reminder?");
     const memo = await startRecognition();
     document.getElementById("memo").value = memo;
     document.getElementById("memo").dispatchEvent(new Event("input"));
+    await speak(`You said: ${memo}`);
 
     await speak("Reminder has been set. You can now save it, clear it, cancel it, or have it read back to you.");
     listenForFinalCommand();
@@ -170,6 +174,8 @@ async function promptUserForInputs() {
 
 async function listenForFinalCommand() {
     const command = await startRecognition();
+    await speak(`You said: ${command}`);
+
     if (command.toLowerCase().includes("save reminder")) {
         document.getElementById("save").click(); // Simulates clicking the Save button
     } else if (command.toLowerCase().includes("cancel")) {

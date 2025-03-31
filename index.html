@@ -43,8 +43,8 @@
         }
     
         function readReminders() {
-            if (isSpeaking) return; 
-            
+            if (isSpeaking) return;
+    
             const reminderContainer = document.getElementById("reminder_container");
             const reminders = reminderContainer.innerText.trim();
             
@@ -55,28 +55,28 @@
             }
         }
     
+        // Function to enable TTS on any click
         function enableTTS() {
-            if (sessionStorage.getItem("ttsWelcomeSpoken") !== "true") {
-                speak("Welcome to AudioReminder. You can navigate by saying Read Reminders, Open Tasks, Open Calendar, or Open Settings.")
-                .then(() => {
-                    sessionStorage.setItem("ttsWelcomeSpoken", "true");
-                    startSpeechRecognition();
-                });
-            }
+            if (isSpeaking) return; // If already speaking, don't trigger again
+            
+            speak("Welcome to AudioReminder. You can navigate by saying Open Task, Open Calendar, Open Settings, Read Reminders, or 'Help' to hear this list of commands again.");
+            
+            // Remove the event listener after the first click
         }
+    
         window.onload = () => {
-    document.body.addEventListener("click", enableTTS, { once: true });
-
-    const readButton = document.getElementById("readRemindersButton");
-    if (readButton) {
-        readButton.addEventListener("click", readReminders);
-    } else {
-        console.error("Button not found! Make sure your HTML is correctly loaded.");
-    }
-
-    startSpeechRecognition();
-};
-
+            // Trigger welcome message on any click, but only once
+            enableTTS();
+    
+            const readButton = document.getElementById("readRemindersButton");
+            if (readButton) {
+                readButton.addEventListener("click", readReminders);
+            } else {
+                console.error("Button not found! Make sure your HTML is correctly loaded.");
+            }
+    
+            startSpeechRecognition();
+        };
     
         window.onbeforeunload = () => {
             window.speechSynthesis.cancel();
@@ -94,7 +94,7 @@
     
                 recognition.onresult = (event) => {
                     if (isSpeaking) return; 
-                    
+    
                     const transcript = event.results[event.results.length - 1][0].transcript.toLowerCase().trim();
                     console.log("Voice Command Detected:", transcript);
                     handleVoiceCommand(transcript);
@@ -122,21 +122,26 @@
     
         function handleVoiceCommand(command) {
             if (isSpeaking) return;
-            
+    
             if (command.includes("open tasks") || command.includes("task") || command.includes("tasks")) {
-                location.href = "tasks.html";
+                speak("Opening Tasks").then(() => location.href = "tasks");
             } else if (command.includes("open calendar") || command.includes("calendar")) {
-                location.href = "calendar.html";
+                speak("Opening Calendar").then(() => location.href = "calendar");
             } else if (command.includes("open settings") || command.includes("setting") || command.includes("settings")) {
-                location.href = "settings.html";
-            } else if (command.includes("open voice") || command.includes("voice")) {
-                location.href = "voice.html";
+                speak("Opening Settings").then(() => location.href = "settings");
             } else if (command.includes("read reminders") || command.includes("reminders")) {
                 readReminders();
+            } else if (command.includes("page")) {
+                const pageTitle = document.title;
+                speak("You are currently on the " + pageTitle + " page.");
+            } else if (command.includes("help")) {
+                speak("You can say 'Read reminders' to hear your tasks, 'Open Tasks' to go to the tasks page, 'Open Settings' to go the settings page, 'Open Calendar' for your schedule or 'Help' to hear this list of commands again.");
             } else {
+                speak("I didn't understand that. Please try again.");
                 console.log("Unknown command:", command);
             }
         }
     </script>
+    
 </body>
 </html>
