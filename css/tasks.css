@@ -48,10 +48,10 @@ button:hover {
 }
 
 /* Reminders - Done Button */
-.done-btn {
-  background-color: #e53935;
+.complete-btn {
+  background-color: #00875A;
   color: white;
-  border: 2px solid #800000;
+  border: 2px solid #000000;
   padding: 8px 10px;
   border-radius: 4px;
   font-weight: bold;
@@ -67,13 +67,14 @@ button:hover {
 }
 
 /* Done button - Mouse hover/keyboard focus */
-.done-btn:hover, .done-btn:focus {
-  background-color: #c62828;
+.complete-btn:hover, .complete-btn:focus {
+  color: #00875A;
+  border-color: #00875A;
   box-shadow: 0 2px 8px rgba(0,0,0,0.3);
 }
 
 /* Done button - On press */
-.done-btn:active {
+.complete-btn:active {
   transform: translateY(1px);
   box-shadow: 0 1px 2px rgba(0,0,0,0.2);
 }

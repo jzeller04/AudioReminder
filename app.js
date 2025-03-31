@@ -100,7 +100,7 @@ app.get('/tasks', async (request, response) => {
                     <p>${reminder.date || 'No reminder found'}</p>
                     <p>${reminder.time || 'No reminder found'}</p>
                 </div>
-            <button class="done-btn" data-id="${reminder._id}">Done</button>
+            <button class="complete-btn" data-id="${reminder._id}">Mark Complete</button>
             </div>`
         ).join('');
 
@@ -125,6 +125,27 @@ app.get('/newtask', (request, response) =>
     }
 );
 
+app.post('/complete-reminder', bodyParser.urlencoded({ extended: true }), async (request, response) => {
+    if (!request.session.userId) {
+        return response.redirect('/login');
+    }
+    
+    const reminderId = request.body.reminderId;
+    
+    try {
+        // Find the user and update their reminders array to remove the completed reminder
+        await User.findOneAndUpdate(
+            { _id: request.session.userId },
+            { $pull: { reminders: { _id: reminderId } } }
+        );
+        
+        // Redirect back to tasks page
+        return response.redirect('/tasks');
+    } catch (error) {
+        console.log('Error removing reminder:', error);
+        return response.redirect('/tasks');
+    }
+});
 
 app.get('/calendar', (request, response) => 
     {
