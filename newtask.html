@@ -5,43 +5,44 @@
     <link rel="stylesheet" href="css/newtask.css">
 </head>
 <body>
+    <header>
+        <h1>New Task</h1>
+    </header>
+
     <form action="/submit" method="POST">
 
-        <div class="titleDiv">
-            <label for="title" id="titleLabel">Reminder Name</label><br>
-            <input type="text" id="title" name="title">
-        </div>
-        
-       <div class="datetimeDiv">
-            <div class="dateDiv">
-                <label for="date" id="dateLabel">Date:</label>
-                <input type="date" id="date" name="date">
-            </div>
-
-            <div class="timeDiv">
-                <label for="time" id="timeLabel">Time:</label> 
-                <input type="time" id="time" name="time">
-            </div>
-       </div>
-
-       <div class="memoDiv">
-            <label for="memo" id="memoLabel">Description</label><br>
-            <textarea id="memo" name="memo"></textarea>
-       </div>
-
-        <div class="buttonDiv">
-            <nav>
-                <button type="button" onclick="location.href='/';">Cancel</button>
-            </nav>
-            <button id="save" type="submit">Save</button>
-        </div>
-        <div class="buttonDiv">
-            <button type="button" class="readReminderBtn" onclick="readReminder()">Read Reminder</button>
-            <button type="button" class="clearReminderBtn" onclick="clearReminder()">Clear Reminder</button>
+        <div class="formWrapper">
             
+            <label for="title" id="titleLabel">Reminder Name</label><br>
+            <input type="text" id="title" name="title" placeholder="Title">
+       
+            <div class="datetimeDiv">
+                <div class="dateDiv">
+                    <label for="date" id="dateLabel">Date:</label>
+                    <input type="date" id="date" name="date">
+                </div>
+    
+                <div class="timeDiv">
+                    <label for="time" id="timeLabel">Time:</label> 
+                    <input type="time" id="time" name="time">
+                </div> 
+            </div>
+
+                <label for="memo" id="memoLabel">Description</label><br>
+                <textarea id="memo" name="memo" placeholder="Enter task description"></textarea>
         </div>
-    
-    
+
+            <div class="buttonDiv">
+                <nav>
+                    <button type="button" onclick="location.href='/';">Cancel</button>
+                </nav>
+                <button id="save" type="submit">Save</button>
+            </div>
+            <div class="buttonDiv">
+                <button type="button" class="readReminderBtn" onclick="readReminder()">Read Reminder</button>
+                <button type="button" class="clearReminderBtn" onclick="clearReminder()">Clear Reminder</button>
+                
+            </div>
     </form>
 
     <script>
