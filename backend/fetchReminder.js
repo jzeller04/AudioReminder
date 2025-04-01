@@ -1,5 +1,6 @@
 const Reminder = require('./models/reminder');
-async function fetch()
+const User = require('./models/user');
+async function fetch(userId)
 {
     try{
         const today = new Date(); // get todays date
@@ -7,17 +8,23 @@ async function fetch()
         const nextWeek = new Date(today); // create next week var
         nextWeek.setHours(23, 59, 59, 999); // set to just before midnight
         nextWeek.setDate(today.getDate() + 6); // add 6 days to next week date
-        console.log('Today:', today);
-        console.log('Next week:', nextWeek);
-        const reminders = await Reminder.find({
-            date: {
-                $gte: today, // greater than equal to today, but less than next week (7 days)
-                $lt: nextWeek
-            }
-        });
-        console.log(reminders); // log the array
-        return reminders; // return array of reminders to be sent to front end
-    } catch{
+        const user = await User.findOne(
+            {_id: userId, "reminders.date": {$gte: today, $lt: nextWeek}},
+            {"reminders": 1}
+    );
+        if(!user)
+        {
+            return [];
+        }
+        // console.log(reminders); // log the array
+        
+        const reminders = user.reminders.filter(reminder =>
+            reminder.date >= today && reminder.date < nextWeek
+        );
+
+        return reminders;
+
+    } catch {
         console.log('error');
     }
     

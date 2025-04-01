@@ -38,6 +38,7 @@
         <div class="buttonDiv">
             <button type="button" class="readReminderBtn" onclick="readReminder()">Read Reminder</button>
             <button type="button" class="clearReminderBtn" onclick="clearReminder()">Clear Reminder</button>
+            
         </div>
     
     
@@ -132,33 +133,41 @@ async function promptUserForInputs() {
     await speak("What is the title of your reminder?");
     const title = await startRecognition();
     document.getElementById("title").value = title;
+    document.getElementById("title").dispatchEvent(new Event("input"));
 
-    await speak("What date should I set the reminder for?");
-    const dateInput = await startRecognition();
-    const formattedDate = parseDate(dateInput);
-    if (formattedDate) {
-        document.getElementById("date").value = formattedDate;
-    } else {
-        await speak("I couldn't understand the date. Please try again.");
+    let formattedDate = "";
+    while (!formattedDate) {
+        await speak("What date should I set the reminder for?");
+        const dateInput = await startRecognition();
+        formattedDate = parseDate(dateInput);
+        if (!formattedDate) {
+            await speak("I couldn't understand the date. Please say a valid date.");
+        }
     }
+    document.getElementById("date").value = formattedDate;
+    document.getElementById("date").dispatchEvent(new Event("change"));
 
-    await speak("What time should I set the reminder for?");
-    const timeInput = await startRecognition();
-    const formattedTime = parseTime(timeInput);
-    if (formattedTime) {
-        document.getElementById("time").value = formattedTime;
-    } else {
-        await speak("I couldn't understand the time. Please try again.");
+    let formattedTime = "";
+    while (!formattedTime) {
+        await speak("What time should I set the reminder for?");
+        const timeInput = await startRecognition();
+        formattedTime = parseTime(timeInput);
+        if (!formattedTime) {
+            await speak("I couldn't understand the time. Please say a valid time.");
+        }
     }
+    document.getElementById("time").value = formattedTime;
+    document.getElementById("time").dispatchEvent(new Event("change"));
 
     await speak("What is the description of the reminder?");
     const memo = await startRecognition();
     document.getElementById("memo").value = memo;
+    document.getElementById("memo").dispatchEvent(new Event("input"));
 
-    await speak("Reminder has been set. You can now save it, clear it, cancel it or have it read back to you.");
+    await speak("Reminder has been set. You can now save it, clear it, cancel it, or have it read back to you.");
     listenForFinalCommand();
-
 }
+
 async function listenForFinalCommand() {
     const command = await startRecognition();
     if (command.toLowerCase().includes("save reminder")) {
