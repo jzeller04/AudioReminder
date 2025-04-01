@@ -30,4 +30,4 @@ jobs:
         run: npm install eslint --global
 
       - name: Run ESLint
-        run: npx eslint .
+        run: npx eslint
