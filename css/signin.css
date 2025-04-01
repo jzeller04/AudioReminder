@@ -5,7 +5,8 @@ body {
 
 #header {
     color: #3e220d;
-    font-size: 50px;
+    font-size: 56px;
+    font-weight: bold;
     margin-left: 90px;
 }
 
@@ -100,10 +101,30 @@ body {
 
 #para1 {
     color: white;
+    font-size: 50px;
+    font-weight: bold;
+    margin-top: 10%;
 }
 
 #para2 {
     color: white;
+    font-size: 70px;
+    font-weight: bold;
+    letter-spacing: 2px;
+}
+
+#para3 {
+    color: white;
+    font-weight: bold;
+    margin-top: 30%;
+}
+
+.rightWrapper {
+    align-content: center;
+    display: flex;
+    flex-direction: column;
+    flex-wrap: wrap;
+    text-align: center;
 }
 
 
