@@ -134,8 +134,9 @@
 
                                 speak("Opening Tasks").then(() => location.href = "tasks.html"); 
             } else if (command.includes("open calendar") || command.includes("calendar")) {
-                speak("Opening Calendar").then(() => location.href = "calendar.html");            } else if (command.includes("read reminders") || command.includes("reminders")) {
-                readReminders();
+                speak("Opening Calendar").then(() => location.href = "calendar.html");            
+            } else if (command.includes("read reminders") || command.includes("reminders") || command.includes("read upcoming task") ||  command.includes("upcoming task")) {
+                    readReminders();
             } 
          else if (command.includes("page")) {
                 const pageTitle = document.title;
