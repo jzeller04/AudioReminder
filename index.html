@@ -9,19 +9,26 @@
         <h1>Home</h1>
     </header>
 
-    <nav>
-        <button onclick="location.href='/tasks';">Tasks</button>
-        <button onclick="location.href='/calendar';">Calendar</button>
+    <div class="topWrapper">
+        <r>Upcoming Task</r>
+        <div id="reminder_container">
+            {{REMINDERS}}
+        </div>
+        <button id="readRemindersButton">Read Task</button>
+    </div>
 
+
+    <nav>
+        <div class="bottomWrapper">
+            <button id="tasksButton" onclick="location.href='/tasks';">Tasks</button>
+            <button id="calendarButton" onclick="location.href='/calendar';">Calendar</button>
+        </div>
+        
         <!-- Eventual settings navigation button !-->
         <!-- <button onclick="location.href='/settings';">Settings</button> !-->
     </nav>
 
-    <r>Upcoming Task</r>
-    <div id="reminder_container">
-        {{REMINDERS}}
-    </div>
-    <button id="readRemindersButton">Read Task</button>
+
     
     <script src="js/auth.js"></script>
     <script>

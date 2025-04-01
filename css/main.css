@@ -1,3 +1,8 @@
+body {
+  background-color: #f2ede9;
+  font-family: Helvetica, Arial, sans-serif;
+}
+
 #logoutButton {
   display: none;
   padding: 8px 16px;
@@ -14,21 +19,18 @@
 }
 
 h1 {
-  font-family: Helvetica, Arial, sans-serif;
-  font-size: 60px;
-  margin-top: 80px;
+  color: #632f0a;
+  font-size: 50px;
   margin-bottom: 80px;
+  margin-top: 40px;
   text-align: center;
-  text-transform: uppercase;
 }
 
-button {
-  background-color: black;
-  border: 6px solid black;
+#readRemindersButton {
+  background-color: #632f0a;
+  border: 6px solid #632f0a;
   border-radius: 6px;
   color: white;
-  display: block;
-  font-family: Helvetica, Arial, sans-serif;
   font-size: 40px;
   height: 90px;
   margin: 18px;
@@ -39,9 +41,29 @@ button {
   width: 260px;
 }
 
+#tasksButton, #calendarButton {
+  background-color: #a54907;
+  border: 6px solid #a54907;
+  border-radius: 6px;
+  color: white;
+  font-size: 40px;
+  height: 400px;
+  margin: 18px;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+  transition-duration: 0.1s;
+  width: 40%;
+}
+
 button:hover {
-  background-color: white;
-  border: 6px solid black;
-  color: black;
+  background-color: f2ede9;
+  border: 6px solid #632f0a;
+  color: #632f0a;
   cursor: pointer;
+}
+
+.bottomWrapper{
+  display: flex;
+  margin-bottom: 100px;
 }
