@@ -26,8 +26,8 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Install ESLint
-        run: npm install -g eslint
+      - name: Install ESLint (working version)
+        run: npm install eslint@8.56.0
 
       - name: Run ESLint
         run: npx eslint .
