@@ -57,16 +57,16 @@
             const reminders = reminderContainer.innerText.trim();
             
             if (reminders) {
-                speak("Here are your upcoming reminders: " + reminders);
+                speak("Here is your upcoming task: " + reminders);
             } else {
-                speak("You have no upcoming reminders.");
+                speak("You have no upcoming task.");
             }
         }
     
         function enableTTS() {
             if (isSpeaking) return; // If already speaking, don't trigger again
 
-            speak("Welcome to AudioReminder. You can navigate by saying Open Task, Open Calendar, Open Settings, Read Reminders, or 'Help' to hear this list of commands again.");
+            speak("Welcome to AudioReminder. You can navigate by saying Open Task, Open Calendar, Read Reminders, or 'Help' to hear this list of commands again.");
 
             // Remove the event listener after the first click
         }
@@ -132,16 +132,16 @@
             
             if (command.includes("open tasks") || command.includes("task") || command.includes("tasks")) {
 
-                                speak("Opening Tasks").then(() => location.href = "tasks"); 
+                                speak("Opening Tasks").then(() => location.href = "tasks.html"); 
             } else if (command.includes("open calendar") || command.includes("calendar")) {
-                speak("Opening Calendar").then(() => location.href = "calendar");            } else if (command.includes("read reminders") || command.includes("reminders")) {
+                speak("Opening Calendar").then(() => location.href = "calendar.html");            } else if (command.includes("read reminders") || command.includes("reminders")) {
                 readReminders();
             } 
          else if (command.includes("page")) {
                 const pageTitle = document.title;
                 speak("You are currently on the " + pageTitle + " page.");
             } else if (command.includes("help")) {
-                speak("You can say 'Read reminders' to hear your tasks, 'Open Tasks' to go to the tasks page, 'Open Settings' to go the settings page, 'Open Calendar' for your schedule or 'Help' to hear this list of commands again.");
+                speak("You can say 'Read reminders' to hear your upcoming task, 'Open Tasks' to go to the tasks page, 'Open Calendar' for your schedule or 'Help' to hear this list of commands again.");
             }
             else {
                 console.log("Unknown command:", command);
