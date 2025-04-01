@@ -10,6 +10,7 @@
         </header>
         <nav>
             <button id="homeButton" onclick="location.href='/';">Home</button>
+
         </nav>
         
         <!-- <script src="js/auth.js"></script> !-->
@@ -32,7 +33,7 @@
                     // Function to enable TTS when the page loads
                     function enableTTS() {
                 // Trigger TTS every time the page loads
-                speak("Calendar Page. You can navigate by saying Previous, Next, or Add Event, Cancel Event, Save Event, or Home.")
+                speak("Calendar Page. You can navigate by saying Previous, Next, or Add Event, or Home.")
                 .then(() => {
                     // Start speech recognition after TTS is spoken
                     startSpeechRecognition();
@@ -73,9 +74,11 @@
         document.getElementById('next-month').click();
     } else if (command.includes("previous") || command.includes("back")) {
         document.getElementById('prev-month').click();
-    } else if (command.includes("new event") || command.includes("event")) {
-        document.getElementById('add-event-btn').click();
-    } else if (command.includes("page")) {
+    } else if (command.includes("new event") || command.includes("event") || command.includes("new reminder")) {
+        document.getElementById('add-event-btn').click();     
+       
+
+    } else if (command.includes("page"))  {
         const pageTitle = document.title;
         speak("You are currently on the " + pageTitle + " page.");}
     else if (command.includes("help")) {
