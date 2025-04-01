@@ -27,7 +27,7 @@ jobs:
         run: npm install
 
       - name: Install ESLint (working version)
-        run: npm install eslint --global
+        run: npm init @eslint/config@latest
 
       - name: Run ESLint
-        run: npx eslint
+        run: npx eslint app.js
