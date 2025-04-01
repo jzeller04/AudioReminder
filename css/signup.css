@@ -4,7 +4,7 @@ body {
 }
 
 #header {
-    color: #3e220d;
+    color: #632f0a;
     font-size: 56px;
     font-weight: bold;
     margin-left: 90px;
@@ -18,7 +18,7 @@ body {
 
 .loginWrapper {
 
-    border:10px solid #3e220d;
+    border:10px solid #632f0a;
     border-radius: 50px;
     box-shadow: 0px 2px 6px grey;
     display: flex;
@@ -46,7 +46,7 @@ body {
 }
 
 #email, #password {
-    border: 3px solid #3e220d;
+    border: 3px solid #632f0a;
     border-radius: 8px;
     box-shadow: 0px 2px 5px grey;
     box-sizing: border-box;
@@ -61,7 +61,7 @@ body {
 }
 
 #signup {
-    background-color: #3e220d;
+    background-color: #632f0a;
     border: none;
     border-radius: 45px;
     box-shadow: 1px 3px 8px grey;
@@ -74,7 +74,7 @@ body {
 }
 
 #signup:hover {
-    background-color: rgb(32, 17, 7);
+    background-color: rgb(36, 20, 9);
     cursor: pointer;
 }
 
@@ -82,8 +82,8 @@ body {
     background-color: #f2ede9;
     border: none;
     border-radius: 45px;
-    box-shadow: 1px 3px 8px #3e220d;
-    color: #3e220d;
+    box-shadow: 1px 3px 8px #632f0a;
+    color: #632f0a;
     font-size: 40px;
     height: 80px;
     transition-duration: 0.1s;
@@ -96,7 +96,7 @@ body {
 }
 
 #emailLabel, #passwordLabel {
-    color: #3e220d;
+    color: #632f0a;
 }
 
 #para1 {
