@@ -126,7 +126,17 @@ body {
     text-align: center;
 }
 
-
-
-
+.login-container {
+    margin: 20px 0;
+  }
+  
+#logoutButton {
+   display: none;
+   padding: 8px 16px;
+   background-color: #f1f1f1;
+   border: 1px solid #ddd;
+   border-radius: 4px;
+   cursor: pointer;
+   margin-top: 10px;
+ }
 

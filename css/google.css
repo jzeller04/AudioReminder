@@ -12,30 +12,35 @@
 
 /* Dark theme overrides for the button */
 .nsm7Bb-HzV7m-LgbsSe.Bz112c-LgbsSe {
-  background-color: #202124 !important;
+  background-color: #a54907 !important;
   color: #fff !important;
-  border-color: #5f6368 !important;
+  border-color: #a54907 !important;
 }
 
 /* Override default button size */
 .nsm7Bb-HzV7m-LgbsSe {
-  height: 50px !important;
-  min-width: 240px !important;
-  border-radius: 4px !important;
+  background-color: #a54907  !important;
+  border: none  !important;
+  border-radius: 45px  !important;
+  box-shadow: 1px 3px 8px grey  !important;
+  height: 80px  !important;
+  transition-duration: 0.1s  !important;
+  width: 100% !important;
 }
 
 /* Style the button text */
 .nsm7Bb-HzV7m-LgbsSe .nsm7Bb-HzV7m-LgbsSe-BPrWId {
-  font-size: 14px !important;
+  font-family: Helvetica, Arial, sans-serif !important;
+  font-size: 40px !important;
   font-weight: 500 !important;
   line-height: 50px !important;
-  color: #fff !important;
+  color: white !important;
 }
 
 /* Hover effect */
 .nsm7Bb-HzV7m-LgbsSe:hover {
   box-shadow: 0 2px 4px rgba(0,0,0,0.4) !important;
-  background-color: #303134 !important;
+  background-color: #a54907 !important;
 }
 
 /* User info display after login */
