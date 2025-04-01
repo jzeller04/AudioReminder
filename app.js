@@ -48,7 +48,9 @@ app.get('/', async (request, response) => {
         const template = await fs.promises.readFile(__dirname + '/index.html', 'utf8');
         const userReminders = await fetchReminder.fetch(request.session.userId);
 
-        let reminderHTML = userReminders.map(reminder => 
+        let reminder = userReminders[0];
+
+        let reminderHTML = 
             `<hr> 
             <div class="reminder-item">          
                 <p>${reminder.title || 'No reminder found'}</p>
@@ -56,7 +58,7 @@ app.get('/', async (request, response) => {
                 <p>${reminder.date || 'No reminder found'}</p>
                 <p>${reminder.time || 'No reminder found'}</p>
             </div>`
-        ).join('');
+        '';
 
         const finalHTML = template.replace('{{REMINDERS}}', reminderHTML);
 
