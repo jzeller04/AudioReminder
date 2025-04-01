@@ -12,7 +12,9 @@
     <nav>
         <button onclick="location.href='/tasks';">Tasks</button>
         <button onclick="location.href='/calendar';">Calendar</button>
-        <button onclick="location.href='/settings';">Settings</button>
+
+        <!-- Eventual settings navigation button !-->
+        <!-- <button onclick="location.href='/settings';">Settings</button> !-->
     </nav>
 
     <r>Upcoming Task</r>
@@ -57,7 +59,7 @@
     
         function enableTTS() {
             if (sessionStorage.getItem("ttsWelcomeSpoken") !== "true") {
-                speak("Welcome to AudioReminder. You can navigate by saying Read Reminders, Open Tasks, Open Calendar, or Open Settings.")
+                speak("Welcome to AudioReminder. You can navigate by saying Read Reminders, Open Tasks, or Open Calendar.") //add 'Open Settings' to TTS once settings page is developed
                 .then(() => {
                     sessionStorage.setItem("ttsWelcomeSpoken", "true");
                     startSpeechRecognition();
@@ -127,8 +129,6 @@
                 location.href = "tasks.html";
             } else if (command.includes("open calendar") || command.includes("calendar")) {
                 location.href = "calendar.html";
-            } else if (command.includes("open settings") || command.includes("setting") || command.includes("settings")) {
-                location.href = "settings.html";
             } else if (command.includes("open voice") || command.includes("voice")) {
                 location.href = "voice.html";
             } else if (command.includes("read reminders") || command.includes("reminders")) {
@@ -136,6 +136,10 @@
             } else {
                 console.log("Unknown command:", command);
             }
+            /* add into function once settings page is developed
+            else if (command.includes("open settings") || command.includes("setting") || command.includes("settings")) {
+                location.href = "settings.html";
+            } */
         }
     </script>
 </body>
