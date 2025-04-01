@@ -5,22 +5,40 @@
         <link rel="stylesheet" href="css/signin.css">
     </head>
     <body>
-        <header>
-            <h1>Log In</h1>
-        </header>
         <nav>
             <form action="/signin" method="POST">
+
+
+                <div class="leftWrapper">
+                    <h1 id ="header">Log In</h1>
+
+                    <div class="loginWrapper">
+                        <div class="emailDiv">
+                            <label for="email" id="emailLabel">Email</label><br>
+                            <input type="text" id="email" name="email"  placeholder="Enter email address">
+                        </div>
+
+                        <div class="passwordDiv">
+                            <label for="password" id="passwordLabel">Password</label><br>
+                            <input type="password" id="password" name="password" placeholder="Enter password">
+                        </div>
+    
+                        <button id="login" type="submit">Log in</button>
+                    </div>
+                </div>
                 
-                <button id="login" type="submit">Log in</button>
+                <!-- Sign in with google button here !-->
 
                 <div class="rightBox">
-                    <p id="para1">Welcome to AudioReminder!</p>
-                    <p id="para2">Don't have an account?</p>
+                    <div class="rightWrapper">
+                        <p id="para1">Welcome to</p>
+                        <p id="para2">AudioReminder</p>
+                        <p id="para3">Don't have an account?</p>
+                        <nav>
+                            <button id="signup" type="button" onclick="location.href='signup';">Sign up</button>
+                        </nav>
+                    </div>
                 </div>
-
-                <nav>
-                    <button type="button" onclick="location.href='signup';">Sign up</button>
-                </nav>
             </form>
         </nav>
     </body>

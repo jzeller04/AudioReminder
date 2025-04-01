@@ -1,0 +1,133 @@
+body {
+    background-color: #f2ede9;
+    font-family: Helvetica, Arial, sans-serif;
+}
+
+#header {
+    color: #3e220d;
+    font-size: 56px;
+    font-weight: bold;
+    margin-left: 90px;
+}
+
+.leftWrapper {
+    float: left;
+    font-size: 40px;
+    width: 50%;
+}
+
+.loginWrapper {
+
+    border:10px solid #3e220d;
+    border-radius: 50px;
+    box-shadow: 0px 2px 6px grey;
+    display: flex;
+    flex-direction: column;
+    height: 60%;
+    margin: 20px 50px;
+}
+
+.rightBox {
+    background-color: #a54907;
+    border-top-left-radius: 50px;
+    border-bottom-left-radius: 50px;
+    float: right;
+    font-size: 40px;
+    height: 100%;
+    width: 50%;
+}
+
+.emailDiv {
+    margin: 60px 70px auto 70px;
+}
+
+.passwordDiv {
+    margin: 20px 70px auto 70px;
+}
+
+#email, #password {
+    border: 3px solid #3e220d;
+    border-radius: 8px;
+    box-shadow: 0px 2px 5px grey;
+    box-sizing: border-box;
+    font-size: 40px;
+    height: 70px;
+    margin: 18px 0px;
+    width: 100%;
+}
+
+#email:focus, #password:focus {
+    border-width: 4px;
+}
+
+#login {
+    background-color: #3e220d;
+    border: none;
+    border-radius: 45px;
+    box-shadow: 1px 3px 8px grey;
+    color: #f2ede9;
+    font-size: 40px;
+    height: 80px;
+    margin: 40px auto;
+    transition-duration: 0.1s;
+    width: 85%;
+}
+
+#login:hover {
+    background-color: rgb(32, 17, 7);
+    cursor: pointer;
+}
+
+#signup {
+    background-color: #f2ede9;
+    border: none;
+    border-radius: 45px;
+    box-shadow: 1px 3px 8px #3e220d;
+    color: #3e220d;
+    font-size: 40px;
+    height: 80px;
+    transition-duration: 0.1s;
+    width: 180px;
+}
+
+#signup:hover {
+    background-color: #cecac7;
+    cursor: pointer;
+}
+
+#emailLabel, #passwordLabel {
+    color: #3e220d;
+}
+
+#para1 {
+    color: white;
+    font-size: 50px;
+    font-weight: bold;
+    margin-top: 10%;
+}
+
+#para2 {
+    color: white;
+    font-size: 70px;
+    font-weight: bold;
+    letter-spacing: 2px;
+}
+
+#para3 {
+    color: white;
+    font-weight: bold;
+    margin-top: 30%;
+}
+
+.rightWrapper {
+    align-content: center;
+    display: flex;
+    flex-direction: column;
+    flex-wrap: wrap;
+    text-align: center;
+}
+
+
+
+
+
