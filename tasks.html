@@ -88,6 +88,12 @@ function speak(text) {
                                 location.href = "newtask.html";
            } else if (command.includes("open home") || command.includes("home")) {
                location.href = "/";
+            } else if (command.includes("page")) {
+        const pageTitle = document.title;
+        speak("You are currently on the " + pageTitle + " page.");}
+           else if (command.includes("help")) {
+                    speak("You can say 'New Task' to add a task, 'Open Home' to return to the homepage, or 'Help' to hear this list of commands again.");
+                
            } else {
                console.log("Unknown command:", command);
            }
