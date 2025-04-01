@@ -132,9 +132,9 @@
             
             if (command.includes("open tasks") || command.includes("task") || command.includes("tasks")) {
 
-                                speak("Opening Tasks").then(() => location.href = "tasks.html"); 
+                                speak("Opening Tasks").then(() => location.href = "tasks"); 
             } else if (command.includes("open calendar") || command.includes("calendar")) {
-                speak("Opening Calendar").then(() => location.href = "calendar.html");            
+                speak("Opening Calendar").then(() => location.href = "calendar");            
             } else if (command.includes("read reminders") || command.includes("reminders") || command.includes("read upcoming task") ||  command.includes("upcoming task")) {
                     readReminders();
             } 
