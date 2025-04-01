@@ -9,10 +9,12 @@
             <h1>Tasks</h1>
         </header>
         <nav>
-            <button onclick="location.href='newtask';">New Task</button>
-            <button onclick="location.href='/';">Home</button>
+            <div class="buttonWrapper">
+                <button id="homeButton" onclick="location.href='/';">Home</button>
+                <button id="newtaskButton" onclick="location.href='newtask';">New Task</button>
+            </div>
         </nav>
-        <r>Upcoming Tasks</r>
+        <r id="text1">Upcoming Tasks</r>
         <div id="reminder_container">
             {{REMINDERS}}
         </div>
