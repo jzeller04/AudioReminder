@@ -27,7 +27,7 @@ jobs:
         run: npm install
 
       - name: Install ESLint (working version)
-        run: npm install eslint
+        run: npm install eslint@8.56.0 --save-dev
 
       - name: Run ESLint
         run: npx eslint "**/*.js"
