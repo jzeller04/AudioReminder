@@ -94,18 +94,49 @@
         return parsedDate.toISOString().split("T")[0]; // Extract YYYY-MM-DD
     }
 
-    // Additional check for natural language formats (e.g., "next Monday")
+    // Additional check for natural language formats (e.g., "next Monday", "next Tuesday", "tomorrow")
     const today = new Date();
-    let dayOfWeek = today.getDay();
+    
     let targetDate;
 
-    // Handle "next" + day of the week (e.g., "next Monday")
+    // Handle "next" + day of the week (e.g., "next Monday", "next Tuesday")
     const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
     const nextMatch = input.match(/next\s+(Sunday|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday)/i);
     if (nextMatch) {
         const targetDay = daysOfWeek.indexOf(nextMatch[1]);
-        const daysToAdd = (targetDay - dayOfWeek + 7) % 7;
-        targetDate = new Date(today.setDate(today.getDate() + daysToAdd));
+        const daysToAdd = (targetDay - today.getDay() + 7) % 7;
+        if (daysToAdd === 0) {
+            // If it's the same day, set to the next occurrence
+            targetDate = new Date(today.setDate(today.getDate() + 7));
+        } else {
+            targetDate = new Date(today.setDate(today.getDate() + daysToAdd));
+        }
+        return targetDate.toISOString().split("T")[0];
+    }
+
+    // Handle exact day of the week (e.g., "Tuesday")
+    const dayMatch = input.match(/(Sunday|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday)/i);
+    if (dayMatch) {
+        const targetDay = daysOfWeek.indexOf(dayMatch[1]);
+        const daysToAdd = (targetDay - today.getDay() + 7) % 7;
+        if (daysToAdd === 0) {
+            // If it's today, move to the next occurrence of that day
+            targetDate = new Date(today.setDate(today.getDate() + 7));
+        } else {
+            targetDate = new Date(today.setDate(today.getDate() + daysToAdd));
+        }
+        return targetDate.toISOString().split("T")[0];
+    }
+
+    // Handle "tomorrow" command
+    if (input.match(/tomorrow/i)) {
+        targetDate = new Date(today.setDate(today.getDate() + 1));
+        return targetDate.toISOString().split("T")[0];
+    }
+
+    // Handle "today" command
+    if (input.match(/today/i)) {
+        targetDate = new Date(today);
         return targetDate.toISOString().split("T")[0];
     }
 
