@@ -92,6 +92,10 @@ function speak(text) {
             } else if (command.includes("page")) {
         const pageTitle = document.title;
         speak("You are currently on the " + pageTitle + " page.");}
+     else if (command.includes("read reminders")) {
+        readReminders();
+
+     }
            else if (command.includes("help")) {
                     speak("You can say 'New Task' to add a task, 'Open Home' to return to the homepage, or 'Help' to hear this list of commands again.");
                 
@@ -134,7 +138,40 @@ function speak(text) {
 
 
 
+    function readReminders() {             
+    console.log("Read Reminders function called"); // Debugging log
 
+    const reminderContainer = document.getElementById("reminder_container");             
+    if (!reminderContainer) {
+        console.error("Reminder container not found.");
+        return;
+    }
+
+    // Clone the container to avoid modifying the original
+    const tempContainer = reminderContainer.cloneNode(true);
+
+    // Remove all buttons inside the container
+    tempContainer.querySelectorAll("button").forEach(btn => btn.remove());
+
+    // Get only the remaining text
+    const reminders = tempContainer.innerText.trim();
+
+    if (reminders) {                 
+        speak("Here are your upcoming tasks: " + reminders);             
+    } else {                 
+        speak("You have no upcoming tasks."); 
+                    
+    }         
+}
+document.addEventListener('DOMContentLoaded', function() {
+    const readRemindersButton = document.getElementById("readRemindersButton");
+    if (readRemindersButton) {
+        readRemindersButton.addEventListener("click", function() {
+            readReminders();  // Call readReminders function on button click
+        });
+    }
+});
+        
     
         </script>
     </body>
