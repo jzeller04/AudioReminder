@@ -8,12 +8,12 @@ async function fetch(userId)
     try{
         const today = new Date(); // get todays date
         today.setUTCHours(0, 0, 0, 0); // set time to midnight
-        console.log("today:", today);
+        //console.log("today:", today);
         const nextWeek = new Date(today); // create next week var
         nextWeek.setUTCHours(23, 59, 59, 999); // set to just before midnight
         nextWeek.setDate(today.getDate() + 6); // add 6 days to next week date
         const user = await User.findById(userId, {reminders: 1});
-        console.log(user);
+        //console.log(user);
         if(!user)
         {
             return [];
@@ -23,12 +23,12 @@ async function fetch(userId)
         const reminders = user.reminders.filter(reminder =>
         {
             const reminderDate = new Date(reminder.date);
-            console.log("reminder date: ", reminderDate);
+            //console.log("reminder date: ", reminderDate);
             return reminder.date >= today && reminder.date < nextWeek
         }
 
         );
-        console.log('filter: ',reminders)
+        //console.log('filter: ',reminders)
         if(reminders)
             return reminders;
         
