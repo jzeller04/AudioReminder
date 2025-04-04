@@ -17,7 +17,7 @@ h1 {
   justify-content: center;
 }
 
-#newtaskButton, #homeButton {
+#newtaskButton, #homeButton, #readRemindersButton {
   background-color: #a54907;
   border: 6px solid #a54907;
   border-radius: 50px;
@@ -31,7 +31,7 @@ h1 {
   width: 20%;
 }
 
-#newtaskButton:hover, #homeButton:hover {
+#newtaskButton:hover, #homeButton:hover, #readRemindersButton:hover {
   background-color: #f2ede9;
   border: 6px solid #a54907;
   color: #a54907;
