@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const Reminder = require('./backend/models/reminder');
@@ -13,10 +14,11 @@ const { request } = require('http');
 const User = require('./backend/models/user.js');
 const {saveReminderToUser} = require('./backend/saveReminderToUser.js');
 
+
 // TDL: All of this needs to be refactored. It's hard to read for literally no reason. There isnt anything complicated happening in this file.
 
 // connect to mongodb
-const dbURI = 'mongodb+srv://gmgadmin:RF8eo4JVyJ8JyPuq@cluster0.b6uj2.mongodb.net/gomeangreendb?retryWrites=true&w=majority&appName=Cluster0' // TODO: MAKE THIS PRIVATE!!!!!!!!!
+const dbURI = process.env.MONGO_URI;
 
 const app = express();
 
