@@ -21,8 +21,10 @@ async function fetch(userId)
         const reminders = user.reminders.filter(reminder =>
             reminder.date >= today && reminder.date < nextWeek
         );
-
-        return reminders;
+        if(reminders)
+            return reminders;
+        
+        return [];
 
     } catch {
         console.log('error');

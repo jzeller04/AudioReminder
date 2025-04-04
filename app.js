@@ -47,25 +47,46 @@ app.get('/', async (request, response) => {
     try {
         const template = await fs.promises.readFile(__dirname + '/index.html', 'utf8');
         const userReminders = await fetchReminder.fetch(request.session.userId);
+        console.log(userReminders);
+        if(userReminders.length != 0)
+        {
+            let reminder = userReminders[0];
 
-        let reminder = userReminders[0];
+            let reminderHTML = 
+                `<hr> 
+                <div class="reminder-item">          
+                    <p>${reminder.title || 'No reminder found'}</p>
+                    <p>${reminder.description || 'No reminder found'}</p>
+                    <p>${reminder.date || 'No reminder found'}</p>
+                    <p>${reminder.time || 'No reminder found'}</p>
+                </div>`
+            '';
+    
+            const finalHTML = template.replace('{{REMINDERS}}', reminderHTML);
+    
+            return response.send(finalHTML);
+        }
+        else
+        {
+            let reminderHTML = 
+                `<hr> 
+                <div class="reminder-item">          
+                    <p>${'Nothing to do!'}</p>
+                    <p>${''}</p>
+                    <p>${''}</p>
+                    <p>${''}</p>
+                </div>`
+            '';
+    
+            const finalHTML = template.replace('{{REMINDERS}}', reminderHTML);
+    
+            return response.send(finalHTML);
+        }
 
-        let reminderHTML = 
-            `<hr> 
-            <div class="reminder-item">          
-                <p>${reminder.title || 'No reminder found'}</p>
-                <p>${reminder.description || 'No reminder found'}</p>
-                <p>${reminder.date || 'No reminder found'}</p>
-                <p>${reminder.time || 'No reminder found'}</p>
-            </div>`
-        '';
-
-        const finalHTML = template.replace('{{REMINDERS}}', reminderHTML);
-
-        return response.send(finalHTML);
+        
     } catch (err) {
         console.log(err);
-        return response.sendFile('./titleform.html', { root: __dirname });
+        return response.sendFile('./404.html', { root: __dirname });
     }
 });
 app.use(express.static(__dirname));
