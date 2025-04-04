@@ -45,11 +45,13 @@ app.get('/', async (request, response) => {
         return response.redirect('/login');
     }
     try {
+        console.log(await fetchReminder.updateUserReminders(request.session.userId));
         const template = await fs.promises.readFile(__dirname + '/index.html', 'utf8');
         const userReminders = await fetchReminder.fetch(request.session.userId);
-        console.log(userReminders);
+        //console.log(userReminders);
         if(userReminders.length != 0)
         {
+
             let reminder = userReminders[0];
 
             let reminderHTML = 
