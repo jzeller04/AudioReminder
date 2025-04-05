@@ -32,7 +32,7 @@
 
         <div class="buttonDiv">
             <nav>
-                <button type="button" onclick="location.href='/';">Cancel</button>
+                <button type="button" onclick="location.href='tasks';">Cancel</button>
             </nav>
             <button id="save" type="submit">Save</button>
         </div>
@@ -166,7 +166,7 @@
             if (response.toLowerCase().includes("yes")) {
                 await promptUserForInputs(); // Proceed with reminder setup
             } else if (response.toLowerCase().includes("no")) {
-                window.location.href = "/"; // Redirect to task page
+                window.location.href = "tasks"; // Redirect to task page
             } else {
                 await speak("Sorry, I didn't understand that. Please say 'Yes' or 'No'.");
                 await promptReminder(); // Retry if the response was unclear
@@ -222,7 +222,7 @@
             if (command.toLowerCase().includes("save reminder")) {
                 document.getElementById("save").click(); // Simulates clicking the Save button
             } else if (command.toLowerCase().includes("cancel")) {
-                window.location.href = "/"; // Redirects to home page (Cancel action)
+                window.location.href = "tasks"; // Redirects to home page (Cancel action)
             } else if (command.toLowerCase().includes("read reminder")) {
                 await readReminder(); // Calls the readReminder function
             } else if (command.toLowerCase().includes("clear reminder")) {
