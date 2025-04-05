@@ -14,7 +14,7 @@
         <div id="reminder_container">
             {{REMINDERS}}
         </div>
-        <button id="readRemindersButton">Read Task</button>
+        <button id="readRemindersButton" onclick="readReminders();">Read Reminder</button>
     </div>
 
 
@@ -66,7 +66,7 @@
         function enableTTS() {
             if (isSpeaking) return; // If already speaking, don't trigger again
 
-            speak("Welcome to AudioReminder. You can navigate by saying Open Task, Open Calendar, Read Reminders, or 'Help' to hear this list of commands again.");
+            speak("Welcome to AudioReminder. You can navigate by saying Open Task, Open Calendar, Read Reminder, or 'Help' to hear this list of commands again.");
 
             // Remove the event listener after the first click
         }
@@ -135,7 +135,7 @@
                                 speak("Opening Tasks").then(() => location.href = "tasks"); 
             } else if (command.includes("open calendar") || command.includes("calendar")) {
                 speak("Opening Calendar").then(() => location.href = "calendar");            
-            } else if (command.includes("read reminders") || command.includes("reminders") || command.includes("read upcoming task") ||  command.includes("upcoming task")) {
+            } else if (command.includes("read reminder") || command.includes("reminders")) {
                     readReminders();
             } 
          else if (command.includes("page")) {

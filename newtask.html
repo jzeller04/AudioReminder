@@ -200,7 +200,7 @@ async function promptUserForInputs() {
     document.getElementById("memo").dispatchEvent(new Event("input"));
     await speak(`You said: ${memo}`);
 
-    await speak("Reminder has been set. You can now save it, clear it, cancel it, or have it read back to you.");
+    await speak("Reminder has been set. You can now save it by saying save reminder, clear it by saying clear reminder, cancel it by saying cancel, or have it read back to you by saying read reminder.");
     listenForFinalCommand();
 }
 

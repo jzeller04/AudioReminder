@@ -12,7 +12,7 @@
             <div class="buttonWrapper">
                 <button id="homeButton" onclick="location.href='/';">Home</button>
                 <button id="newtaskButton" onclick="location.href='newtask';">New Task</button>
-                <button id="readRemindersButton">Read All Tasks</button>
+                <button id="readRemindersButton">Read All Reminders</button>
             </div>
         </nav>
         <r id="text1">Upcoming Tasks</r>
@@ -92,12 +92,12 @@ function speak(text) {
             } else if (command.includes("page")) {
         const pageTitle = document.title;
         speak("You are currently on the " + pageTitle + " page.");}
-     else if (command.includes("read reminders")) {
+     else if  (command.includes("read all reminders") || (command.includes("read reminders"))) {
         readReminders();
 
      }
            else if (command.includes("help")) {
-                    speak("You can say 'New Task' to add a task, 'Open Home' to return to the homepage, or 'Help' to hear this list of commands again.");
+                    speak("You can say 'New Task' to add a task, 'Open Home' to return to the homepage, 'Read all Reminders' to hear your upcoming tasks, or 'Help' to hear this list of commands again.");
                 
            } else {
                console.log("Unknown command:", command);
