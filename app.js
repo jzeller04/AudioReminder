@@ -245,7 +245,7 @@ app.post('/submit', (request, response) => {
     const time = request.body.time;
     if (title) {
         saveReminderToUser(title,description,time,date, request.session.userId);
-        return response.redirect('/tasks');
+        return response.redirect('/newtask');
     } else {
         return response.status(400).send("No title received");
     }
