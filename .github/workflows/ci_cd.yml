@@ -17,6 +17,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+        with:
+          persist-credentials: false  # Required to push using PAT
 
       - name: Set up Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v3
@@ -26,3 +28,27 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Run linter and auto-fix
+        run: npx eslint . --fix
+
+      - name: Push changes to staging
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b staging || git checkout staging
+          git add .
+          git diff --cached --quiet || (
+            git commit -m "chore: lint auto-fixes"
+            git push https://x-access-token:${GH_PAT}@github.com/${{ github.repository }}.git staging --force
+          )
+
+      - name: Merge staging to main
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+        run: |
+          git checkout main
+          git pull origin main
+          git merge staging --no-edit
+          git push https://x-access-token:${GH_PAT}@github.com/${{ github.repository }}.git main
