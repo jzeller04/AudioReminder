@@ -79,7 +79,7 @@ hr {
 
 [data-theme="low-contrast"]{
   --bg-color: #f2ede9;
-  --text-field: white;
+  --text-color: white;
   --hover-btn: #cecac7;
   --heading-color: #632f0a;
   --primary-btn: #a54907;
@@ -97,7 +97,7 @@ hr {
     background-color: var(--primary-btn);
     border: 6px solid var(--primary-btn);
     box-shadow: 0px 2px 6px var(--shadow-color);
-    color: var(--text-field);
+    color: var(--text-color);
   }
 
   & #newtaskButton:hover, & #homeButton:hover, & #readRemindersButton:hover {
@@ -108,7 +108,7 @@ hr {
 
   & .reminder-item {
     border:3px solid var(--heading-color);
-    background-color: var(--text-field);
+    background-color: var(--text-color);
   }
 
   & .complete-btn {
@@ -134,7 +134,7 @@ hr {
 
 [data-theme="high-contrast"]{
   --bg-color: #f2ede9;
-  --text-field: white;
+  --text-color: white;
   --hover-btn: #cecac7;
   --heading-color: #632f0a;
   --primary-btn: #a54907;
@@ -152,7 +152,7 @@ hr {
     background-color: var(--primary-btn);
     border: 6px solid var(--primary-btn);
     box-shadow: 0px 2px 6px var(--shadow-color);
-    color: var(--text-field);
+    color: var(--text-color);
   }
 
   & #newtaskButton:hover, & #homeButton:hover, & #readRemindersButton:hover {
@@ -163,7 +163,7 @@ hr {
 
   & .reminder-item {
     border:3px solid var(--heading-color);
-    background-color: var(--text-field);
+    background-color: var(--text-color);
   }
 
   & .complete-btn {

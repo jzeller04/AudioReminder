@@ -110,10 +110,8 @@ body {
     --text-field: white;
     --hover-btn: #cecac7;
     --heading-color: #632f0a;
-    --primary-btn: #a54907;
-    --secondary-btn: #632f0a;
+    --right-blackground: #a54907;
     --shadow-color: grey;
-
     background-color: #f2ede9;
 
     & #header {
@@ -126,7 +124,7 @@ body {
     }
 
     & .rightBox {
-        background-color: var(--primary-btn);
+        background-color: var(--right-blackground);
     }
 
     & #email, & #password {
@@ -137,7 +135,7 @@ body {
     & #login {
         background-color: var(--heading-color);
         box-shadow: 1px 3px 8px var(--shadow-color);
-        color: #f2ede9;
+        color: var(--bg-color);
     }
 
     & #login:hover {
@@ -176,10 +174,8 @@ body {
     --text-field: white;
     --hover-btn: #cecac7;
     --heading-color: #632f0a;
-    --primary-btn: #a54907;
-    --secondary-btn: #632f0a;
+    --right-blackground: #a54907;
     --shadow-color: grey;
-
     background-color: #f2ede9;
 
     & #header {
@@ -192,7 +188,7 @@ body {
     }
 
     & .rightBox {
-        background-color: var(--primary-btn);
+        background-color: var(--right-blackground);
     }
 
     & #email, & #password {
@@ -203,7 +199,7 @@ body {
     & #login {
         background-color: var(--heading-color);
         box-shadow: 1px 3px 8px var(--shadow-color);
-        color: #f2ede9;
+        color: var(--bg-color);
     }
 
     & #login:hover {

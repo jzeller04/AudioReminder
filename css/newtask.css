@@ -140,7 +140,6 @@ button:hover {
   --bg-color: #f2ede9;
   --heading-color: #632f0a;
   --primary-btn: #a54907;
-  --secondary-btn: #632f0a;
   --shadow-color: grey;
 
   background-color: var(--bg-color);
@@ -186,7 +185,7 @@ button:hover {
   }
   
   & #titleLabel {
-    color: #632f0a;
+    color: var(--heading-color);
   }
   
   & #title {
@@ -231,7 +230,6 @@ button:hover {
   --bg-color: #f2ede9;
   --heading-color: #632f0a;
   --primary-btn: #a54907;
-  --secondary-btn: #632f0a;
   --shadow-color: grey;
 
   background-color: var(--bg-color);
@@ -277,7 +275,7 @@ button:hover {
   }
   
   & #titleLabel {
-    color: #632f0a;
+    color: var(--heading-color);
   }
   
   & #title {

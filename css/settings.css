@@ -8,10 +8,7 @@ h1 {
 }
 
 button {
-  background-color: black;
-  border: 6px solid black;
   border-radius: 6px;
-  color: white;
   display: block;
   font-family: Helvetica, Arial, sans-serif;
   font-size: 40px;
@@ -25,8 +22,93 @@ button {
 }
 
 button:hover {
-  background-color: white;
-  border: 6px solid black;
-  color: black;
   cursor: pointer;
+}
+
+[data-theme="low-contrast"]{
+  --bg-color: #f2ede9;
+  --heading-color: #632f0a;
+  --primary-btn: #a54907;
+  --secondary-btn: #632f0a;
+  --shadow-color: grey;
+
+  background-color: var(--bg-color);
+
+  button {
+    background-color: var(--secondary-btn);
+    border: 6px solid var(--secondary-btn);
+    color: var(--bg-color);
+  }
+
+  & button:hover {
+    background-color: var(--bg-color);
+    border: 6px solid var(--secondary-btn);
+    color: var(--secondary-btn);
+  }
+}
+
+[data-theme="high-contrast"]{
+  --bg-color: #f2ede9;
+  --heading-color: #632f0a;
+  --primary-btn: #a54907;
+  --secondary-btn: #632f0a;
+  --shadow-color: grey;
+
+  background-color: var(--bg-color);
+
+  button {
+    background-color: var(--secondary-btn);
+    border: 6px solid var(--secondary-btn);
+    color: var(--bg-color);
+  }
+
+  & button:hover {
+    background-color: var(--bg-color);
+    border: 6px solid var(--secondary-btn);
+    color: var(--secondary-btn);
+  }
+}
+
+[data-theme="high-contrast"]{
+  --bg-color: #f2ede9;
+  --heading-color: #632f0a;
+  --primary-btn: #a54907;
+  --secondary-btn: #632f0a;
+  --shadow-color: grey;
+
+  background-color: var(--bg-color);
+
+  button {
+    background-color: var(--secondary-btn);
+    border: 6px solid var(--secondary-btn);
+    color: var(--bg-color);
+  }
+
+  & button:hover {
+    background-color: var(--bg-color);
+    border: 6px solid var(--secondary-btn);
+    color: var(--secondary-btn);
+  }
+}
+
+[data-theme="high-contrast"]{
+  --bg-color: #f2ede9;
+  --heading-color: #632f0a;
+  --primary-btn: #a54907;
+  --secondary-btn: #632f0a;
+  --shadow-color: grey;
+
+  background-color: var(--bg-color);
+
+  button {
+    background-color: var(--secondary-btn);
+    border: 6px solid var(--secondary-btn);
+    color: var(--bg-color);
+  }
+
+  & button:hover {
+    background-color: var(--bg-color);
+    border: 6px solid var(--secondary-btn);
+    color: var(--secondary-btn);
+  }
 }

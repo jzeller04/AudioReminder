@@ -116,7 +116,6 @@ body {
     --hover-btn: #cecac7;
     --heading-color: #632f0a;
     --primary-btn: #a54907;
-    --secondary-btn: #632f0a;
     --shadow-color: grey;
     --signup-hover: black;
 
@@ -157,7 +156,7 @@ body {
     }
 
     & #signup:hover {
-        background-color: var(--hover-btn);
+        background-color: var(--signup-hover);
     }
 
     & #emailLabel, & #passwordLabel {
@@ -175,15 +174,14 @@ body {
     & #para3 {
         color: var(--text-field);
     }
-  }
+}
 
-  [data-theme="low-contrast"]{
+[data-theme="high-contrast"]{
     --bg-color: #f2ede9;
     --text-field: white;
     --hover-btn: #cecac7;
     --heading-color: #632f0a;
     --primary-btn: #a54907;
-    --secondary-btn: #632f0a;
     --shadow-color: grey;
     --signup-hover: black;
 
@@ -224,7 +222,7 @@ body {
     }
 
     & #signup:hover {
-        background-color: var(--hover-btn);
+        background-color: var(--signup-hover);
     }
 
     & #emailLabel, & #passwordLabel {
@@ -242,4 +240,4 @@ body {
     & #para3 {
         color: var(--text-field);
     }
-  }
+}
