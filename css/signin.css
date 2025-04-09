@@ -1,10 +1,8 @@
 body {
-    background-color: #f2ede9;
     font-family: Helvetica, Arial, sans-serif;
 }
 
 #header {
-    color: #632f0a;
     font-size: 56px;
     font-weight: bold;
     margin-left: 90px;
@@ -17,9 +15,7 @@ body {
 }
 
 .loginWrapper {
-    border:10px solid #632f0a;
     border-radius: 50px;
-    box-shadow: 0px 2px 6px grey;
     display: flex;
     flex-direction: column;
     height: 60%;
@@ -27,7 +23,6 @@ body {
 }
 
 .rightBox {
-    background-color: #a54907;
     border-top-left-radius: 50px;
     border-bottom-left-radius: 50px;
     float: right;
@@ -45,9 +40,7 @@ body {
 }
 
 #email, #password {
-    border: 3px solid #632f0a;
     border-radius: 8px;
-    box-shadow: 0px 2px 5px grey;
     box-sizing: border-box;
     font-size: 40px;
     height: 70px;
@@ -60,11 +53,8 @@ body {
 }
 
 #login {
-    background-color: #632f0a;
     border: none;
     border-radius: 45px;
-    box-shadow: 1px 3px 8px grey;
-    color: #f2ede9;
     font-size: 40px;
     height: 80px;
     margin: 40px auto;
@@ -73,16 +63,12 @@ body {
 }
 
 #login:hover {
-    background-color: rgb(36, 20, 9);
     cursor: pointer;
 }
 
 #signup {
-    background-color: #f2ede9;
     border: none;
     border-radius: 45px;
-    box-shadow: 1px 3px 8px #632f0a;
-    color: #632f0a;
     font-size: 40px;
     height: 80px;
     transition-duration: 0.1s;
@@ -90,30 +76,23 @@ body {
 }
 
 #signup:hover {
-    background-color: #cecac7;
     cursor: pointer;
 }
 
-#emailLabel, #passwordLabel {
-    color: #632f0a;
-}
 
 #para1 {
-    color: white;
     font-size: 50px;
     font-weight: bold;
     margin-top: 10%;
 }
 
 #para2 {
-    color: white;
     font-size: 70px;
     font-weight: bold;
     letter-spacing: 2px;
 }
 
 #para3 {
-    color: white;
     font-weight: bold;
     margin-top: 30%;
 }
@@ -126,7 +105,134 @@ body {
     text-align: center;
 }
 
+[data-theme="low-contrast"]{
+    --bg-color: #f2ede9;
+    --text-field: white;
+    --hover-btn: #cecac7;
+    --heading-color: #632f0a;
+    --primary-btn: #a54907;
+    --secondary-btn: #632f0a;
+    --shadow-color: grey;
 
+    background-color: #f2ede9;
 
+    & #header {
+        color: var(--heading-color);
+    }
 
+    & .loginWrapper {
+        border:10px solid var(--heading-color);
+        box-shadow: 0px 2px 6px var(--shadow-color);
+    }
 
+    & .rightBox {
+        background-color: var(--primary-btn);
+    }
+
+    & #email, & #password {
+        border: 3px solid var(--heading-color);
+        box-shadow: 0px 2px 5px var(--shadow-color);
+    }
+
+    & #login {
+        background-color: var(--heading-color);
+        box-shadow: 1px 3px 8px var(--shadow-color);
+        color: #f2ede9;
+    }
+
+    & #login:hover {
+        background-color: rgb(36, 20, 9);
+    }
+
+    & #signup {
+        background-color: var(--bg-color);
+        box-shadow: 1px 3px 8px var(--heading-color);
+        color: var(--heading-color);
+    }
+
+    & #signup:hover {
+        background-color: var(--hover-btn);
+    }
+
+    & #emailLabel, & #passwordLabel {
+        color: var(--heading-color);
+    }
+
+    & #para1 {
+        color: var(--text-field);
+    }
+
+    & #para2 {
+        color: var(--text-field);
+    }
+
+    & #para3 {
+        color: var(--text-field);
+    }
+  }
+
+  [data-theme="high-contrast"]{
+    --bg-color: #f2ede9;
+    --text-field: white;
+    --hover-btn: #cecac7;
+    --heading-color: #632f0a;
+    --primary-btn: #a54907;
+    --secondary-btn: #632f0a;
+    --shadow-color: grey;
+
+    background-color: #f2ede9;
+
+    & #header {
+        color: var(--heading-color);
+    }
+
+    & .loginWrapper {
+        border:10px solid var(--heading-color);
+        box-shadow: 0px 2px 6px var(--shadow-color);
+    }
+
+    & .rightBox {
+        background-color: var(--primary-btn);
+    }
+
+    & #email, & #password {
+        border: 3px solid var(--heading-color);
+        box-shadow: 0px 2px 5px var(--shadow-color);
+    }
+
+    & #login {
+        background-color: var(--heading-color);
+        box-shadow: 1px 3px 8px var(--shadow-color);
+        color: #f2ede9;
+    }
+
+    & #login:hover {
+        background-color: rgb(36, 20, 9);
+    }
+
+    & #signup {
+        background-color: var(--bg-color);
+        box-shadow: 1px 3px 8px var(--heading-color);
+        color: var(--heading-color);
+    }
+
+    & #signup:hover {
+        background-color: var(--hover-btn);
+    }
+
+    & #emailLabel, & #passwordLabel {
+        color: var(--heading-color);
+    }
+
+    & #para1 {
+        color: var(--text-field);
+    }
+
+    & #para2 {
+        color: var(--text-field);
+    }
+
+    & #para3 {
+        color: var(--text-field);
+    }
+}
