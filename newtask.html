@@ -53,7 +53,8 @@
             return new Promise((resolve) => {
                 const synth = window.speechSynthesis;
                 const utterance = new SpeechSynthesisUtterance(text);
-                
+                utterance.rate = 0.7;
+
                 // Ensure voices are loaded before speaking
                 const voices = synth.getVoices();
                 if (voices.length > 0) {
@@ -224,7 +225,7 @@
             } else if (command.toLowerCase().includes("cancel")) {
                 window.location.href = "tasks"; // Redirects to home page (Cancel action)
             } else if (command.toLowerCase().includes("read reminder")) {
-                await readReminder(); // Calls the readReminder function
+                await readReminder(); // Calls the readReminder function  
             } else if (command.toLowerCase().includes("clear reminder")) {
                 await clearReminder(); // Calls the clearReminder function
             } else {
