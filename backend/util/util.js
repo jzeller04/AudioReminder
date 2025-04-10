@@ -1,13 +1,15 @@
 function dateToReadable(date)
 {
-    const options = {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-    };
 
-    return new Date(date).toLocaleDateString('en-US',options);
+    const localDate = formatDate(date);
+
+        const utcDate = "2025-04-10T00:00:00.000+00:00";
+        console.log("Input Date (UTC):", utcDate);
+        
+
+        console.log("Converted Local Date:", localDate);
+
+    return localDate;
 }
 
 function timeToTwelveSystem(time) // thank you gippity for making my life easier here lol, strings suck
@@ -26,6 +28,22 @@ function timeToTwelveSystem(time) // thank you gippity for making my life easier
 
     // Format time back to a string
     return `${hours}:${minutes < 10 ? '0' + minutes : minutes} ${period}`; 
+}
+
+function formatDate(date) {
+    const parsedDate = new Date(date);
+    parsedDate.setHours(parsedDate.getHours() + new Date().getTimezoneOffset() / 60); // Adjust for the time zone offset
+
+    const options = {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    };
+
+    const localDate = parsedDate.toLocaleDateString('en-US', options);
+    console.log("Adjusted Local Date: ", localDate); // For debugging
+    return localDate;
 }
 
 module.exports = {dateToReadable, timeToTwelveSystem};
