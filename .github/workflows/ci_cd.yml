@@ -1,54 +1,45 @@
-name: Node.js App CI
+name: Continuous Integration
 
 on:
-  push:
-    branches: [ main ]
   pull_request:
-    branches: [ main ]
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
 
 jobs:
-  build:
+  test-javascript:
+    name: JavaScript Tests
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        node-version: [18.x]
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      - name: Checkout
+        id: checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        id: setup-node
+        uses: actions/setup-node@v4
         with:
-          persist-credentials: false  # Required to push using PAT
+          node-version-file: .node-version
+          cache: npm
 
-      - name: Set up Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v3
-        with:
-          node-version: ${{ matrix.node-version }}
+      - name: Install Dependencies
+        id: npm-ci
+        run: npm ci
 
-      - name: Install dependencies
-        run: npm install
+      - name: Check Format
+        id: npm-format-check
+        run: npm run format:check
 
-      - name: Run linter and auto-fix
-        run: npx eslint . --fix
+      - name: Lint
+        id: npm-lint
+        run: npm run lint
 
-      - name: Push changes to staging
-        env:
-          GH_PAT: ${{ secrets.GH_PAT }}
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git checkout -b staging || git checkout staging
-          git add .
-          git diff --cached --quiet || (
-            git commit -m "chore: lint auto-fixes"
-            git push https://x-access-token:${GH_PAT}@github.com/${{ github.repository }}.git staging --force
-          )
-
-      - name: Merge staging to main
-        env:
-          GH_PAT: ${{ secrets.GH_PAT }}
-        run: |
-          git checkout main
-          git pull origin main
-          git merge staging --no-edit
-          git push https://x-access-token:${GH_PAT}@github.com/${{ github.repository }}.git main
+      - name: Test
+        id: npm-ci-test
+        run: npm run ci-test
