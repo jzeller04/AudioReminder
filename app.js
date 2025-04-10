@@ -13,6 +13,7 @@ const session = require('express-session');
 const { request } = require('http');
 const User = require('./backend/models/user.js');
 const {saveReminderToUser} = require('./backend/saveReminderToUser.js');
+const {dateToReadable, timeToTwelveSystem} = require('./backend/util/util.js');
 
 // TDL: All of this needs to be refactored. It's hard to read for literally no reason. There isnt anything complicated happening in this file.
 
@@ -55,15 +56,17 @@ app.get('/', async (request, response) => {
 
             let reminder = userReminders[0];
 
-            let reminderHTML = 
-                `<hr> 
-                <div class="reminder-item">          
-                    <p>${reminder.title || 'No reminder found'}</p>
-                    <p>${reminder.description || 'No reminder found'}</p>
-                    <p>${reminder.date || 'No reminder found'}</p>
-                    <p>${reminder.time || 'No reminder found'}</p>
-                </div>`
-            '';
+            let reminderHTML = reminder =
+                `<div class="reminder-item"> 
+        <div class="reminder-content">
+            <p class="reminder-title">${reminder.title || 'No reminder found'}</p>
+            <p class="reminder-description">${reminder.description || 'No reminder found'}</p>
+            <p class="reminder-date">${dateToReadable(reminder.date) || 'No reminder found'}</p>
+            <p class="reminder-time">${timeToTwelveSystem(reminder.time) || 'No reminder found'}</p>
+        </div>
+        
+    </div>`
+            ;
     
             const finalHTML = template.replace('{{REMINDERS}}', reminderHTML);
     
@@ -122,8 +125,8 @@ app.get('/tasks', async (request, response) => {
     <div class="reminder-content">
         <p class="reminder-title">${reminder.title || 'No reminder found'}</p>
         <p class="reminder-description">${reminder.description || 'No reminder found'}</p>
-        <p class="reminder-date">${reminder.date || 'No reminder found'}</p>
-        <p class="reminder-time">${reminder.time || 'No reminder found'}</p>
+        <p class="reminder-date">${dateToReadable(reminder.date) || 'No reminder found'}</p>
+        <p class="reminder-time">${timeToTwelveSystem(reminder.time) || 'No reminder found'}</p>
     </div>
     <button class="complete-btn" data-id="${reminder._id}">Mark Complete</button>
 </div>`

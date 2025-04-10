@@ -10,7 +10,8 @@ async function createUserWithSignUp(email, password) {
         const user = new User(
             {
                 userEmail: email,
-                password: hashedPassword
+                password: hashedPassword,
+                settings: {}
             }
         );
         user.save();
