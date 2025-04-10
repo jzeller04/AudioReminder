@@ -4,7 +4,7 @@ const mongoose = require('mongoose');
 const { Schema } = mongoose;
 
 // MongoDB connection setup
-const uri = "mongodb+srv://XXXX:XXXX@audiodb.txm6x.mongodb.net/?retryWrites=true&w=majority&appName=audioDB";
+const uri = 'mongodb+srv://XXXX:XXXX@audiodb.txm6x.mongodb.net/?retryWrites=true&w=majority&appName=audioDB';
 
 // Connect to MongoDB Atlas
 mongoose.connect(uri)

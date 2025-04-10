@@ -37,7 +37,7 @@ const isAuthentic = (request, response, next) =>
     }else{
         return response.redirect('/login');
     }
-}
+};
 
 // listen for requests
 // send html pages back
@@ -63,7 +63,7 @@ app.get('/', async (request, response) => {
                     <p>${reminder.description || 'No reminder found'}</p>
                     <p>${reminder.date || 'No reminder found'}</p>
                     <p>${reminder.time || 'No reminder found'}</p>
-                </div>`
+                </div>`;
             '';
     
             const finalHTML = template.replace('{{REMINDERS}}', reminderHTML);
@@ -79,7 +79,7 @@ app.get('/', async (request, response) => {
                     <p>${''}</p>
                     <p>${''}</p>
                     <p>${''}</p>
-                </div>`
+                </div>`;
             '';
     
             const finalHTML = template.replace('{{REMINDERS}}', reminderHTML);
@@ -235,8 +235,8 @@ app.get('/logout', (request, response) => {
         {
             return response.redirect('/login');
         }
-    })
-})
+    });
+});
 
 app.post('/submit', (request, response) => {
     const title = request.body.title; // as of right now, when you enter a title in the tasks screen, it will send a 'reminder' to the DB with the title entered
@@ -247,7 +247,7 @@ app.post('/submit', (request, response) => {
         saveReminderToUser(title,description,time,date, request.session.userId);
         return response.redirect('/newtask');
     } else {
-        return response.status(400).send("No title received");
+        return response.status(400).send('No title received');
     }
 });
 

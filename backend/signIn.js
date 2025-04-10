@@ -5,7 +5,7 @@ const User = require('./models/user.js');
 async function signInSuccess(email, password)
 {
     try {
-        const foundUserID = await User.findOne({userEmail: email})
+        const foundUserID = await User.findOne({userEmail: email});
         
         if(foundUserID)
         {

@@ -102,20 +102,20 @@
       recognition.onresult = (event) => {
           // Process the speech results and convert to lowercase
           const transcript = event.results[event.results.length - 1][0].transcript.toLowerCase();
-          console.log("Voice Command Detected:", transcript);
+          console.log('Voice Command Detected:', transcript);
           handleVoiceCommand(transcript);
       };
       
       recognition.onerror = (event) => {
-          console.error("Speech recognition error:", event.error);
+          console.error('Speech recognition error:', event.error);
       };
       
       recognition.onstart = () => {
-          console.log("Voice recognition started");
+          console.log('Voice recognition started');
       };
       
       recognition.onend = () => {
-          console.log("Voice recognition ended");
+          console.log('Voice recognition ended');
           if (!isRecording) {
               recognition.start(); // Restart recognition after it ends (if not recording)
           }
@@ -158,7 +158,7 @@
       transcriptText = '';
       
       transcriptRecognition.onresult = (event) => {
-          console.log("Speech recognition result received");
+          console.log('Speech recognition result received');
           let interimTranscript = '';
           let finalTranscript = '';
           
@@ -182,18 +182,18 @@
                   <p>${transcriptText}</p>
                   <p class="interim">${interimTranscript}</p>
               `;
-              console.log("Updated transcript:", transcriptText);
+              console.log('Updated transcript:', transcriptText);
           } else {
-              console.error("Transcript content element not found");
+              console.error('Transcript content element not found');
           }
       };
       
       transcriptRecognition.onerror = (event) => {
-          console.error("Transcript recognition error:", event.error);
+          console.error('Transcript recognition error:', event.error);
       };
       
       transcriptRecognition.onend = () => {
-          console.log("Transcript recognition ended");
+          console.log('Transcript recognition ended');
           // Remove recording indicator when transcription ends
           const recordingIndicator = document.querySelector('.recording-indicator');
           if (recordingIndicator) {
@@ -208,7 +208,7 @@
       
       // Start the transcript recognition
       transcriptRecognition.start();
-      console.log("Transcript recognition started");
+      console.log('Transcript recognition started');
   }
   
   // Add event listeners to buttons
@@ -221,13 +221,13 @@
   
   // Handle voice commands
   function handleVoiceCommand(command) {
-      if (command.includes("start recording")) {
+      if (command.includes('start recording')) {
           startRecording();
-      } else if (command.includes("stop recording")) {
+      } else if (command.includes('stop recording')) {
           stopRecording();
-      } else if (command.includes("delete")) {
+      } else if (command.includes('delete')) {
           deleteAudio();
-      } else if (command.includes("save") && audioPlayer.src) {
+      } else if (command.includes('save') && audioPlayer.src) {
           saveAudio();
       }
   }
@@ -253,7 +253,7 @@
               const url = URL.createObjectURL(audioBlob);
               audioPlayer.src = url;
               audioPlayer.parentElement.style.display = 'block';
-              console.log("Recording complete");
+              console.log('Recording complete');
           };
           
           mediaRecorder.start();
@@ -266,7 +266,7 @@
           recordButton.disabled = true;
           stopButton.disabled = false;
       } catch (err) {
-          console.error("Microphone is not available:", err);
+          console.error('Microphone is not available:', err);
           updateTranscriptText(`Error: Could not access microphone. ${err.message}`);
       }
   }
@@ -286,7 +286,7 @@
           if (transcriptText) {
               updateTranscriptText(transcriptText);
           } else {
-              updateTranscriptText("No speech detected during recording.");
+              updateTranscriptText('No speech detected during recording.');
           }
           
           // Update UI
@@ -316,10 +316,10 @@
               });
               
               const data = await response.json();
-              console.log("Audio saved:", data);
-              updateTranscriptText("Audio and transcript saved successfully.");
+              console.log('Audio saved:', data);
+              updateTranscriptText('Audio and transcript saved successfully.');
           } catch (err) {
-              console.error("Error saving audio:", err);
+              console.error('Error saving audio:', err);
           }
       }
   }
@@ -329,7 +329,7 @@
       audioPlayer.src = '';
       audioPlayer.parentElement.style.display = 'none';
       transcriptText = '';
-      updateTranscriptText("Audio deleted. Ready to record again.");
+      updateTranscriptText('Audio deleted. Ready to record again.');
       
       // Reset UI
       saveButton.disabled = true;

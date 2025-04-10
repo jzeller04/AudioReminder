@@ -115,7 +115,7 @@ const Calendar = {
                     }
                 }
 
-                console.log("Parsed tasks:", tasks);
+                console.log('Parsed tasks:', tasks);
 
                 this.tasks = tasks;
                 this.isLoading = false;

@@ -131,7 +131,7 @@ const GoogleAuth = {
         window.Calendar.loadCalendarEvents();
     }
       
-      console.log("User successfully logged in:", this.userData);
+      console.log('User successfully logged in:', this.userData);
   },
   
   // Update the UI based on authentication state
@@ -204,7 +204,7 @@ const GoogleAuth = {
       // Dispatch logout event
       window.dispatchEvent(new CustomEvent('userLoggedOut'));
       
-      console.log("User signed out");
+      console.log('User signed out');
   },
   
   // Helper function to parse JWT tokens

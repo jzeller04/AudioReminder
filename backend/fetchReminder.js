@@ -1,7 +1,7 @@
 const { error } = require('console');
 const Reminder = require('./models/reminder');
 const User = require('./models/user');
-console.log("fetchReminder.js loaded");
+console.log('fetchReminder.js loaded');
 async function fetch(userId)
 
 {
@@ -24,7 +24,7 @@ async function fetch(userId)
         {
             const reminderDate = new Date(reminder.date);
             //console.log("reminder date: ", reminderDate);
-            return reminder.date >= today && reminder.date < nextWeek
+            return reminder.date >= today && reminder.date < nextWeek;
         }
 
         );
@@ -45,7 +45,7 @@ async function updateUserReminders(userId) {
 
     try
     {
-        console.log("updateUserReminders CALLED for user:", userId);
+        console.log('updateUserReminders CALLED for user:', userId);
         const twoDaysAgo = new Date();
         twoDaysAgo.setDate(twoDaysAgo.getDate()-2);
 
@@ -74,8 +74,8 @@ async function fetchOne(userId)
         nextWeek.setHours(23, 59, 59, 999); // set to just before midnight
         nextWeek.setDate(today.getDate() + 6); // add 6 days to next week date
         const user = await User.findOne(
-            {_id: userId, "reminders.date": {$gte: today, $lt: nextWeek}},
-            {"reminders": 1}
+            {_id: userId, 'reminders.date': {$gte: today, $lt: nextWeek}},
+            {'reminders': 1}
     );
         if(!user)
         {

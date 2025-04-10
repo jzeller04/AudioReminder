@@ -16,7 +16,7 @@ async function saveReminderToUser(title, description, time, date, userId) { // u
             {_id: userId},
             {$push: {reminders: reminder}}, // push new reminder to reminder array in user
             {new: true}
-        )
+        );
         if(updateUser)
         {
             console.log(reminder);
