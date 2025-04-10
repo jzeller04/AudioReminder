@@ -49,12 +49,7 @@ jobs:
             --output-file eslint-results.sarif
         continue-on-error: true
         
-      - name: Debug Check SARIF exists
-        run: ls -lh eslint-results.sarif || echo "SARIF file not found"
-
-      - name: Upload SARIF as artifact
-        if: always()
-        uses: actions/upload-artifact@v3
+      - name: Upload SARIF to GitHub
+        uses: github/codeql-action/upload-sarif@v3
         with:
-          name: eslint-results
-          path: eslint-results.sarif
+          sarif_file: eslint-results.sarif
