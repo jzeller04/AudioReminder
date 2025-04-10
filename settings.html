@@ -11,6 +11,30 @@
         <nav>
             <button onclick="location.href='/';">Home</button>
         </nav>
+        
+        <section>
+            <!-- All buttons post to the same route -->
+            <form action="/updateSettings" method="POST">
+                <button type="submit" name="setting" value="highContrastHandle">High Contrast Mode</button>
+            </form>
+        
+            <form action="/updateSettings" method="POST">
+                <button type="submit" name="setting" value="voiceCommandHandle">Voice Commands</button>
+            </form>
+        
+            <form action="/updateSettings" method="POST">
+                <button type="submit" name="setting" value="pushToTalkHandle">Push To Talk</button>
+            </form>
+        </section>
+        
+    </form>
+
+    <form action="/updateSettings" method="POST">
+        <!-- Slider: Volume -->
+        <label for="volume">Volume: </label>
+        <input type="range" id="volume" name="volume" min="0" max="100" value="50" />
+
+    </form>
         <script>
             // Function for Text-to-Speech (TTS)
             function speak(text) {
@@ -32,8 +56,8 @@
                 });
             }
             window.onbeforeunload = () => {
-    window.speechSynthesis.cancel(); // Stops any ongoing speech synthesis
-};
+                window.speechSynthesis.cancel(); // Stops any ongoing speech synthesis
+            };
 
             // Start TTS and Speech Recognition once the page is loaded
             window.onload = enableTTS;

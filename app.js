@@ -12,7 +12,7 @@ const {createUserWithSignUp} = require('./backend/signUp.js');
 const session = require('express-session');
 const { request } = require('http');
 const User = require('./backend/models/user.js');
-const {saveReminderToUser} = require('./backend/saveReminderToUser.js');
+const {saveReminderToUser, saveUserSettings} = require('./backend/saveReminderToUser.js');
 const {dateToReadable, timeToTwelveSystem} = require('./backend/util/util.js');
 
 // TDL: All of this needs to be refactored. It's hard to read for literally no reason. There isnt anything complicated happening in this file.
@@ -109,6 +109,14 @@ app.get('/settings', (request, response) =>
         return response.sendFile('./settings.html', { root: __dirname });
     }
 );
+
+// POST req for settings
+app.post('/updateSettings', async (request, response) => 
+{
+    console.log(request.body.setting);
+    saveUserSettings(request.body.setting, request.session.userId);
+    return response.redirect('/settings');
+});
 
 // Does the same thing as the home page (Maybe we can combine these later)
 app.get('/tasks', async (request, response) => {
