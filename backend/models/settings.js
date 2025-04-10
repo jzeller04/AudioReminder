@@ -24,7 +24,7 @@ const settingsSchema = new Schema({
         default: true
     }
 
-});// saves the time when reminder is created
+});
 
 const Settings = mongoose.model('Settings', settingsSchema); // has to be the same name as the collection in the DB
 module.exports = Settings; // exports to other files
