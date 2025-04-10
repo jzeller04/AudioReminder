@@ -4,12 +4,18 @@
         <title>AudioReminder - Sign Up</title>
         <link rel="stylesheet" href="css/signup.css">
         <script>
-            // Load theme on page load
             document.addEventListener('DOMContentLoaded', function() {
-                const savedTheme = localStorage.getItem('audioreminder-theme') || 'low-contrast';
-                document.body.dataset.theme = savedTheme;
+                // Check if server provided a theme (from session)
+                const serverTheme = '{{serverTheme}}'; // This will be replaced by the server
+                
+                // Use server theme if available, otherwise use localStorage, or default to low-contrast
+                const theme = serverTheme || localStorage.getItem('audioreminder-theme') || 'low-contrast';
+                
+                // Apply theme and save to localStorage for future visits
+                document.body.dataset.theme = theme;
+                localStorage.setItem('audioreminder-theme', theme);
             });
-        </script>
+          </script>
     </head>
     <body data-theme="low-contrast">
         <nav>
