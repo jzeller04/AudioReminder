@@ -119,8 +119,8 @@ hr {
   }
 }
 
-[data-theme="dark-contrast"]{
-  --bg-color: #f2ede9;
+[data-theme="high-contrast"]{
+  --bg-color: #000000;
   --heading-color: #632f0a;
   --primary-btn: #a54907;
   --secondary-btn: #632f0a;

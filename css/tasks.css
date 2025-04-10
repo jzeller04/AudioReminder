@@ -71,7 +71,6 @@ hr {
 }
 
 #text1 {
-  color: #632f0a;
   font-size: 36px;
   font-weight: bold;
   margin: 20px;
@@ -112,9 +111,9 @@ hr {
   }
 
   & .complete-btn {
-    color: var(--text-field);
     background-color: var(--heading-color);
     border: 6px solid var(--heading-color);
+    color: var(--text-color);
   }
 
   & .complete-btn:hover, & .complete-btn:focus {
@@ -141,6 +140,7 @@ hr {
   --secondary-btn: #632f0a;
   --shadow-color: grey;
   --box-shadow: black;
+
 
   background-color: var(--bg-color);
 

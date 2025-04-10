@@ -3,6 +3,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AudioReminder - New Task</title>
     <link rel="stylesheet" href="css/newtask.css">
+    <script>
+        // Load theme on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedTheme = localStorage.getItem('audioreminder-theme') || 'low-contrast';
+            document.body.dataset.theme = savedTheme;
+        });
+    </script>
 </head>
 <body data-theme="low-contrast">
     <header>

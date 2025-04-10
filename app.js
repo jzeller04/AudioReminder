@@ -28,6 +28,26 @@ app.use(session({
     saveUninitialized: true,
     cookie: {secure: false}
 }));
+
+// Theme middleware function (query the database only if there is no theme already in session)
+app.use(async (req, res, next) => {
+    if (req.session.userId) {
+      // Only fetch if theme isn't already in session
+      if (!req.session.theme) {
+        try {
+          const user = await User.findById(req.session.userId, 'preferences.theme');
+          req.session.theme = user?.preferences?.theme || 'low-contrast';
+        } catch (error) {
+          console.log('Error loading theme preference:', error);
+          req.session.theme = 'low-contrast';
+        }
+      }
+      // Make theme available to templates
+      res.locals.theme = req.session.theme;
+    }
+    next();
+  });
+
 // no idea why, but this code is required for the logging in to work. :shrug:
 const isAuthentic = (request, response, next) =>
 {
@@ -50,6 +70,8 @@ app.get('/', async (request, response) => {
         console.log(await fetchReminder.updateUserReminders(request.session.userId));
         const template = await fs.promises.readFile(__dirname + '/index.html', 'utf8');
         const userReminders = await fetchReminder.fetch(request.session.userId);
+        // Add the theme from session
+        const theme = request.session.theme || 'low-contrast';
         //console.log(userReminders);
         if(userReminders.length != 0)
         {
@@ -66,7 +88,9 @@ app.get('/', async (request, response) => {
                 </div>`
             '';
     
-            const finalHTML = template.replace('{{REMINDERS}}', reminderHTML);
+            const finalHTML = template
+                .replace('{{REMINDERS}}', reminderHTML)
+                .replace('{{serverTheme}}', theme);
     
             return response.send(finalHTML);
         }
@@ -96,7 +120,7 @@ app.get('/', async (request, response) => {
 app.use(express.static(__dirname));
 
 app.use(bodyParser.urlencoded({extended: true}));
-
+app.use(bodyParser.json());
 
 app.get('/settings', (request, response) => 
     {
@@ -251,7 +275,29 @@ app.post('/submit', (request, response) => {
     }
 });
 
-
+// Save theme route
+app.post('/save-theme', bodyParser.json(), async (req, res) => {
+    if (!req.session.userId) {
+      return res.status(401).json({ error: 'Not authenticated' });
+    }
+    
+    const theme = req.body.theme;
+    
+    try {
+      // Update in database
+      await User.findByIdAndUpdate(req.session.userId, {
+        $set: { 'preferences.theme': theme }
+      });
+      
+      // Update in session
+      req.session.theme = theme;
+      
+      return res.json({ success: true });
+    } catch (error) {
+      console.log('Error saving theme preference:', error);
+      return res.status(500).json({ error: 'Failed to save theme preference' });
+    }
+  });
 
 mongoose.connect(dbURI)
     .then((result) => app.listen(3000), console.log('Successfully connected to DB ... listening on port 3000')) // will change localhost later when server is online, 3000 port is for local web dev)

@@ -12,6 +12,13 @@ const userSchema = new Schema({
         type: String
     },
     reminders: [Reminder.schema],
+    // Preference for theme
+    preferences: {
+        theme: {
+            type: String,
+            default: 'low-contrast'
+        }
+    }
 }, {timestamps: true}); // saves the time when reminder is created
 
 const User = mongoose.model('User', userSchema, 'users'); // has to be the same name as the collection in the DB
