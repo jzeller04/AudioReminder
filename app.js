@@ -14,7 +14,6 @@ const { request } = require('http');
 const User = require('./backend/models/user.js');
 const {saveReminderToUser} = require('./backend/saveReminderToUser.js');
 
-
 // TDL: All of this needs to be refactored. It's hard to read for literally no reason. There isnt anything complicated happening in this file.
 
 // connect to mongodb
@@ -119,16 +118,15 @@ app.get('/tasks', async (request, response) => {
         const reminders = await fetchReminder.fetch(request.session.userId);
 
         let reminderHTML = reminders.map(reminder =>
-            `<hr>
-            <div class="reminder-item"> 
-                <div class="reminder-content">
-                    <p>${reminder.title || 'No reminder found'}</p>
-                    <p>${reminder.description || 'No reminder found'}</p>
-                    <p>${reminder.date || 'No reminder found'}</p>
-                    <p>${reminder.time || 'No reminder found'}</p>
-                </div>
-            <button class="complete-btn" data-id="${reminder._id}">Mark Complete</button>
-            </div>`
+            `<div class="reminder-item"> 
+    <div class="reminder-content">
+        <p class="reminder-title">${reminder.title || 'No reminder found'}</p>
+        <p class="reminder-description">${reminder.description || 'No reminder found'}</p>
+        <p class="reminder-date">${reminder.date || 'No reminder found'}</p>
+        <p class="reminder-time">${reminder.time || 'No reminder found'}</p>
+    </div>
+    <button class="complete-btn" data-id="${reminder._id}">Mark Complete</button>
+</div>`
         ).join('');
 
         const finalHTML = template.replace('{{REMINDERS}}', reminderHTML);

@@ -3,7 +3,7 @@ const argon2 = require('argon2');
 const User = require('./models/user.js');
 
 async function createUserWithSignUp(email, password) {
-    console.log('sdjkfjshdf');
+
     if(email && password)
     {
         const hashedPassword = await argon2.hash(password);
