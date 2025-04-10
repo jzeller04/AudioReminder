@@ -16,9 +16,7 @@
 
     "serve": "node app.js --open", 
 
-    "lint:js": "eslint src/**/*.js",
-    
-    "lint": "npm run lint:js"
+    "lint": "eslint . --ext .js"
 
   },
 
