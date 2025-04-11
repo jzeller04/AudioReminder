@@ -11,7 +11,7 @@ async function createUserWithSignUp(email, password) {
             {
                 userEmail: email,
                 password: hashedPassword,
-                settings: {}
+                preferences: {}
             }
         );
         user.save();

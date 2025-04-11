@@ -35,24 +35,24 @@ async function saveUserSettings(settings, userId) {
             return;
         }
 
-        console.log("Before Update:", user.settings); // for dev purposes atm
+        console.log("Before Update:", user.preferences); // for dev purposes atm
 
         // Toggle settings based on the `settings` value
         switch (settings) {
             case 'highContrastHandle':
-                user.settings.highContrast = !user.settings.highContrast;
+                user.preferences.highContrast = !user.preferences.highContrast;
                 break;
             case 'voiceCommandHandle':
-                user.settings.voiceCommands = !user.settings.voiceCommands;
+                user.preferences.voiceCommands = !user.preferences.voiceCommands;
                 break;
             case 'pushToTalkHandle':
-                user.settings.pushToTalk = !user.settings.pushToTalk;
+                user.preferences.pushToTalk = !user.preferences.pushToTalk;
                 break;
             default:
                 break;
         }
 
-        console.log("After Update:", user.settings); // for dev purposes atm
+        console.log("After Update:", user.preferences); // for dev purposes atm
 
         // Save the updated user settings
         await user.save();

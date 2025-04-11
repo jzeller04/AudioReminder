@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const Reminder = require('./reminder.js');
-const Settings = require('./settings.js');
+const Preferences = require('./settings.js');
 
 const Schema = mongoose.Schema;
 
@@ -14,8 +14,8 @@ const userSchema = new Schema({
         type: String
     },
     reminders: [Reminder.schema],
-    settings: {
-        type: Settings.schema
+    preferences: {
+        type: Preferences.schema
     }
 }, {timestamps: true}); // saves the time when reminder is created
 

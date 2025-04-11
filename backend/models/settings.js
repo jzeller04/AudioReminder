@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-const settingsSchema = new Schema({
+const preferencesSchema = new Schema({
     // title is a string, and required for every reminder
     highContrast: {
         type: Boolean,
@@ -26,5 +26,5 @@ const settingsSchema = new Schema({
 
 });
 
-const Settings = mongoose.model('Settings', settingsSchema); // has to be the same name as the collection in the DB
-module.exports = Settings; // exports to other files
+const Preferences = mongoose.model('Preferences', preferencesSchema); // has to be the same name as the collection in the DB
+module.exports = Preferences; // exports to other files
