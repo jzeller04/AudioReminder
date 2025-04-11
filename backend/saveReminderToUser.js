@@ -40,7 +40,8 @@ async function saveUserSettings(settings, userId) {
         // Toggle settings based on the `settings` value
         switch (settings) {
             case 'highContrastHandle':
-                user.preferences.highContrast = !user.preferences.highContrast;
+                if(user.preferences.highContrast == 'low-contrast') {user.preferences.highContrast = 'high-contrast'; break;}
+                if(user.preferences.highContrast == 'high-contrast') {user.preferences.highContrast = 'low-contrast'; break;}
                 break;
             case 'voiceCommandHandle':
                 user.preferences.voiceCommands = !user.preferences.voiceCommands;

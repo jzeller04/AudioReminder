@@ -4,9 +4,9 @@ const Schema = mongoose.Schema;
 const preferencesSchema = new Schema({
     // title is a string, and required for every reminder
     highContrast: {
-        type: Boolean,
+        type: String,
         required: true,
-        default: false
+        default: 'low-contrast'
     },
     volume: {
         type: Number,
