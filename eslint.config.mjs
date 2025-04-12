@@ -3,10 +3,9 @@ import js from '@eslint/js';
 export default [
   js.configs.recommended,
 
-
   {
     files: ['**/*.js'],
-    ignores: ['**/reference/**', '**/src/**', '**/js/**'],
+    ignores: ['reference/src/**'],
     languageOptions: {
       sourceType: 'commonjs',
       ecmaVersion: 'latest',
@@ -22,25 +21,35 @@ export default [
   },
 
   {
-    files: ['js/**/*.js', 'run/**/*.js', 'reference/src/**/*.js'],
+    files: ['js/**/*.js', 'run/**/*.js', 'audio-recorder.js'],
     languageOptions: {
       sourceType: 'script',
       ecmaVersion: 'latest',
       globals: {
         window: 'readonly',
         document: 'readonly',
-        navigator: 'readonly',
+        console: 'readonly',
         localStorage: 'readonly',
+        navigator: 'readonly',
         MediaRecorder: 'readonly',
         Blob: 'readonly',
         URL: 'readonly',
-        CustomEvent: 'readonly',
-        speechSynthesis: 'readonly',
-        SpeechSynthesisUtterance: 'readonly',
+        FormData: 'readonly',
         fetch: 'readonly',
         alert: 'readonly',
+        CustomEvent: 'readonly',
+        SpeechSynthesisUtterance: 'readonly',
+        speechSynthesis: 'readonly',
         atob: 'readonly',
       },
+    },
+  },
+
+  {
+    files: ['reference/src/**/*.js'],
+    languageOptions: {
+      sourceType: 'module',
+      ecmaVersion: 'latest',
     },
   },
 ];
