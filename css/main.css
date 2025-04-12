@@ -120,10 +120,10 @@ body[data-theme="low-contrast"]{
 }
 
 body[data-theme="high-contrast"]{
-  --bg-color: #000000;
-  --heading-color: #632f0a;
-  --primary-btn: #a54907;
-  --secondary-btn: #632f0a;
+  --bg-color: white;
+  --heading-color: black;
+  --primary-btn: black;
+  --secondary-btn: black;
   --text-color: white;
   --light-shadow: grey;
 
