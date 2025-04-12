@@ -4,6 +4,8 @@
 
   "version": "0.0.0",
 
+  "type": "module",
+
   "private": true,
 
   "main": "index.js",
@@ -57,6 +59,8 @@
   },
 
   "devDependencies": {
+
+    "eslint": "^9.0.0",
 
     "nodemon": "^3.0.1"
 
