@@ -1,10 +1,12 @@
-h1 {
+body {
   font-family: Helvetica, Arial, sans-serif;
-  font-size: 60px;
-  margin-top: 80px;
+}
+
+h1 {
+  font-size: 50px;
   margin-bottom: 80px;
+  margin-top: 50px;
   text-align: center;
-  text-transform: uppercase;
 }
 
 button {
@@ -29,4 +31,241 @@ button:hover {
   border: 6px solid black;
   color: black;
   cursor: pointer;
+}
+
+/* Toggle Switch Styles */
+.theme-switch-container {
+  display: flex;
+  align-items: center;
+  margin: 25px auto;
+  width: 500px;
+  justify-content: space-between;
+}
+
+.theme-switch-label {
+  color: #632f0a;
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: 40px;
+  font-weight: bold;
+  margin-right: 20px;
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 120px;
+  height: 68px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: .4s;
+  border: 3px solid #632f0a;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 52px;
+  width: 52px;
+  left: 8px;
+  bottom: 5px;
+  background-color: white;
+  transition: .4s;
+}
+
+input:checked + .slider {
+  background-color: #a54907;
+}
+
+input:focus + .slider {
+  box-shadow: 0 0 1px #a54907;
+}
+
+input:checked + .slider:before {
+  transform: translateX(52px);
+}
+
+/* Rounded sliders */
+.slider.round {
+  border-radius: 34px;
+}
+
+.slider.round:before {
+  border-radius: 50%;
+}
+
+/* Theme indicator text */
+.theme-text {
+  position: absolute;
+  color: white;
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  font-weight: bold;
+  text-transform: uppercase;
+  transition: .4s;
+}
+
+.theme-text.off {
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 1;
+}
+
+.theme-text.on {
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0;
+}
+
+input:checked + .slider .theme-text.off {
+  opacity: 0;
+}
+
+input:checked + .slider .theme-text.on {
+  opacity: 1;
+}
+
+[data-theme="low-contrast"]{
+  --bg-color: #f2ede9;
+  --heading-color: #632f0a;
+  --primary-btn: #a54907;
+  --secondary-btn: #632f0a;
+  --text-color: white;
+  --shadow-color: grey;
+
+  & h1 {
+    color: var(--heading-color);
+  }
+
+  & button {
+    background-color: var(--primary-btn);
+    border: 6px solid var(--primary-btn);
+    box-shadow: 0px 2px 6px var(--light-shadow);
+    color: var(--text-color);
+  }
+  
+  & button:hover {
+    background-color: var(--bg-color);
+    border: 10px solid var(--primary-btn);
+    color: var(--primary-btn);
+  }
+
+  & #homeButton {
+    background-color: var(--secondary-btn);
+    border: 6px solid var(--secondary-btn);
+    box-shadow: 0px 2px 6px var(--light-shadow);
+    color: var(--text-color);
+  }
+
+  & #homeButton:hover {
+    background-color: var(--bg-color);
+    border: 6px solid var(--secondary-btn);
+    color: var(--secondary-btn);
+  }
+  
+  & .theme-switch-label {
+    color: var(--secondary-btn);
+  }
+  
+  & .slider {
+    background-color: var(--shadow-color);
+    border: 3px solid var(--secondary-btn);
+  }
+  
+  & .slider:before {
+    background-color: var(--text-color);
+  }
+  
+  & input:checked + .slider {
+    background-color: var(--primary-btn);
+  }
+  
+  & input:focus + .slider {
+    box-shadow: 0 0 1px var(--primary-btn);
+  }
+  
+  /* Theme indicator text */
+  & .theme-text {
+    color: var(--text-color);
+  }
+}
+
+[data-theme="high-contrast"]{
+  --bg-color: white;
+  --heading-color: black;
+  --primary-btn: black;
+  --secondary-btn: black;
+  --text-color: white;
+  --shadow-color: grey;
+
+  & h1 {
+    color: var(--heading-color);
+  }
+
+  & button {
+    background-color: var(--primary-btn);
+    border: 6px solid var(--primary-btn);
+    box-shadow: 0px 2px 6px var(--light-shadow);
+    color: var(--text-color);
+  }
+  
+  & button:hover {
+    background-color: var(--bg-color);
+    border: 10px solid var(--primary-btn);
+    color: var(--primary-btn);
+  }
+
+  & #homeButton {
+    background-color: var(--secondary-btn);
+    border: 6px solid var(--secondary-btn);
+    box-shadow: 0px 2px 6px var(--light-shadow);
+    color: var(--text-color);
+  }
+
+  & #homeButton:hover {
+    background-color: var(--bg-color);
+    border: 6px solid var(--secondary-btn);
+    color: var(--secondary-btn);
+  }
+  
+  & .theme-switch-label {
+    color: var(--secondary-btn);
+  }
+  
+  & .slider {
+    background-color: var(--shadow-color);
+    border: 3px solid var(--secondary-btn);
+  }
+  
+  & .slider:before {
+    background-color: var(--text-color);
+  }
+  
+  & input:checked + .slider {
+    background-color: var(--primary-btn);
+  }
+  
+  & input:focus + .slider {
+    box-shadow: 0 0 1px var(--primary-btn);
+  }
+  
+  /* Theme indicator text */
+  & .theme-text {
+    color: var(--text-color);
+  }
 }

@@ -51,52 +51,53 @@ app.get('/', async (request, response) => {
         const template = await fs.promises.readFile(__dirname + '/index.html', 'utf8');
         const userReminders = await fetchReminder.fetch(request.session.userId);
         //console.log(userReminders);
-        if(userReminders.length != 0)
-        {
 
-            let reminder = userReminders[0];
-
-            let reminderHTML = reminder =
+        let reminderHTML;
+        if(userReminders.length > 0) {
+            const reminder = userReminders[0];
+            reminderHTML =
                 `<div class="reminder-item"> 
-        <div class="reminder-content">
-            <p class="reminder-title">${reminder.title || 'No reminder found'}</p>
-            <p class="reminder-description">${reminder.description || 'No reminder found'}</p>
-            <p class="reminder-date">${dateToReadable(reminder.date) || 'No reminder found'}</p>
-            <p class="reminder-time">${timeToTwelveSystem(reminder.time) || 'No reminder found'}</p>
-        </div>
-        
-    </div>`
-            ;
-    
-            const finalHTML = template.replace('{{REMINDERS}}', reminderHTML);
-    
-            return response.send(finalHTML);
-        }
-        else
-        {
-            let reminderHTML = 
-                `<hr> 
-                <div class="reminder-item">          
-                    <p>${'Nothing to do!'}</p>
-                    <p>${''}</p>
-                    <p>${''}</p>
-                    <p>${''}</p>
-                </div>`
-            '';
-    
-            const finalHTML = template.replace('{{REMINDERS}}', reminderHTML);
-    
-            return response.send(finalHTML);
+                    <div class="reminder-content">
+                        <p class="reminder-title">${reminder.title || 'No reminder found'}</p>
+                        <p class="reminder-description">${reminder.description || 'No reminder found'}</p>
+                        <p class="reminder-date">${dateToReadable(reminder.date) || 'No reminder found'}</p>
+                        <p class="reminder-time">${timeToTwelveSystem(reminder.time) || 'No reminder found'}</p>
+                    </div>
+                </div>`;
+            } else {
+                reminderHTML = 
+                    `<hr> 
+                    <div class="reminder-item">          
+                        <p>${'Nothing to do!'}</p>
+                        <p>${''}</p>
+                        <p>${''}</p>
+                        <p>${''}</p>
+                    </div>`;
         }
 
-        
+        let finalHTML = template.replace('{{REMINDERS}}', reminderHTML);
+
+        const user = await User.findById(request.session.userId);
+
+        if (user?.preferences?.highContrast) {
+            const theme = user.preferences.highContrast;
+            const themeScript = `<script>
+                localStorage.setItem('theme', '${theme}');
+                document.body.classList.add('${theme}');
+            </script>`;
+            finalHTML = finalHTML.replace('</body>', `${themeScript}</body>`);
+        } else {
+            console.log('No theme preference found for user.');
+        }
+
+        return response.send(finalHTML);
     } catch (err) {
         console.log(err);
         return response.sendFile('./404.html', { root: __dirname });
     }
 });
-app.use(express.static(__dirname));
 
+app.use(express.static(__dirname));
 app.use(bodyParser.urlencoded({extended: true}));
 
 
@@ -130,14 +131,14 @@ app.get('/tasks', async (request, response) => {
 
         let reminderHTML = reminders.map(reminder =>
             `<div class="reminder-item"> 
-    <div class="reminder-content">
-        <p class="reminder-title">${reminder.title || 'No reminder found'}</p>
-        <p class="reminder-description">${reminder.description || 'No reminder found'}</p>
-        <p class="reminder-date">${dateToReadable(reminder.date) || 'No reminder found'}</p>
-        <p class="reminder-time">${timeToTwelveSystem(reminder.time) || 'No reminder found'}</p>
-    </div>
-    <button class="complete-btn" data-id="${reminder._id}">Mark Complete</button>
-</div>`
+                <div class="reminder-content">
+                    <p class="reminder-title">${reminder.title || 'No reminder found'}</p>
+                    <p class="reminder-description">${reminder.description || 'No reminder found'}</p>
+                    <p class="reminder-date">${dateToReadable(reminder.date) || 'No reminder found'}</p>
+                    <p class="reminder-time">${timeToTwelveSystem(reminder.time) || 'No reminder found'}</p>
+                </div>
+                <button class="complete-btn" data-id="${reminder._id}">Mark Complete</button>
+            </div>`
         ).join('');
 
         const finalHTML = template.replace('{{REMINDERS}}', reminderHTML);
@@ -198,30 +199,26 @@ app.get('/login', (request, response) =>
         return response.sendFile('./login.html', { root: __dirname });
     }
 );
-app.post('/signin', async (request, response) => 
-    {
-        const {email, password} = request.body;
 
-        try {
+app.post('/signin', async (request, response) => {
+    const {email, password} = request.body;
 
-            const isLoggedIn = await signInSuccess(email, password);
-
-            if(isLoggedIn)
-            {
-                const user = await User.findOne({userEmail: email});
-                request.session.userId = user._id; // store user ID in session
-                console.log('session created: ' + request.session.userId);
-                return response.redirect('/');
-            }
-            else
-            {
-                return response.redirect('/login');
-            }
-        } catch (error) {
-            return response.redirect('404');
+    try {
+        const isLoggedIn = await signInSuccess(email, password);
+        
+        if(isLoggedIn) {
+            const user = await User.findOne({userEmail: email});
+            request.session.userId = user._id; // store user ID in session
+            console.log('session created: ' + request.session.userId);
+            return response.redirect('/');
+        } else {
+            return response.redirect('/login');
         }
+    } catch (error) {
+        return response.redirect('404');
     }
-);
+});
+
 app.get('/signup', (request, response) => 
     {
         return response.sendFile('./signup.html', { root: __dirname });
@@ -257,6 +254,24 @@ app.post('/submit', (request, response) => {
         return response.redirect('/newtask');
     } else {
         return response.status(400).send("No title received");
+    }
+});
+
+app.get('/getUserPreferences', async (request, response) => {
+    if (!request.session.userId) {
+        return response.status(401).json({ error: 'Not logged in' });
+    }
+    
+    try {
+        const user = await User.findById(request.session.userId);
+        if (!user) {
+            return response.status(404).json({ error: 'User not found' });
+        }
+        
+        return response.json({ preferences: user.preferences });
+    } catch (error) {
+        console.error('Error fetching user preferences:', error);
+        return response.status(500).json({ error: 'Server error' });
     }
 });
 
