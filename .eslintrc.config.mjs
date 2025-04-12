@@ -1,6 +1,3 @@
-// Run this command to generate base config and vs code settings:
-// pnpm dlx @antfu/eslint-config@latest
-
 import antfu from "@antfu/eslint-config";
 
 export default antfu({
