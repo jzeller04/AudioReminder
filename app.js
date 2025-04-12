@@ -12,8 +12,8 @@ const {createUserWithSignUp} = require('./backend/signUp.js');
 const session = require('express-session');
 const { request } = require('http');
 const User = require('./backend/models/user.js');
-const {saveReminderToUser} = require('./backend/saveReminderToUser.js');
-
+const {saveReminderToUser, saveUserSettings} = require('./backend/saveReminderToUser.js');
+const {dateToReadable, timeToTwelveSystem} = require('./backend/util/util.js');
 
 // TDL: All of this needs to be refactored. It's hard to read for literally no reason. There isnt anything complicated happening in this file.
 
@@ -51,50 +51,53 @@ app.get('/', async (request, response) => {
         const template = await fs.promises.readFile(__dirname + '/index.html', 'utf8');
         const userReminders = await fetchReminder.fetch(request.session.userId);
         //console.log(userReminders);
-        if(userReminders.length != 0)
-        {
 
-            let reminder = userReminders[0];
-
-            let reminderHTML = 
-                `<hr> 
-                <div class="reminder-item">          
-                    <p>${reminder.title || 'No reminder found'}</p>
-                    <p>${reminder.description || 'No reminder found'}</p>
-                    <p>${reminder.date || 'No reminder found'}</p>
-                    <p>${reminder.time || 'No reminder found'}</p>
-                </div>`
-            '';
-    
-            const finalHTML = template.replace('{{REMINDERS}}', reminderHTML);
-    
-            return response.send(finalHTML);
-        }
-        else
-        {
-            let reminderHTML = 
-                `<hr> 
-                <div class="reminder-item">          
-                    <p>${'Nothing to do!'}</p>
-                    <p>${''}</p>
-                    <p>${''}</p>
-                    <p>${''}</p>
-                </div>`
-            '';
-    
-            const finalHTML = template.replace('{{REMINDERS}}', reminderHTML);
-    
-            return response.send(finalHTML);
+        let reminderHTML;
+        if(userReminders.length > 0) {
+            const reminder = userReminders[0];
+            reminderHTML =
+                `<div class="reminder-item"> 
+                    <div class="reminder-content">
+                        <p class="reminder-title">${reminder.title || 'No reminder found'}</p>
+                        <p class="reminder-description">${reminder.description || 'No reminder found'}</p>
+                        <p class="reminder-date">${dateToReadable(reminder.date) || 'No reminder found'}</p>
+                        <p class="reminder-time">${timeToTwelveSystem(reminder.time) || 'No reminder found'}</p>
+                    </div>
+                </div>`;
+            } else {
+                reminderHTML = 
+                    `<hr> 
+                    <div class="reminder-item">          
+                        <p>${'Nothing to do!'}</p>
+                        <p>${''}</p>
+                        <p>${''}</p>
+                        <p>${''}</p>
+                    </div>`;
         }
 
-        
+        let finalHTML = template.replace('{{REMINDERS}}', reminderHTML);
+
+        const user = await User.findById(request.session.userId);
+
+        if (user?.preferences?.highContrast) {
+            const theme = user.preferences.highContrast;
+            const themeScript = `<script>
+                localStorage.setItem('theme', '${theme}');
+                document.body.classList.add('${theme}');
+            </script>`;
+            finalHTML = finalHTML.replace('</body>', `${themeScript}</body>`);
+        } else {
+            console.log('No theme preference found for user.');
+        }
+
+        return response.send(finalHTML);
     } catch (err) {
         console.log(err);
         return response.sendFile('./404.html', { root: __dirname });
     }
 });
-app.use(express.static(__dirname));
 
+app.use(express.static(__dirname));
 app.use(bodyParser.urlencoded({extended: true}));
 
 
@@ -108,6 +111,14 @@ app.get('/settings', (request, response) =>
     }
 );
 
+// POST req for settings
+app.post('/updateSettings', async (request, response) => 
+{
+    console.log(request.body.setting);
+    saveUserSettings(request.body.setting, request.session.userId);
+    return response.redirect('/settings');
+});
+
 // Does the same thing as the home page (Maybe we can combine these later)
 app.get('/tasks', async (request, response) => {
     if(!request.session.userId)
@@ -119,15 +130,14 @@ app.get('/tasks', async (request, response) => {
         const reminders = await fetchReminder.fetch(request.session.userId);
 
         let reminderHTML = reminders.map(reminder =>
-            `<hr>
-            <div class="reminder-item"> 
+            `<div class="reminder-item"> 
                 <div class="reminder-content">
-                    <p>${reminder.title || 'No reminder found'}</p>
-                    <p>${reminder.description || 'No reminder found'}</p>
-                    <p>${reminder.date || 'No reminder found'}</p>
-                    <p>${reminder.time || 'No reminder found'}</p>
+                    <p class="reminder-title">${reminder.title || 'No reminder found'}</p>
+                    <p class="reminder-description">${reminder.description || 'No reminder found'}</p>
+                    <p class="reminder-date">${dateToReadable(reminder.date) || 'No reminder found'}</p>
+                    <p class="reminder-time">${timeToTwelveSystem(reminder.time) || 'No reminder found'}</p>
                 </div>
-            <button class="complete-btn" data-id="${reminder._id}">Mark Complete</button>
+                <button class="complete-btn" data-id="${reminder._id}">Mark Complete</button>
             </div>`
         ).join('');
 
@@ -189,30 +199,26 @@ app.get('/login', (request, response) =>
         return response.sendFile('./login.html', { root: __dirname });
     }
 );
-app.post('/signin', async (request, response) => 
-    {
-        const {email, password} = request.body;
 
-        try {
+app.post('/signin', async (request, response) => {
+    const {email, password} = request.body;
 
-            const isLoggedIn = await signInSuccess(email, password);
-
-            if(isLoggedIn)
-            {
-                const user = await User.findOne({userEmail: email});
-                request.session.userId = user._id; // store user ID in session
-                console.log('session created: ' + request.session.userId);
-                return response.redirect('/');
-            }
-            else
-            {
-                return response.redirect('/login');
-            }
-        } catch (error) {
-            return response.redirect('404');
+    try {
+        const isLoggedIn = await signInSuccess(email, password);
+        
+        if(isLoggedIn) {
+            const user = await User.findOne({userEmail: email});
+            request.session.userId = user._id; // store user ID in session
+            console.log('session created: ' + request.session.userId);
+            return response.redirect('/');
+        } else {
+            return response.redirect('/login');
         }
+    } catch (error) {
+        return response.redirect('404');
     }
-);
+});
+
 app.get('/signup', (request, response) => 
     {
         return response.sendFile('./signup.html', { root: __dirname });
@@ -248,6 +254,24 @@ app.post('/submit', (request, response) => {
         return response.redirect('/newtask');
     } else {
         return response.status(400).send("No title received");
+    }
+});
+
+app.get('/getUserPreferences', async (request, response) => {
+    if (!request.session.userId) {
+        return response.status(401).json({ error: 'Not logged in' });
+    }
+    
+    try {
+        const user = await User.findById(request.session.userId);
+        if (!user) {
+            return response.status(404).json({ error: 'User not found' });
+        }
+        
+        return response.json({ preferences: user.preferences });
+    } catch (error) {
+        console.error('Error fetching user preferences:', error);
+        return response.status(500).json({ error: 'Server error' });
     }
 });
 

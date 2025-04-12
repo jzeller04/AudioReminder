@@ -3,6 +3,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>AudioReminder - Tasks</title>
         <link rel="stylesheet" href="css/tasks.css">
+        <script src="js/theme-init.js"></script>
     </head>
     <body>
         <header>
@@ -26,6 +27,8 @@ function speak(text) {
                return new Promise((resolve) => {
                    const synth = window.speechSynthesis;
                    const utterance = new SpeechSynthesisUtterance(text);
+                   utterance.rate = 0.7;
+
                    utterance.onend = () => resolve();
                    synth.speak(utterance);
                });
