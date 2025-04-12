@@ -14,7 +14,7 @@
 
     "dev": "nodemon app.js",
 
-    "serve": "node app.js --open", 
+    "serve": "node app.js --open",
 
     "lint": "eslint . --ext .js"
 
