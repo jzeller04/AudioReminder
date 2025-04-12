@@ -30,8 +30,11 @@ jobs:
       
 
       - name: Install dependencies
-        run: pnpm i
+        run: pnpm install
 
       - name: Lint code
         run: pnpm lint
+
+      - name: Debug ls
+        run: ls -al && cat eslint.config.js
         
