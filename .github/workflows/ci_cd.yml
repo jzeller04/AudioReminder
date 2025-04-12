@@ -35,6 +35,4 @@ jobs:
       - name: Lint code
         run: pnpm lint
 
-      - name: Debug ls
-        run: ls -al && cat eslint.config.js
         
