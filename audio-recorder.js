@@ -5,7 +5,6 @@
     let recordButton, stopButton, saveButton, deleteButton, audioPlayer, transcriptContainer, transcriptContent, ttsButton;
     // Variables for recording state
     let isRecording = false;
-    let audioURL = null;
     let mediaRecorder = null;
     let audioChunks = [];
     let recognition = null;

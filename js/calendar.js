@@ -362,11 +362,6 @@ const Calendar = {
         
         // Display details in an alert
         alert(details);
-
-        // Announce details using text-to-speech if speak function is available
-        if (typeof speak === 'function') {
-            speak(details);
-        }
     },
 
     // Function to select dates

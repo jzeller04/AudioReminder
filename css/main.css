@@ -69,7 +69,7 @@ hr {
   display: none;
 }
 
-body[data-theme="low-contrast"]{
+[data-theme="low-contrast"]{
   --bg-color: #f2ede9;
   --heading-color: #632f0a;
   --primary-btn: #a54907;
