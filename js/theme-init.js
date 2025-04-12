@@ -32,7 +32,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function applyTheme(theme) {
-        document.body.classList.remove('low-contrast', 'high-contrast');
-        document.body.classList.add(theme);
+        document.body.setAttribute('data-theme', theme);
     }
 });

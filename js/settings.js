@@ -5,12 +5,13 @@ document.addEventListener('DOMContentLoaded', function() {
     // Check if user preference is stored in localStorage
     const currentTheme = localStorage.getItem('theme') || 'low-contrast';
     themeToggle.checked = currentTheme === 'high-contrast';
-    document.body.className = currentTheme;
-    
+
+    document.body.setAttribute('data-theme', currentTheme);
+
     // Add event listener to toggle switch
     themeToggle.addEventListener('change', function() {
         const newTheme = this.checked ? 'high-contrast' : 'low-contrast';
-        document.body.className = newTheme;
+        document.body.setAttribute('data-theme', newTheme);
         
         // Save theme preference to localStorage and server
         localStorage.setItem('theme', newTheme);
@@ -41,7 +42,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // Initialize theme on page load for all pages
 function initializeTheme() {
     const currentTheme = localStorage.getItem('theme') || 'low-contrast';
-    document.body.className = currentTheme;
+    document.body.setAttribute('data-theme', currentTheme);
 }
 
 // Run initialization on every page

@@ -1,10 +1,8 @@
 body {
-  background-color: #f2ede9;
   font-family: Helvetica, Arial, sans-serif;
 }
 
 h1 {
-  color: #632f0a;
   font-size: 50px;
   margin-bottom: 80px;
   margin-top: 50px;
@@ -12,11 +10,7 @@ h1 {
 }
 
 #readRemindersButton {
-  background-color: #632f0a;
-  border: 6px solid #632f0a;
   border-radius: 50px;
-  box-shadow: 0px 2px 6px grey;
-  color: white;
   flex-grow: 1;
   font-size: 50px;
   height: auto;
@@ -26,18 +20,8 @@ h1 {
   width: 260px;
 }
 
-#readRemindersButton:hover {
-  background-color: #f2ede9;
-  border: 6px solid #632f0a;
-  color: #632f0a;
-}
-
 #tasksButton, #calendarButton {
-  background-color: #a54907;
-  border: 6px solid #a54907;
   border-radius: 50px;
-  box-shadow: 0px 2px 6px grey;
-  color: white;
   font-size: 60px;
   height: 300px;
   margin: 0px 30px;
@@ -47,9 +31,6 @@ h1 {
 }
 
 #tasksButton:hover, #calendarButton:hover {
-  background-color: #f2ede9;
-  border: 10px solid #a54907;
-  color: #a54907;
   cursor: pointer;
 }
 
@@ -69,9 +50,7 @@ h1 {
 }
 
 #reminder_container {
-  border:6px solid #632f0a;
   border-radius: 50px;
-  box-shadow: 0px 2px 6px grey;
   flex-grow: 3;
   height: 200px;
   margin: 0px 30px;
@@ -81,7 +60,6 @@ h1 {
 
 
 #text1 {
-  color: #632f0a;
   font-size: 40px;
   font-weight: bold;
   margin-left: 9%;
@@ -89,4 +67,104 @@ h1 {
 
 hr {
   display: none;
+}
+
+body[data-theme="low-contrast"]{
+  --bg-color: #f2ede9;
+  --heading-color: #632f0a;
+  --primary-btn: #a54907;
+  --secondary-btn: #632f0a;
+  --text-color: white;
+  --light-shadow: grey;
+
+  background-color: var(--bg-color);
+
+  & h1 {
+    color: var(--heading-color);
+  }
+
+  & #readRemindersButton {
+    background-color: var(--secondary-btn);
+    border: 6px solid var(--secondary-btn);
+    box-shadow: 0px 2px 6px var(--light-shadow);
+    color: var(--text-color);
+  }
+
+  & #readRemindersButton:hover {
+    background-color: var(--bg-color);
+    border: 6px solid var(--secondary-btn);
+    color: var(--secondary-btn);
+  }
+
+  & #tasksButton, & #calendarButton {
+    background-color: var(--primary-btn);
+    border: 6px solid var(--primary-btn);
+    box-shadow: 0px 2px 6px var(--light-shadow);
+    color: var(--text-color);
+  }
+
+  & #tasksButton:hover, & #calendarButton:hover {
+    background-color: var(--bg-color);
+    border: 10px solid var(--primary-btn);
+    color: var(--primary-btn);
+  }
+
+  & #reminder_container {
+    border:6px solid var(--heading-color);
+    box-shadow: 0px 2px 6px var(--light-shadow);
+  }
+
+  & #text1 {
+    color: var(--heading-color);
+  }
+}
+
+body[data-theme="high-contrast"]{
+  --bg-color: #000000;
+  --heading-color: #632f0a;
+  --primary-btn: #a54907;
+  --secondary-btn: #632f0a;
+  --text-color: white;
+  --light-shadow: grey;
+
+  background-color: var(--bg-color);
+
+  & h1 {
+    color: var(--heading-color);
+  }
+
+  & #readRemindersButton {
+    background-color: var(--secondary-btn);
+    border: 6px solid var(--secondary-btn);
+    box-shadow: 0px 2px 6px var(--light-shadow);
+    color: var(--text-color);
+  }
+
+  & #readRemindersButton:hover {
+    background-color: var(--bg-color);
+    border: 6px solid var(--secondary-btn);
+    color: var(--secondary-btn);
+  }
+
+  & #tasksButton, & #calendarButton {
+    background-color: var(--primary-btn);
+    border: 6px solid var(--primary-btn);
+    box-shadow: 0px 2px 6px var(--light-shadow);
+    color: var(--text-color);
+  }
+
+  & #tasksButton:hover, & #calendarButton:hover {
+    background-color: var(--bg-color);
+    border: 10px solid var(--primary-btn);
+    color: var(--primary-btn);
+  }
+
+  & #reminder_container {
+    border:6px solid var(--heading-color);
+    box-shadow: 0px 2px 6px var(--light-shadow);
+  }
+
+  & #text1 {
+    color: var(--heading-color);
+  }
 }
