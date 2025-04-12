@@ -3,7 +3,7 @@ name: Node.js App CI
 on:
   pull_request:
     branches: 
-      - mainn
+      - main
 
 jobs:
   build:
