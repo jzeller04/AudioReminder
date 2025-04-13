@@ -133,14 +133,14 @@
 
             function handleVoiceCommand(command) {
             if (command.includes("open home") || command.includes("home")) {
-                speak("Opening home").then(() => location.href = "/'");            
+                speak("Opening home").then(() => location.href = "/");            
             }else if (command.includes("next")) {
                 speak("next").then(() => document.getElementById('next-month').click());
     } else if (command.includes("previous") || command.includes("back")) {
         speak("previous").then(() => document.getElementById('prev-month').click());
 
     } else if (command.includes("new event") || command.includes("event") || command.includes("new reminder")) {
-        speak("adding event").then(() => document.getElementById('add-event-btn').click());
+        speak("adding event").then(() => document.getElementById('add-task-btn').click());
     } else if (command.includes("page"))  {
         const pageTitle = document.title;
         speak("page").then(() =>  speak("You are currently on the " + pageTitle + " page."));
