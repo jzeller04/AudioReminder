@@ -70,7 +70,7 @@
         function enableTTS() {
             if (isSpeaking) return;
 
-            speak("Welcome to AudioReminder. You can say: ‘Read reminder’ to hear your upcoming task, ‘Open Tasks’ to go to your tasks, ‘Open Calendar’ for your schedule, ‘Page’ to hear what you’re currently on, or ‘Help’ to repeat these options.");
+            speak("Home Page. You can say: ‘Read reminder’ to hear your upcoming task, ‘Open Tasks’ to go to your tasks, ‘Open Calendar’ for your schedule, ‘Page’ to hear what you’re currently on, or ‘Help’ to repeat these options.");
         }
 
         window.onload = () => {
@@ -139,7 +139,7 @@
             } else if (command.includes("open calendar") || command.includes("calendar")) {
                 speak("Opening Calendar").then(() => location.href = "calendar");            
             } else if (command.includes("read reminder") || command.includes("reminders")) {
-                readReminders();
+                speak("Reading reminder").then(() => readReminders());
             } 
             else if (command.includes("page"))  {
         const pageTitle = document.title;

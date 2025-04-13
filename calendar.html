@@ -38,10 +38,16 @@
                 // Trigger TTS every time the page loads
                 speak("Calendar Page. You can navigate by saying Schedule to read this months schedule, Previous to see the past month, Next to see the next month, or Add Event to set a reminder, Home to go back to home, ‘Page’ to hear what you’re currently on, or ‘Help’ to repeat these options.")
                 .then(() => {
+                    setTimeout(() => {
+
                     // Start speech recognition after TTS is spoken
                     startSpeechRecognition();
+                    },1000)
                 });
             }
+            function startSpeechRecognition() {
+    recognition.start();
+}
 
         // Automatically start speech recognition and set up TTS trigger for the first click
         window.onload = enableTTS;
@@ -49,7 +55,7 @@
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
             if (SpeechRecognition) {
                 const recognition = new SpeechRecognition();
-                recognition.continuous = true;
+                recognition.continuous = false;
                 recognition.interimResults = false;
     
                 recognition.onresult = (event) => {
@@ -127,14 +133,14 @@
 
             function handleVoiceCommand(command) {
             if (command.includes("open home") || command.includes("home")) {
-                location.href = "/";
+                speak("Opening home").then(() => location.href = "/'");            
             }else if (command.includes("next")) {
                 speak("next").then(() => document.getElementById('next-month').click());
     } else if (command.includes("previous") || command.includes("back")) {
         speak("previous").then(() => document.getElementById('prev-month').click());
 
     } else if (command.includes("new event") || command.includes("event") || command.includes("new reminder")) {
-        speak("addinng event").then(() => document.getElementById('add-event-btn').click());
+        speak("adding event").then(() => document.getElementById('add-event-btn').click());
     } else if (command.includes("page"))  {
         const pageTitle = document.title;
         speak("page").then(() =>  speak("You are currently on the " + pageTitle + " page."));
