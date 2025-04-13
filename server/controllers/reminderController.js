@@ -16,8 +16,6 @@ const getUpcomingReminder = async (req, res) => {
         
         const template = await fs.readFile(path.join(__dirname, '../../views/index.html'), 'utf8');
         const userReminders = await fetch(req.session.userId);
-        const readableDate = dateToReadable(reminder.date);
-        const twelveHourTime = timeToTwelveSystem(reminder.time);
 
         let reminderHTML;
         if (userReminders.length > 0) {
@@ -67,8 +65,6 @@ const getAllReminders = async (req, res) => {
     try {
         const template = await fs.readFile(path.join(__dirname, '../../views/tasks.html'), 'utf8');
         const reminders = await fetch(req.session.userId);
-        const readableDate = dateToReadable(reminder.date);
-        const twelveHourTime = timeToTwelveSystem(reminder.time);
 
         let reminderHTML = reminders.map(reminder =>
             `<div class="reminder-item"> 

@@ -59,35 +59,6 @@ const getUpcomingReminder = async (req, res) => {
     }
 };
 
-// Helper functions and other reminder handlers
-const getAllReminders = async (req, res) => {
-    // Place holder
-};
-
-const createReminder = async (req, res) => {
-    // Place holder
-};
-
-const completeReminder = async (req, res) => {
-    // Place holder
-};
-
-const updateSettings = async (req, res) => {
-    // Place holder
-};
-
-async function fetchReminders(userId) {
-    // Place holder
-}
-
-async function updateUserReminders(userId) {
-    // Place holder
-}
-
 export {
-    getUpcomingReminder,
-    getAllReminders,
-    createReminder,
-    completeReminder,
-    updateSettings
+    getUpcomingReminder
 };
