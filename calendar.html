@@ -13,7 +13,7 @@
             <button id="homeButton" onclick="location.href='/';">Home</button>
 
         </nav>
-        
+
         <!-- <script src="js/auth.js"></script> !-->
 
         <script src="js/calendar.js"></script>
@@ -36,12 +36,18 @@
                     // Function to enable TTS when the page loads
                     function enableTTS() {
                 // Trigger TTS every time the page loads
-                speak("Calendar Page. You can navigate by saying Previous, Next, or Add Event, or Home.")
+                speak("Calendar Page. You can navigate by saying Schedule to read this months schedule, Previous to see the past month, Next to see the next month, or Add Event to set a reminder, Home to go back to home, ‘Page’ to hear what you’re currently on, or ‘Help’ to repeat these options.")
                 .then(() => {
+                    setTimeout(() => {
+
                     // Start speech recognition after TTS is spoken
                     startSpeechRecognition();
+                    },1000)
                 });
             }
+            function startSpeechRecognition() {
+    recognition.start();
+}
 
         // Automatically start speech recognition and set up TTS trigger for the first click
         window.onload = enableTTS;
@@ -49,7 +55,7 @@
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
             if (SpeechRecognition) {
                 const recognition = new SpeechRecognition();
-                recognition.continuous = true;
+                recognition.continuous = false;
                 recognition.interimResults = false;
     
                 recognition.onresult = (event) => {
@@ -69,28 +75,84 @@
             } else {
                 console.error("Speech recognition is not supported in this browser.");
             }
-    
+       
+       
+            function getMonthlySchedule() {
+        // Get the current month and year
+        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
+                          'July', 'August', 'September', 'October', 'November', 'December'];
+        const currentMonth = monthNames[Calendar.selectedDate.getMonth()];
+        const currentYear = Calendar.selectedDate.getFullYear();
+        
+        // Filter the tasks for the current month
+        const tasksForMonth = Calendar.tasks.filter(task => {
+            const taskDate = task.date instanceof Date ? task.date : new Date(task.date);
+            return taskDate.getMonth() === Calendar.selectedDate.getMonth() && 
+                   taskDate.getFullYear() === Calendar.selectedDate.getFullYear();
+        });
+
+        if (tasksForMonth.length === 0) {
+            speak("You have no tasks for " + currentMonth + " " + currentYear + ".");
+        } else {
+            speak("Here is your schedule for " + currentMonth + " " + currentYear + ":");
+            
+            // Group tasks by day for better organization
+            const tasksByDay = {};
+            tasksForMonth.forEach(task => {
+                const taskDate = task.date instanceof Date ? task.date : new Date(task.date);
+                const day = taskDate.getDate();
+                
+                if (!tasksByDay[day]) {
+                    tasksByDay[day] = [];
+                }
+                tasksByDay[day].push(task);
+            });
+
+            // Loop through days with tasks
+            for (const day in tasksByDay) {
+                const dayTasks = tasksByDay[day];
+                const dayOrdinal = getOrdinal(day);
+                
+                speak(`On the ${dayOrdinal}:`);
+                
+                // Loop through tasks for this day
+                dayTasks.forEach((task, index) => {
+                    const taskTime = task.time ? Calendar.formatTime(task.time) : "all day";
+                    speak(`Task ${index + 1}: ${task.title} at ${taskTime}.`);
+                });
+            }
+        }
+    }
+
+    // Helper function to get ordinal (1st, 2nd, 3rd, etc.)
+    function getOrdinal(n) {
+        const s = ["th", "st", "nd", "rd"];
+        const v = n % 100;
+        return n + (s[(v - 20) % 10] || s[v] || s[0]);
+    }
+
             function handleVoiceCommand(command) {
             if (command.includes("open home") || command.includes("home")) {
-                location.href = "/";
+                speak("Opening home").then(() => location.href = "/'");            
             }else if (command.includes("next")) {
-        document.getElementById('next-month').click();
+                speak("next").then(() => document.getElementById('next-month').click());
     } else if (command.includes("previous") || command.includes("back")) {
-        document.getElementById('prev-month').click();
-    } else if (command.includes("new event") || command.includes("event") || command.includes("new reminder")) {
-        document.getElementById('add-event-btn').click();     
-       
+        speak("previous").then(() => document.getElementById('prev-month').click());
 
+    } else if (command.includes("new event") || command.includes("event") || command.includes("new reminder")) {
+        speak("adding event").then(() => document.getElementById('add-event-btn').click());
     } else if (command.includes("page"))  {
         const pageTitle = document.title;
-        speak("You are currently on the " + pageTitle + " page.");}
-    else if (command.includes("help")) {
-        speak("You can say 'Open Home' to return to the homepage, 'Next' to go to the next month, 'Previous' to go to the previous month, 'New Event' to add a new event or 'Help' to hear this list of commands again..");
-    } else {
+        speak("page").then(() =>  speak("You are currently on the " + pageTitle + " page."));
+        }    else if (command.includes("help")) {
+            speak("help").then(() =>  speak("You can navigate by saying Schedule to see this months schedule, Previous to see the past month, Next to see the next month, Add Event to set a reminder, Home to go back to home, ‘Page’ to hear what page you are currently on, or ‘Help’ to repeat these options."));
+        } else if (command.includes("what's my schedule") || command.includes("schedule")) {
+            speak("getting schedule").then(() => getMonthlySchedule());
+        } else {
         console.log("Unknown command:", command);
     }
 }
-    
+
         </script>
     </body>
 </html>showEventForm
