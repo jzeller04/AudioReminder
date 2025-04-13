@@ -10,11 +10,7 @@ const __dirname = path.dirname(__filename);
 // Get upcoming reminder for homepage
 const getUpcomingReminder = async (req, res) => {
     try {
-        // Update old reminders
-        await updateUserReminders(req.session.userId);
-        
         const template = await fs.readFile(path.join(__dirname, '../../views/index.html'), 'utf8');
-        const userReminders = await fetchReminders(req.session.userId);
 
         let reminderHTML;
         if (userReminders.length > 0) {
