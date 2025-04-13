@@ -175,13 +175,29 @@
             }
         }
 
-        async function promptUserForInputs() {
+        async function confirmInput(fieldName, inputValue, promptFunction) {
+            while (true) {
+                await speak(`You said ${fieldName} is ${inputValue}. Is this correct? Say 'Yes' to continue or 'No' to try again.`);
+                const confirmation = await startRecognition();
+                
+                if (confirmation.toLowerCase().includes("yes")) {
+                    return inputValue;
+                } else if (confirmation.toLowerCase().includes("no")) {
+                    await speak(`Let's try the ${fieldName} again.`);
+                    return await promptFunction();
+                } else {
+                    await speak("Sorry, I didn't understand that. Please say 'Yes' or 'No'.");
+                }
+            }
+        }
+
+        async function promptTitle() {
             await speak("What is the title of your reminder?");
             const title = await startRecognition();
-            document.getElementById("title").value = title;
-            document.getElementById("title").dispatchEvent(new Event("input"));
-            await speak(`You said: ${title}`);
+            return await confirmInput("title", title, promptTitle);
+        }
 
+        async function promptDate() {
             let formattedDate = "";
             while (!formattedDate) {
                 await speak("What date should I set the reminder for?");
@@ -191,10 +207,10 @@
                     await speak("I couldn't understand the date. Please say a valid date.");
                 }
             }
-            document.getElementById("date").value = formattedDate;
-            document.getElementById("date").dispatchEvent(new Event("change"));
-            await speak(`You set the date as: ${formattedDate}`);
+            return await confirmInput("date", formattedDate, promptDate);
+        }
 
+        async function promptTime() {
             let formattedTime = "";
             while (!formattedTime) {
                 await speak("What time should I set the reminder for?");
@@ -204,15 +220,35 @@
                     await speak("I couldn't understand the time. Please say a valid time.");
                 }
             }
-            document.getElementById("time").value = formattedTime;
-            document.getElementById("time").dispatchEvent(new Event("change"));
-            await speak(`You set the time as: ${formattedTime}`);
+            return await confirmInput("time", formattedTime, promptTime);
+        }
 
+        async function promptMemo() {
             await speak("What is the description of the reminder?");
             const memo = await startRecognition();
+            return await confirmInput("description", memo, promptMemo);
+        }
+
+        async function promptUserForInputs() {
+            // Get title with confirmation
+            const title = await promptTitle();
+            document.getElementById("title").value = title;
+            document.getElementById("title").dispatchEvent(new Event("input"));
+            
+            // Get date with confirmation
+            const formattedDate = await promptDate();
+            document.getElementById("date").value = formattedDate;
+            document.getElementById("date").dispatchEvent(new Event("change"));
+            
+            // Get time with confirmation
+            const formattedTime = await promptTime();
+            document.getElementById("time").value = formattedTime;
+            document.getElementById("time").dispatchEvent(new Event("change"));
+            
+            // Get memo with confirmation
+            const memo = await promptMemo();
             document.getElementById("memo").value = memo;
             document.getElementById("memo").dispatchEvent(new Event("input"));
-            await speak(`You said: ${memo}`);
 
             await speak("Reminder has been set. You can now save it by saying save reminder, clear it by saying clear reminder, cancel it by saying cancel, or have it read back to you by saying read reminder.");
             listenForFinalCommand();
@@ -221,7 +257,8 @@
         async function listenForFinalCommand() {
             const command = await startRecognition();
             await speak(`You said: ${command}`);
-            if (command.toLowerCase().includes("save reminder")) {
+            if (command.toLowerCase().includes("save reminder") || command.toLowerCase().includes("sav reminder")) 
+            {
                 document.getElementById("save").click(); // Simulates clicking the Save button
             } else if (command.toLowerCase().includes("cancel")) {
                 window.location.href = "tasks"; // Redirects to home page (Cancel action)
@@ -241,6 +278,7 @@
 
         function enableTTS() {
             const unlockTTS = new SpeechSynthesisUtterance("");
+
             unlockTTS.onend = () => {
                 console.log("TTS unlocked, starting prompts...");
                 promptReminder();
@@ -312,7 +350,7 @@
             }
             
             // Start the prompt when the page loads
-            document.body.addEventListener("click", enableTTS, { once: true });
+            enableTTS();
         });
     </script>
 </body>

@@ -37,7 +37,7 @@ function speak(text) {
 // Function to enable TTS when the page loads
 function enableTTS() {
     // Trigger TTS every time the page loads
-    speak("Tasks page. You can navigate by saying New Task or Open Home.")
+    speak("Tasks page. You can navigate by saying 'New Task' to add a task, 'Open Home' to return to the homepage, 'Read all Reminders' to hear your upcoming tasks, 'Mark Complete' to go through your tasks, or 'Help' to hear this list of commands again.")
     .then(() => {
         // Start speech recognition after TTS is spoken
         startSpeechRecognition();
@@ -114,17 +114,17 @@ async function handleVoiceCommand(command) {
 
     // Normal command processing
     if (command.includes("new task") || command.includes("task")) {
-        location.href = "newtask";
+        speak("Creating new task").then(() => location.href = "newtask");            
     } 
     else if (command.includes("open home") || command.includes("home")) {
-        location.href = "/";
+        speak("Opening home").then(() => location.href = "/");            
     } 
     else if (command.includes("page")) {
         const pageTitle = document.title;
         speak("You are currently on the " + pageTitle + " page.");
     }
     else if (command.includes("read all reminders") || (command.includes("read reminders"))) {
-        readReminders();
+        speak("Reading reminder").then(() => readReminders());
     }
     else if (command.includes("mark complete") || command.includes("complete tasks")) {
         startMarkCompleteProcess();
