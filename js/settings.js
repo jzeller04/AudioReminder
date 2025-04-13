@@ -20,6 +20,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Function to save theme preference to server
     function saveThemePreference(theme) {
+        console.log(`Saving theme preference: ${theme}`);
+
         // Create a form to post the data
         const form = document.createElement('form');
         form.method = 'POST';

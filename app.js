@@ -1,16 +1,12 @@
 require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
-const Reminder = require('./backend/models/reminder');
 const fetchReminder = require('./backend/fetchReminder');
 const bodyParser = require('body-parser');
-const { error } = require('console');
-const { title } = require('process');
 const fs = require('fs');
 const {signInSuccess} = require('./backend/signIn.js');
 const {createUserWithSignUp} = require('./backend/signUp.js');
 const session = require('express-session');
-const { request } = require('http');
 const User = require('./backend/models/user.js');
 const {saveReminderToUser, saveUserSettings} = require('./backend/saveReminderToUser.js');
 const {dateToReadable, timeToTwelveSystem} = require('./backend/util/util.js');
@@ -28,16 +24,6 @@ app.use(session({
     saveUninitialized: true,
     cookie: {secure: false}
 }));
-// no idea why, but this code is required for the logging in to work. :shrug:
-const isAuthentic = (request, response, next) =>
-{
-    if(request.session.userId)
-    {
-        return next();
-    }else{
-        return response.redirect('/login');
-    }
-}
 
 // listen for requests
 // send html pages back
@@ -91,8 +77,8 @@ app.get('/', async (request, response) => {
         }
 
         return response.send(finalHTML);
-    } catch (err) {
-        console.log(err);
+    } catch (error) {
+        console.log(error);
         return response.sendFile('./404.html', { root: __dirname });
     }
 });
@@ -144,23 +130,19 @@ app.get('/tasks', async (request, response) => {
         const finalHTML = template.replace('{{REMINDERS}}', reminderHTML);
 
         return response.send(finalHTML);
-    } catch (err) {
-        console.log(err);
+    } catch (error) {
+        console.log(error);
         return response.sendFile('./tasks.html', { root: __dirname });
     }
 });
 
-app.get('/newtask', (request, response) => 
-    {
-    if(!request.session.userId)
-    {
+app.get('/newtask', (request, response) => {
+    if(!request.session.userId) {
         return response.redirect('/login');
     }
-        const title = request.body.title;
-        console.log(title);
-        return response.sendFile('./newtask.html', { root: __dirname });
-    }
-);
+    return response.sendFile('./newtask.html', { root: __dirname });
+});
+
 
 app.post('/complete-reminder', bodyParser.urlencoded({ extended: true }), async (request, response) => {
     if (!request.session.userId) {
@@ -215,6 +197,7 @@ app.post('/signin', async (request, response) => {
             return response.redirect('/login');
         }
     } catch (error) {
+        console.log('Signin error:', error);
         return response.redirect('404');
     }
 });
@@ -232,8 +215,8 @@ app.post('/newuser', (request, response) =>
 );
 
 app.get('/logout', (request, response) => {
-    request.session.destroy(err =>{
-        if(err)
+    request.session.destroy(error =>{
+        if(error)
         {
             return response.redirect('404');
         }
@@ -278,8 +261,8 @@ app.get('/getUserPreferences', async (request, response) => {
 
 
 mongoose.connect(dbURI)
-    .then((result) => app.listen(3000), console.log('Successfully connected to DB ... listening on port 3000')) // will change localhost later when server is online, 3000 port is for local web dev)
-    .catch((err) => console.log(err));
+    .then(() => app.listen(3000), console.log('Successfully connected to DB ... listening on port 3000')) // will change localhost later when server is online, 3000 port is for local web dev)
+    .catch((error) => console.log(error));
 
 
 // 404 page

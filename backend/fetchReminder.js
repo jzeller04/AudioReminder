@@ -1,5 +1,4 @@
 const { error } = require('console');
-const Reminder = require('./models/reminder');
 const User = require('./models/user');
 console.log("fetchReminder.js loaded");
 async function fetch(userId)
@@ -24,7 +23,7 @@ async function fetch(userId)
         {
             const reminderDate = new Date(reminder.date);
             //console.log("reminder date: ", reminderDate);
-            return reminder.date >= today && reminder.date < nextWeek
+            return reminderDate >= today && reminder.date < nextWeek
         }
 
         );
