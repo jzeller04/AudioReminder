@@ -278,12 +278,6 @@
 
         function enableTTS() {
             const unlockTTS = new SpeechSynthesisUtterance("");
-
-/*************  ✨ Windsurf Command ⭐  *************/
-            // When speech synthesis is finished speaking, this is called. It is necessary
-            // to unlock the speech synthesis system so that we can use it again.
-            // After unlocking, it starts the prompts for the reminder.
-/*******  96b65727-3656-46f6-920d-12cb2833ce91  *******/
             unlockTTS.onend = () => {
                 console.log("TTS unlocked, starting prompts...");
                 promptReminder();
