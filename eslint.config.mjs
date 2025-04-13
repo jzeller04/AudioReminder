@@ -3,11 +3,12 @@ import js from '@eslint/js';
 export default [
   js.configs.recommended,
 
+  // Server-side Node.js (ESM)
   {
     files: ['**/*.js'],
-    ignores: ['reference/src/**'],
+    ignores: ['public/js/**'],
     languageOptions: {
-      sourceType: 'commonjs',
+      sourceType: 'module',
       ecmaVersion: 'latest',
       globals: {
         require: 'readonly',
@@ -20,8 +21,9 @@ export default [
     },
   },
 
+  // Cliend-side browser scripts
   {
-    files: ['js/**/*.js', 'run/**/*.js', 'audio-recorder.js'],
+    files: ['public/js/**/*.js'],
     languageOptions: {
       sourceType: 'script',
       ecmaVersion: 'latest',
@@ -43,13 +45,5 @@ export default [
         atob: 'readonly',
       },
     },
-  },
-
-  {
-    files: ['reference/src/**/*.js'],
-    languageOptions: {
-      sourceType: 'module',
-      ecmaVersion: 'latest',
-    },
-  },
+  }
 ];
