@@ -60,33 +60,28 @@ const getUpcomingReminder = async (req, res) => {
 };
 
 // Helper functions and other reminder handlers
-// [Include your existing functions for fetchReminders, updateUserReminders, etc.]
-
-// Add the rest of your reminder functions:
 const getAllReminders = async (req, res) => {
-    // Your existing code for fetching all reminders
+    // Place holder
 };
 
 const createReminder = async (req, res) => {
-    // Your existing code for creating reminders
+    // Place holder
 };
 
 const completeReminder = async (req, res) => {
-    // Your existing code for marking reminders complete
+    // Place holder
 };
 
 const updateSettings = async (req, res) => {
-    // Your existing code for updating user settings
+    // Place holder
 };
 
-// Helper function to fetch reminders
 async function fetchReminders(userId) {
-    // Your existing fetch reminders code
+    // Place holder
 }
 
-// Helper function to update reminders
 async function updateUserReminders(userId) {
-    // Your existing update reminders code
+    // Place holder
 }
 
 export {

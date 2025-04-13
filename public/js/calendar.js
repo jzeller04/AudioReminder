@@ -9,8 +9,8 @@ const Calendar = {
     init: function() {
         console.log('Calendar module initialized');
 
-        // Load tasks from MongoDB
-        this.loadTasks();
+        // Load from server
+        this.loadCalendarEvents();
 
         // Initialize calendar UI elements
         this.initCalendarUI();
@@ -69,62 +69,49 @@ const Calendar = {
         this.renderCalendar();
     },
 
-    // Load tasks from server using regular fetch
-    loadTasks: function() {
-        this.isLoading = true;
-        this.renderCalendar();
+    loadCalendarEvents: function() {
+        console.log("Loading calendar events from server data");
         
-        // Get tasks from the server
-        fetch('/')
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.text();
-            })
-            .then(htmlText => {
-                // Parse tasks from the HTML response
-                const tempDiv = document.createElement('div');
-                tempDiv.innerHTML = htmlText;
-                
-                // Extract tasks from reminder_container
-                const tasks = [];
-                const reminderContainer = tempDiv.querySelector('#reminder_container');
-                
-                if (reminderContainer) {
-                    // Each group of 4 paragraphs represents a single reminder
-                    const paragraphs = reminderContainer.querySelectorAll('p');
-                    
-                    for (let i = 0; i < paragraphs.length; i += 4) {
-                        if (i + 3 < paragraphs.length) {
-                            const title = paragraphs[i].textContent.replace('No reminder found', '').trim();
-                            const description = paragraphs[i+1].textContent.replace('No reminder found', '').trim();
-                            const date = paragraphs[i+2].textContent.replace('No reminder found', '').trim();
-                            const time = paragraphs[i+3].textContent.replace('No reminder found', '').trim();
-                            
-                            // Only add if we have at least a title and date
-                            if (title && date) {
-                                tasks.push({
-                                    title: title,
-                                    description: description,
-                                    date: new Date(date), // Convert to Date object
-                                    time: time
-                                });
-                            }
-                        }
-                    }
-                }
-
-                console.log("Parsed tasks:", tasks);
-
-                this.tasks = tasks;
-                this.isLoading = false;
-                this.renderCalendar();
-            }).catch(error => {
-                console.error('Error loading tasks:', error);
-                this.isLoading = false;
-                this.renderCalendar();
-            });
+        if (window.calendarReminders && Array.isArray(window.calendarReminders)) {
+          console.log("Found reminders:", window.calendarReminders.length);
+          
+          // Process the reminders with proper timezone handling
+          this.tasks = window.calendarReminders.map(reminder => {
+            // Debug logging
+            console.log("Processing reminder:", reminder);
+            
+            if (reminder._debug) {
+              console.log("Debug info:", reminder._debug);
+            }
+            
+            // Parse the ISO date string
+            const reminderDate = new Date(reminder.date);
+            
+            // Create a local date using the date components
+            const localDate = new Date(
+              reminderDate.getFullYear(),
+              reminderDate.getMonth(),
+              reminderDate.getDate()
+            );
+            
+            console.log("Parsed date:", reminderDate);
+            console.log("Local date for display:", localDate);
+            
+            return {
+              id: reminder._id,
+              title: reminder.title || '',
+              description: reminder.description || '',
+              date: localDate,
+              time: reminder.time || ''
+            };
+          });
+        } else {
+          console.log("No reminders found or invalid data format");
+          this.tasks = [];
+        }
+        
+        // Render the calendar with the loaded tasks
+        this.renderCalendar();
     },
 
     // Change month and update calendar
@@ -134,7 +121,7 @@ const Calendar = {
             this.selectedDate.getMonth() + delta,
             1
         );
-        this.loadTasks();
+        this.renderCalendar();
     },
 
     // Render the calendar UI
@@ -188,16 +175,17 @@ const Calendar = {
             // Add click event listener to each day
             dayElement.addEventListener('click', () => this.selectDate(date));
 
-            // Check if day has tasks - improved version with better date comparison
+            // Check if day has tasks
             const hasTasks = this.tasks.some(task => {
                 // Make sure task.date is a Date object
                 const taskDate = task.date instanceof Date ? task.date : new Date(task.date);
                 
                 // Only compare if taskDate is valid
                 if (!isNaN(taskDate.getTime())) {
-                    return taskDate.getDate() === i &&
-                        taskDate.getMonth() === month &&
-                        taskDate.getFullYear() === year;
+                    // Compare just the date portions (year, month, day), ignoring time
+                    return taskDate.getFullYear() === year && 
+                           taskDate.getMonth() === month && 
+                           taskDate.getDate() === i;
                 }
                 return false;
             });
@@ -256,9 +244,10 @@ const Calendar = {
         
             // Only compare if taskDate is valid
             if (!isNaN(taskDate.getTime())) {
-                return taskDate.getDate() === this.selectedDate.getDate() &&
-                    taskDate.getMonth() === this.selectedDate.getMonth() &&
-                    taskDate.getFullYear() === this.selectedDate.getFullYear();
+                // Compare just the date portions (year, month, day), ignoring time
+                return taskDate.getFullYear() === this.selectedDate.getFullYear() && 
+                       taskDate.getMonth() === this.selectedDate.getMonth() && 
+                       taskDate.getDate() === this.selectedDate.getDate();
             }
             return false;
         });
@@ -395,8 +384,10 @@ const Calendar = {
 
 // Initialize the calendar when the DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
+    console.log("DOM loaded, checking if calendar should initialize");
     // Initialize calendar if on the calendar page
     if (window.location.pathname.includes('/calendar')) {
+        console.log("On calendar page, initializing calendar");
         Calendar.init();
     }
 });

@@ -1,5 +1,5 @@
 import User from '../models/user.js';
-import { dateToReadable, timeToTwelveSystem } from '../utils/util.js';
+import { normalizeDate, dateToReadable, timeToTwelveSystem } from '../utils/util.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
@@ -127,32 +127,51 @@ const completeReminder = async (req, res) => {
 // Fetch user reminders
 async function fetch(userId) {
     try {
-        const today = new Date();
-        today.setUTCHours(0, 0, 0, 0);
-        
-        const nextWeek = new Date(today);
-        nextWeek.setUTCHours(23, 59, 59, 999);
-        nextWeek.setDate(today.getDate() + 6);
-        
-        const user = await User.findById(userId, {reminders: 1});
-        
-        if (!user) {
-            return [];
-        }
-        
-        const reminders = user.reminders.filter(reminder => {
-            const reminderDate = new Date(reminder.date);
-            return reminderDate >= today && reminder.date < nextWeek;
-        });
-        
-        if (reminders) {
-            return reminders;
-        }
-        
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const nextWeek = new Date(today);
+      nextWeek.setDate(today.getDate() + 6);
+      nextWeek.setHours(23, 59, 59, 999);
+      
+      const user = await User.findById(userId, {reminders: 1});
+      
+      if (!user || !user.reminders) {
         return [];
+      }
+      
+      // Filter relevant reminders
+      const reminders = user.reminders.filter(reminder => {
+        const reminderDate = new Date(reminder.date);
+        return reminderDate >= today && reminderDate <= nextWeek;
+      });
+      
+      // Sort reminders by date and time
+      reminders.sort((a, b) => {
+        // First compare by date
+        const dateA = new Date(a.date);
+        const dateB = new Date(b.date);
+        
+        if (dateA.getTime() !== dateB.getTime()) {
+          return dateA - dateB;
+        }
+        
+        // If same date, compare by time
+        const [hoursA, minutesA] = a.time.split(':').map(Number);
+        const [hoursB, minutesB] = b.time.split(':').map(Number);
+        
+        if (hoursA !== hoursB) {
+          return hoursA - hoursB;
+        }
+        
+        return minutesA - minutesB;
+      });
+      
+      console.log("Fetched and sorted reminders:", reminders.length);
+      return reminders;
     } catch (error) {
-        console.log('Error fetching reminders:', error);
-        return [];
+      console.error('Error fetching reminders:', error);
+      return [];
     }
 }
 
@@ -177,23 +196,33 @@ async function updateUserReminders(userId) {
 
 // Save reminder to user
 async function saveReminderToUser(title, description, time, date, userId) {
-    if (title) {
-        const reminder = {
-            title: title,
-            description: description,
-            date: date,
-            time: time
-        };
-
-        const updateUser = await User.findOneAndUpdate(
-            { _id: userId },
-            { $push: { reminders: reminder } },
-            { new: true }
-        );
-        
-        if (updateUser) {
-            console.log(reminder);
-        }
+    try {
+      // Store date in UTC to avoid timezone issues
+      const normalizedDate = normalizeDate(date);
+      
+      console.log("Saving reminder with normalized date:", normalizedDate.toISOString());
+      
+      // Create reminder
+      const reminder = {
+        title: title,
+        description: description || "",
+        date: normalizedDate,
+        time: time
+      };
+  
+      const user = await User.findById(userId);
+      if (!user) {
+        throw new Error("User not found");
+      }
+  
+      user.reminders.push(reminder);
+      await user.save();
+      
+      console.log("Successfully saved reminder:", reminder);
+      return true;
+    } catch (error) {
+      console.error("Failed to save reminder:", error);
+      throw error;
     }
 }
 
