@@ -18,7 +18,7 @@
 
     "serve": "node app.js --open",
 
-    "lint": "eslint . --ext .js"
+    "lint": "eslint"
 
   },
 
