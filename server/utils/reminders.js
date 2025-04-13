@@ -11,7 +11,10 @@ const __dirname = path.dirname(__filename);
 const getUpcomingReminder = async (req, res) => {
     try {
         const template = await fs.readFile(path.join(__dirname, '../../views/index.html'), 'utf8');
-
+        
+        const user = await User.findById(req.session.userId);
+        const userReminders = user?.reminders || [];
+        
         let reminderHTML;
         if (userReminders.length > 0) {
             const reminder = userReminders[0];
@@ -36,8 +39,6 @@ const getUpcomingReminder = async (req, res) => {
         }
 
         let finalHTML = template.replace('{{REMINDERS}}', reminderHTML);
-
-        const user = await User.findById(req.session.userId);
 
         if (user?.preferences?.highContrast) {
             const theme = user.preferences.highContrast;
