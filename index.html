@@ -1,7 +1,7 @@
 <html>
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AudioReminder</title>
+    <title>AudioReminder - Home</title>
     <link rel="stylesheet" href="css/main.css">
     <script src="js/theme-init.js"></script>
 </head>
@@ -70,7 +70,7 @@
         function enableTTS() {
             if (isSpeaking) return;
 
-            speak("Welcome to AudioReminder. You can navigate by saying Open Task, Open Calendar, Read Reminder, or 'Help' to hear this list of commands again.");
+            speak("Welcome to AudioReminder. You can say: ‘Read reminder’ to hear your upcoming task, ‘Open Tasks’ to go to your tasks, ‘Open Calendar’ for your schedule, ‘Page’ to hear what you’re currently on, or ‘Help’ to repeat these options.");
         }
 
         window.onload = () => {
@@ -134,7 +134,7 @@
         function handleVoiceCommand(command) {
             if (isSpeaking) return;
             
-            if (command.includes("open tasks") || command.includes("task") || command.includes("tasks")) {
+            if (command.includes("open tasks") || command.includes("task") || command.includes("tasks") || command.includes("open task")) {
                 speak("Opening Tasks").then(() => location.href = "tasks"); 
             } else if (command.includes("open calendar") || command.includes("calendar")) {
                 speak("Opening Calendar").then(() => location.href = "calendar");            
@@ -144,7 +144,7 @@
             else if (command.includes("page"))  {
         const pageTitle = document.title;
         speak("You are currently on the " + pageTitle+" page.");}else if (command.includes("help")) {
-                speak("You can say 'Read reminders' to hear your upcoming task, 'Open Tasks' to go to the tasks page, 'Open Calendar' for your schedule or 'Help' to hear this list of commands again.");
+                speak("You can say 'Read reminder' to hear your upcoming task, 'Open Tasks' to go to the tasks page, 'Open Calendar' for your schedule, ‘Page’ to hear what you’re currently on or 'Help' to hear this list of commands again.");
             } else {
                 console.log("Unknown command:", command);
             }
