@@ -1,19 +1,12 @@
-function dateToReadable(date)
-{
-
+function dateToReadable(date){
     const localDate = formatDate(date);
-
-        const utcDate = "2025-04-10T00:00:00.000+00:00";
-        console.log("Input Date (UTC):", utcDate);
-        
-
-        console.log("Converted Local Date:", localDate);
-
+    const utcDate = "2025-04-10T00:00:00.000+00:00";
+    console.log("Input Date (UTC):", utcDate);
+    console.log("Converted Local Date:", localDate);
     return localDate;
 }
 
-function timeToTwelveSystem(time) // thank you gippity for making my life easier here lol, strings suck
-{
+function timeToTwelveSystem(time){ // thank you gippity for making my life easier here lol, strings suck
     // Split the input into hours and minutes
     let [hours, minutes] = time.split(":");
     hours = parseInt(hours); // Convert hours to number for comparison
@@ -46,4 +39,4 @@ function formatDate(date) {
     return localDate;
 }
 
-module.exports = {dateToReadable, timeToTwelveSystem};
+export {dateToReadable, timeToTwelveSystem};

@@ -1,10 +1,34 @@
+import mongoose from 'mongoose';
+import dotenv from 'dotenv';
+import { MongoClient, ServerApiVersion } from 'mongodb';
 
-// TDL: Add IPs for all group members to access database, or figure out how to not need a specific IP to connect to DB. AORN, this file does nothing.
+dotenv.config(); // Load .env variables
+const uri = process.env.MONGO_URI;
 
-const { MongoClient, ServerApiVersion } = require('mongodb');
-const uri = "mongodb+srv://audioreminderadmin:UpeBennK0Ca4oDqg@cluster0.b6uj2.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+const connectDB = async () => {
+  try{
+    await mongoose.connect(process.env.MONGO_URI);
+    console.log('Successfully connected to MongoDB');
+  } catch (error) {
+    console.error('MongoDB connection error:', error.message);
+    process.exit(1); // Exit process on failure
+  }
+};
+// Connection event listeners
+mongoose.connection.on('connected', () => {
+  console.log('Mongoose connected to DB');
+});
 
-// Create a MongoClient with a MongoClientOptions object to set the Stable API version
+mongoose.connection.on('error', (error) => {
+  console.log('Mongoose connection error:', error);
+});
+
+mongoose.connection.on('disconnected', () => {
+  console.log('Mongoose disconnected');
+});
+
+
+// Create a MongoClient with a MongoClientOptions object
 const client = new MongoClient(uri, {
   serverApi: {
     version: ServerApiVersion.v1,
@@ -13,16 +37,17 @@ const client = new MongoClient(uri, {
   }
 });
 
-async function run() {
+// You can add a function to connect with the MongoDB driver directly if needed
+const connectWithMongoClient = async () => {
   try {
-    // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
-    // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
-  } finally {
-    // Ensures that the client will close when you finish/error
-    await client.close();
+    console.log("Connected to MongoDB with MongoClient");
+    return client;
+  } catch (error) {
+    console.error("Error connecting with MongoClient:", error);
+    throw error;
   }
-}
-run().catch(console.dir);
+};
+
+export default connectDB;
+export { connectWithMongoClient, client };

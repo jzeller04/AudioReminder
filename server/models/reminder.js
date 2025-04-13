@@ -1,5 +1,5 @@
-const mongoose = require('mongoose');
-const Schema = mongoose.Schema;
+import mongoose from 'mongoose';
+const { Schema } = mongoose;
 
 const reminderSchema = new Schema({
     // title is a string, and required for every reminder
@@ -21,4 +21,4 @@ const reminderSchema = new Schema({
 }, {timestamps: true}); // saves the time when reminder is created
 
 const Reminder = mongoose.model('Reminder', reminderSchema); // has to be the same name as the collection in the DB
-module.exports = Reminder; // exports to other files
+export default Reminder; // exports to other files
