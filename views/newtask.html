@@ -35,7 +35,7 @@
             <nav>
                 <button type="button" onclick="location.href='tasks';">Cancel</button>
             </nav>
-            <button id="save" type="submit">Save</button>
+            <button id="save" type="submit">Save Reminder</button>
         </div>
         <div class="buttonDiv">
             <button type="button" class="readReminderBtn" onclick="readReminder()">Read Reminder</button>
@@ -278,6 +278,7 @@
 
         function enableTTS() {
             const unlockTTS = new SpeechSynthesisUtterance("");
+
 
             unlockTTS.onend = () => {
                 console.log("TTS unlocked, starting prompts...");
