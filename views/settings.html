@@ -4,6 +4,13 @@
         <title>AudioReminder - Settings</title>
         <link rel="stylesheet" href="../css/settings.css">
 
+        <script>
+            (function() {
+                const theme = localStorage.getItem('theme') || 'low-contrast';
+                document.documentElement.setAttribute('data-theme', theme);
+            })();
+        </script>
+        
         <script src="../js/settings.bundle.js"></script>
     </head>
     <body>
