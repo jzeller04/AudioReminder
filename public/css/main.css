@@ -9,6 +9,13 @@ h1 {
   text-align: center;
 }
 
+.top-left-nav {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 100;
+}
+
 #readRemindersButton {
   border-radius: 50px;
   flex-grow: 1;
@@ -29,6 +36,22 @@ h1 {
   transition-duration: 0.1s;
   width: 40%;
 }
+
+#preferencesButton {
+  border-radius: 50px;
+  flex-grow: 1;
+  font-size: 50px;
+  height: 100;
+  margin: 0px 30px;
+  text-align: center;
+  transition-duration: 0.1s;
+  width: 200px;
+}
+
+#preferencesButton:hover {
+  cursor: pointer;
+}
+
 
 #tasksButton:hover, #calendarButton:hover {
   cursor: pointer;
@@ -109,6 +132,19 @@ hr {
     color: var(--primary-btn);
   }
 
+  & #preferencesButton {
+    background-color: var(--secondary-btn);
+    border: 6px solid var(--secondary-btn);
+    box-shadow: 0px 2px 6px var(--light-shadow);
+    color: var(--text-color);
+  }
+  
+  & #preferencesButton:hover {
+    background-color: var(--bg-color);
+    border: 6px solid var(--secondary-btn);
+    color: var(--secondary-btn);
+  }
+
   & #reminder_container {
     border:6px solid var(--heading-color);
     box-shadow: 0px 2px 6px var(--light-shadow);
@@ -154,6 +190,19 @@ body[data-theme="high-contrast"]{
   }
 
   & #tasksButton:hover, & #calendarButton:hover {
+    background-color: var(--bg-color);
+    border: 10px solid var(--primary-btn);
+    color: var(--primary-btn);
+  }
+
+  & #preferencesButton {
+    background-color: var(--primary-btn);
+    border: 6px solid var(--primary-btn);
+    box-shadow: 0px 2px 6px var(--light-shadow);
+    color: var(--text-color);
+  }
+  
+  & #preferencesButton:hover {
     background-color: var(--bg-color);
     border: 10px solid var(--primary-btn);
     color: var(--primary-btn);

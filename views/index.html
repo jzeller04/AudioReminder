@@ -2,15 +2,32 @@
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AudioReminder</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="../css/main.css">
+
+    <script>
+        (function() {
+          const theme = localStorage.getItem('theme') || 'low-contrast';
+          document.documentElement.setAttribute('data-theme', theme);
+        })();
+      </script>
+
     <script src="../js/theme-init.js"></script>
 </head>
 <body>
     <header>
+        <div class="top-left-nav">
+            <button id="preferencesButton" 
+                    onclick="location.href='/preferences';" 
+                    aria-label="Preferences">
+                <i class="bi bi-gear-fill" style="font-size:55px;"></i>
+            </button>
+        </div>
+        </div>
         <h1>Home</h1>
     </header>
-
     <r id="text1">Upcoming Task</r>
+    
     <div class="topWrapper">
         <div id="reminder_container">
             {{REMINDERS}}
@@ -18,13 +35,11 @@
         <button id="readRemindersButton" onclick="readReminders();">Read Reminder</button>
     </div>
 
-
     <nav>
         <div class="bottomWrapper">
             <button id="tasksButton" onclick="location.href='/tasks';">Tasks</button>
             <button id="calendarButton" onclick="location.href='/calendar';">Calendar</button>
         </div>
-        
     </nav>
     <script>
         let isSpeaking = false;
