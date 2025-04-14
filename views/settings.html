@@ -3,12 +3,20 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>AudioReminder - Settings</title>
         <link rel="stylesheet" href="../css/settings.css">
-        <script src="../js/settings.js"></script>
+        
+        <script>
+            (function() {
+            const theme = localStorage.getItem('theme') || 'low-contrast';
+            document.documentElement.setAttribute('data-theme', theme);
+            })();
+        </script>
+        
         <script src="../js/theme-init.js"></script>
+        <script src="../js/settings.js"></script>
     </head>
     <body>
         <header>
-            <h1>Settings</h1>
+            <h1>Preferences</h1>
         </header>
         <nav>
             <button id="homeButton" onclick="location.href='/';">Home</button>
@@ -26,13 +34,18 @@
                     </span>
                 </label>
             </div>
-            <form action="/updateSettings" method="POST">
+            <form action="/preferences/updateSettings" method="POST">
+                <input type="hidden" name="setting" value="highContrastHandle">
+                <button type="submit" id="theme-submit" style="display:none;">Update Theme</button>
+            </form>
+            
+            <!-- Update other forms as well -->
+            <form action="/preferences/updateSettings" method="POST">
                 <button type="submit" name="setting" value="voiceCommandHandle">Voice Commands</button>
             </form>
-            <form action="/updateSettings" method="POST">
+            <form action="/preferences/updateSettings" method="POST">
                 <button type="submit" name="setting" value="pushToTalkHandle">Push To Talk</button>
             </form>
-        </section>
 
         <form action="/updateSettings" method="POST">
             <!-- Slider: Volume -->

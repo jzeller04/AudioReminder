@@ -15,30 +15,8 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Save theme preference to localStorage and server
         localStorage.setItem('theme', newTheme);
-        saveThemePreference(newTheme);
+        document.getElementById('theme-submit').click();
     });
-    
-    // Function to save theme preference to server
-    function saveThemePreference(theme) {
-        console.log(`Saving theme preference: ${theme}`);
-
-        // Create a form to post the data
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = '/updateSettings';
-        form.style.display = 'none';
-        
-        // Create input for the setting
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = 'setting';
-        input.value = 'highContrastHandle';
-        
-        // Add input to form and submit
-        form.appendChild(input);
-        document.body.appendChild(form);
-        form.submit();
-    }
 });
 
 // Initialize theme on page load for all pages
