@@ -4,10 +4,8 @@ import argon2 from 'argon2';
 // Sign in user
 const signIn = async (req, res) => {
     const { email, password } = req.body;
-
     try {
         const user = await User.findOne({ userEmail: email });
-        
         if (user && await argon2.verify(user.password, password)) {
             req.session.userId = user._id;
             console.log('Session created: ' + req.session.userId);
@@ -60,3 +58,4 @@ export {
     createUser,
     logout
 };
+
