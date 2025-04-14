@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Function to fetch user preferences if logged in
     async function fetchUserPreferences() {
         try {
-            const response = await fetch('/getUserPreferences');
+            const response = await fetch('/preferences/getUserPreferences');
             if (response.ok) {
                 const data = await response.json();
                 if (data?.preferences?.highContrast) {

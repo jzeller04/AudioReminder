@@ -11,7 +11,7 @@ const __dirname = dirname(__filename);
 const router = express.Router();
 
 // Settings page route
-router.get('/settings', authMiddleware.isAuthenticated, (req, res) => {
+router.get('/', authMiddleware.isAuthenticated, (req, res) => {
     return res.sendFile('settings.html', { root: path.join(__dirname, '../../views') });
 });
 

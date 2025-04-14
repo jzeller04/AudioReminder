@@ -11,19 +11,29 @@ const updateSettings = async (req, res) => {
         
         if (!user) {
             console.log('User not found');
-            return res.redirect('/user/settings');
+            return res.redirect('/preferences');
         }
         
         console.log("Before Update:", user.preferences);
+
+        // Initialize preferences if they don't exist
+        if (!user.preferences) {
+            user.preferences = {
+                highContrast: 'low-contrast',
+                volume: 100,
+                pushToTalk: false,
+                voiceCommands: true
+            };
+        }
         
         // Update settings based on the request
         switch (settings) {
             case 'highContrastHandle':
-                if (user.preferences.highContrast == 'low-contrast') {
-                    user.preferences.highContrast = 'high-contrast';
-                } else if (user.preferences.highContrast == 'high-contrast') {
-                    user.preferences.highContrast = 'low-contrast';
-                }
+                // Toggle between high-contrast and low-contrast
+                user.preferences.highContrast = 
+                    user.preferences.highContrast === 'high-contrast' 
+                        ? 'low-contrast' 
+                        : 'high-contrast';
                 break;
             case 'voiceCommandHandle':
                 user.preferences.voiceCommands = !user.preferences.voiceCommands;
@@ -40,10 +50,10 @@ const updateSettings = async (req, res) => {
         // Save updated user
         await user.save();
         
-        return res.redirect('/user/settings');
+        return res.redirect('/preferences');
     } catch (error) {
         console.log(error);
-        return res.redirect('/user/settings');
+        return res.redirect('/preferences');
     }
 };
 

@@ -33,7 +33,7 @@ app.use(session({
 // Routes - update the URL prefixes to match route organization
 app.use('/auth', authRoutes); // All auth routes will be prefixed with /auth
 app.use('/', reminderRoutes);  // Main reminder routes
-app.use('/user', authMiddleware.isAuthenticated, userRoutes);  // User and settings routes
+app.use('/preferences', authMiddleware.isAuthenticated, userRoutes);  // User and settings routes
 app.use('/calendar', authMiddleware.isAuthenticated, calendarRoutes); // Calendar routes
 
 // 404 handler

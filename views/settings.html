@@ -26,13 +26,18 @@
                     </span>
                 </label>
             </div>
-            <form action="/updateSettings" method="POST">
+            <form action="/preferences/updateSettings" method="POST">
+                <input type="hidden" name="setting" value="highContrastHandle">
+                <button type="submit" id="theme-submit" style="display:none;">Update Theme</button>
+            </form>
+            
+            <!-- Update other forms as well -->
+            <form action="/preferences/updateSettings" method="POST">
                 <button type="submit" name="setting" value="voiceCommandHandle">Voice Commands</button>
             </form>
-            <form action="/updateSettings" method="POST">
+            <form action="/preferences/updateSettings" method="POST">
                 <button type="submit" name="setting" value="pushToTalkHandle">Push To Talk</button>
             </form>
-        </section>
 
         <form action="/updateSettings" method="POST">
             <!-- Slider: Volume -->
