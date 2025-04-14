@@ -45,11 +45,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Debug secrets
-        run: |
-          echo "DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}"
-          echo "DOCKERHUB_ACCESS_TOKEN is set: ${{ secrets.DOCKERHUB_ACCESS_TOKEN != '' }}"
-
       - name: Log in to DockerHub
         run: echo "${{ secrets.DOCKERHUB_ACCESS_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
 
