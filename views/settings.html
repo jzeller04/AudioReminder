@@ -3,16 +3,8 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>AudioReminder - Settings</title>
         <link rel="stylesheet" href="../css/settings.css">
-        
-        <script>
-            (function() {
-            const theme = localStorage.getItem('theme') || 'low-contrast';
-            document.documentElement.setAttribute('data-theme', theme);
-            })();
-        </script>
-        
-        <script src="../js/theme-init.js"></script>
-        <script src="../js/settings.js"></script>
+
+        <script src="../js/settings.bundle.js"></script>
     </head>
     <body>
         <header>
@@ -38,20 +30,74 @@
                 <input type="hidden" name="setting" value="highContrastHandle">
                 <button type="submit" id="theme-submit" style="display:none;">Update Theme</button>
             </form>
+
+            <!-- Push-to-talk toggle switch -->
+            <div class="toggle-switch-container">
+                <span class="toggle-switch-label">Push To Talk Mode</span>
+                <label class="switch">
+                    <input type="checkbox" id="push-to-talk-toggle">
+                    <span class="slider round">
+                        <span class="theme-text on">ON</span>
+                        <span class="theme-text off">OFF</span>
+                    </span>
+                </label>
+                <p class="setting-description">When enabled, you'll need to hold the space bar to activate voice recognition.</p>
+            </div>
+            <form action="/preferences/updateSettings" method="POST" id="push-to-talk-form">
+                <input type="hidden" name="setting" value="pushToTalkHandle">
+                <button type="submit" id="push-to-talk-submit" style="display:none;">Update Push To Talk</button>
+            </form>
             
             <!-- Update other forms as well -->
             <form action="/preferences/updateSettings" method="POST">
                 <button type="submit" name="setting" value="voiceCommandHandle">Voice Commands</button>
             </form>
+
+            <!-- Voice Commands toggle -->
             <form action="/preferences/updateSettings" method="POST">
-                <button type="submit" name="setting" value="pushToTalkHandle">Push To Talk</button>
+                <button type="submit" name="setting" value="voiceCommandHandle">Voice Commands</button>
             </form>
 
-        <form action="/updateSettings" method="POST">
-            <!-- Slider: Volume -->
-            <label for="volume">Volume: </label>
-            <input type="range" id="volume" name="volume" min="0" max="100" value="50" />
-        </form>
+            <!-- Volume slider -->
+            <form action="/updateSettings" method="POST">
+                <label for="volume">Volume: </label>
+                <input type="range" id="volume" name="volume" min="0" max="100" value="50" />
+            </form>
+
+        </section>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                // Theme toggle handler
+                const themeToggle = document.getElementById('theme-toggle');
+                themeToggle.checked = localStorage.getItem('theme') === 'high-contrast';
+                themeToggle.addEventListener('change', function() {
+                    const newTheme = this.checked ? 'high-contrast' : 'low-contrast';
+                    document.body.setAttribute('data-theme', newTheme);
+                    localStorage.setItem('theme', newTheme);
+                    document.getElementById('theme-submit').click();
+                });
+                
+                // Push-to-talk toggle handler
+                const pushToTalkToggle = document.getElementById('push-to-talk-toggle');
+                pushToTalkToggle.checked = window.PushToTalk?.enabled || false;
+                pushToTalkToggle.addEventListener('change', function() {
+                    if (window.PushToTalk) {
+                        window.PushToTalk.updateSetting(this.checked);
+                    }
+                    document.getElementById('push-to-talk-submit').click();
+                });
+                
+                // Listen for push-to-talk updates
+                window.addEventListener('pushToTalkChanged', function(event) {
+                    pushToTalkToggle.checked = event.detail.enabled;
+                });
+                
+                // Listen for settings loaded event
+                window.addEventListener('userSettingsLoaded', function() {
+                    pushToTalkToggle.checked = window.PushToTalk?.enabled || false;
+                });
+            });
+        </script>
 
         <script>
             // Function for Text-to-Speech (TTS)
