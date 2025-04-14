@@ -22,14 +22,29 @@
         </div>
         <script>
         
+// Global variable for speech recognition
+let recognition;
+
 // Function for Text-to-Speech (TTS)
 function speak(text) {
     return new Promise((resolve) => {
+        // Stop speech recognition if it's running
+        if (recognition) {
+            recognition.stop();
+        }
+
         const synth = window.speechSynthesis;
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.rate = 0.7;
 
-        utterance.onend = () => resolve();
+        utterance.onend = () => {
+            // Restart speech recognition after TTS is done
+            if (recognition) {
+                recognition.start();
+            }
+            resolve();
+        };
+        
         synth.speak(utterance);
     });
 }
@@ -52,6 +67,9 @@ const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecogni
 
 window.onbeforeunload = () => {
     window.speechSynthesis.cancel(); // Stops any ongoing speech synthesis
+    if (recognition) {
+        recognition.stop(); // Stop speech recognition
+    }
 };
 
 // Global variables for mark complete process
@@ -61,7 +79,7 @@ let reminderElements = [];
 
 function startSpeechRecognition() {
     if (SpeechRecognition) {
-        const recognition = new SpeechRecognition();
+        recognition = new SpeechRecognition();
         recognition.continuous = true;
         recognition.interimResults = false;
 
@@ -75,7 +93,9 @@ function startSpeechRecognition() {
 
         recognition.onend = () => {
             console.log("Voice recognition ended, restarting...");
-            recognition.start();
+            if (!window.speechSynthesis.speaking) {
+                recognition.start();
+            }
         };
 
         recognition.start();
@@ -124,7 +144,7 @@ async function handleVoiceCommand(command) {
         speak("You are currently on the " + pageTitle + " page.");
     }
     else if (command.includes("read all reminders") || (command.includes("read reminders"))) {
-        speak("Reading reminder").then(() => readReminders());
+        speak("Reading reminders").then(() => readReminders());
     }
     else if (command.includes("mark complete") || command.includes("complete tasks")) {
         startMarkCompleteProcess();
@@ -136,6 +156,7 @@ async function handleVoiceCommand(command) {
         console.log("Unknown command:", command);
     }
 }
+
 async function startMarkCompleteProcess() {
     reminderElements = Array.from(document.querySelectorAll('.reminder-item'));
     
@@ -180,7 +201,6 @@ async function processNextReminder() {
         await speak("Could not read task details. Moving to next task.");
     }
 }
-
 
 async function markReminderComplete(reminderId) {
     // Create a form to submit
