@@ -59,7 +59,7 @@
                 <button type="submit" id="push-to-talk-submit" style="display:none;">Update Push To Talk</button>
             </form>
             
-            <!-- Voice Commands toggle
+            <!-- Voice Commands toggle -->
             <div class="toggle-switch-container">
                 <span class="toggle-switch-label">Voice Commands</span>
                 <label class="switch">
@@ -69,11 +69,11 @@
                         <span class="theme-text off">OFF</span>
                     </span>
                 </label>
-            </div>*/
+            </div>
             <form action="/preferences/updateSettings" method="POST" id="voice-commands-form">
                 <input type="hidden" name="setting" value="voiceCommandHandle">
                 <button type="submit" id="voice-commands-submit" style="display:none;">Update Voice Commands</button>
-            </form> -->
+            </form>
 
             <!-- Volume slider -->
             <form action="/updateSettings" method="POST">
@@ -86,9 +86,10 @@
 
         </section>
         <script>
+            // Global variables for speech and recognition
             let isSpeaking = false;
             let recognition;
-            let isRecognitionActive = false;
+            let isRecognitionActive = true;
             
             // Check if this is a page reload after settings change
             const isSettingsReload = sessionStorage.getItem('settingsChanged') === 'true';
@@ -120,35 +121,37 @@
                                 recognition.start();
                             }
                             resolve();
-                            };
+                        };
                         
-                            // Short timeout to ensure the engine is ready
-                            setTimeout(() => synth.speak(utterance), 100);
+                        // Short timeout to ensure the engine is ready
+                        setTimeout(() => synth.speak(utterance), 100);
                     }, 200);
-                });
-            }
-
-             // Function for Text-to-Speech (TTS)
-             function speak(text) {
-                return new Promise((resolve) => {
-                    const synth = window.speechSynthesis;
-                    const utterance = new SpeechSynthesisUtterance(text);
-                    utterance.onend = () => resolve();
-                    synth.speak(utterance);
                 });
             }
 
             // Function to enable TTS when the page loads
             function enableTTS() {
-                // Trigger TTS every time the page loads
-                speak("Settings page. You can navigate by saying Open Home.")
-                .then(() => {
-                    // Start speech recognition after TTS is spoken
+                // Only speak if this is NOT a reload after settings change
+                if (!isSettingsReload) {
+                    speak("Settings page. You can navigate by saying Open Home.")
+                    .then(() => {
+                        // Start speech recognition after TTS is spoken
+                        startSpeechRecognition();
+                    });
+                } else {
+                    // Just start speech recognition without speaking
                     startSpeechRecognition();
-                });
+                    
+                    // Clear the flag
+                    sessionStorage.removeItem('settingsChanged');
+                }
             }
+            
             window.onbeforeunload = () => {
                 window.speechSynthesis.cancel(); // Stops any ongoing speech synthesis
+                if (recognition) {
+                    recognition.stop();
+                }
             };
 
             // Start TTS and Speech Recognition once the page is loaded
@@ -159,24 +162,74 @@
 
             function startSpeechRecognition() {
                 if (SpeechRecognition) {
-                    const recognition = new SpeechRecognition();
-                    recognition.continuous = true;
+                    recognition = new SpeechRecognition();
+                    
+                    // Function to check if push-to-talk is enabled
+                    function isPushToTalkEnabled() {
+                        return window.PushToTalk?.enabled || localStorage.getItem('pushToTalk') === 'true';
+                    }
+                    
+                    // Configure recognition based on push-to-talk setting
+                    recognition.continuous = !isPushToTalkEnabled();
                     recognition.interimResults = false;
+                    recognition.lang = 'en-US';
 
                     recognition.onresult = (event) => {
+                        if (isSpeaking) return;
+                        
                         const transcript = event.results[event.results.length - 1][0].transcript.toLowerCase().trim();
                         console.log("Voice Command Detected:", transcript);
                         handleVoiceCommand(transcript);
                     };
 
-                    recognition.onerror = (event) => console.error("Speech recognition error:", event.error);
-
-                    recognition.onend = () => {
-                        console.log("Voice recognition ended, restarting...");
-                        recognition.start();
+                    recognition.onerror = (event) => {
+                        console.error("Speech recognition error:", event.error);
+                        // Only auto-restart if we're NOT in push-to-talk mode
+                        if (event.error !== 'no-speech' && !isPushToTalkEnabled()) {
+                            setTimeout(() => recognition.start(), 1000);
+                        }
                     };
 
-                    recognition.start();
+                    recognition.onend = () => {
+                        console.log("Voice recognition ended");
+                        // Only auto-restart if not in push-to-talk mode
+                        if (isRecognitionActive && !isSpeaking && !isPushToTalkEnabled()) {
+                            recognition.start();
+                        }
+                    };
+                    
+                    // Only auto-start if not in push-to-talk mode
+                    if (!isPushToTalkEnabled()) {
+                        recognition.start();
+                    }
+                    
+                    // Add listeners for push-to-talk events
+                    window.addEventListener('pttKeyDown', function() {
+                        if (isPushToTalkEnabled() && !isSpeaking) {
+                            recognition.start();
+                        }
+                    });
+                    
+                    window.addEventListener('pttKeyUp', function() {
+                        if (isPushToTalkEnabled()) {
+                            recognition.stop();
+                        }
+                    });
+
+                    // Listen for setting changes
+                    window.addEventListener('pushToTalkChanged', function(event) {
+                        const newPttState = event.detail.enabled;
+                        recognition.continuous = !newPttState;
+                        
+                        if (recognition.active) {
+                            recognition.stop();
+                        }
+                
+                        if (!newPttState && isRecognitionActive && !isSpeaking) {
+                            // Auto-start if switching to continuous mode
+                            setTimeout(() => recognition.start(), 100);
+                        }
+                    });
                 } else {
                     console.error("Speech recognition is not supported in this browser.");
                 }
@@ -185,7 +238,7 @@
             // Handling voice commands
             function handleVoiceCommand(command) {
                 if (command.includes("open home") || command.includes("home")) {
-                    location.href = "/";
+                    speak("Opening home").then(() => location.href = "/");
                 } else {
                     console.log("Unknown command:", command);
                 }
@@ -209,11 +262,14 @@
                 
                 // Push-to-talk toggle handler
                 const pushToTalkToggle = document.getElementById('push-to-talk-toggle');
-                pushToTalkToggle.checked = window.PushToTalk?.enabled || false;
+                pushToTalkToggle.checked = window.PushToTalk?.enabled || localStorage.getItem('pushToTalk') === 'true';
                 pushToTalkToggle.addEventListener('change', function() {
                     if (window.PushToTalk) {
                         window.PushToTalk.updateSetting(this.checked);
                     }
+                    
+                    // Store setting in localStorage for consistency across pages
+                    localStorage.setItem('pushToTalk', this.checked);
                     
                     // Set flag before submitting
                     sessionStorage.setItem('settingsChanged', 'true');
@@ -222,23 +278,39 @@
                 
                 // Voice commands toggle handler
                 const voiceCommandsToggle = document.getElementById('voice-commands-toggle');
-                voiceCommandsToggle.checked = window.VoiceCommands?.enabled || true;
-                voiceCommandsToggle.addEventListener('change', function() {
-                    // Set flag before submitting
-                    sessionStorage.setItem('settingsChanged', 'true');
-                    document.getElementById('voice-commands-submit').click();
-                });
+                if (voiceCommandsToggle) {
+                    voiceCommandsToggle.checked = window.VoiceCommands?.enabled || true;
+                    voiceCommandsToggle.addEventListener('change', function() {
+                        // Set flag before submitting
+                        sessionStorage.setItem('settingsChanged', 'true');
+                        document.getElementById('voice-commands-submit').click();
+                    });
+                }
                 
                 // Listen for push-to-talk updates
                 window.addEventListener('pushToTalkChanged', function(event) {
                     pushToTalkToggle.checked = event.detail.enabled;
                 });
                 
-                /*// Listen for settings loaded event
-                window.addEventListener('userSettingsLoaded', function() {
-                    pushToTalkToggle.checked = window.PushToTalk?.enabled || false;
-                    voiceCommandsToggle.checked = window.VoiceCommands?.enabled || true;
-                });*/
+                // Volume slider change event
+                const volumeSlider = document.getElementById('volume');
+                if (volumeSlider) {
+                    // Initialize from localStorage if available
+                    const savedVolume = localStorage.getItem('volume');
+                    if (savedVolume) {
+                        volumeSlider.value = savedVolume;
+                    }
+                    
+                    // Update volume when slider changes
+                    volumeSlider.addEventListener('change', function() {
+                        localStorage.setItem('volume', this.value);
+                        // Apply volume to all speech synthesis utterances
+                        const volume = this.value / 100;
+                        window.speechSynthesis.getVoices().forEach(voice => {
+                            voice.default = volume;
+                        });
+                    });
+                }
             });
         </script>
     </body>
