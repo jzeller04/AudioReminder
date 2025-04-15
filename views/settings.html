@@ -73,54 +73,48 @@
 
         </section>
         <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                // Theme toggle handler
-                const themeToggle = document.getElementById('theme-toggle');
-                themeToggle.checked = localStorage.getItem('theme') === 'high-contrast';
-                themeToggle.addEventListener('change', function() {
-                    const newTheme = this.checked ? 'high-contrast' : 'low-contrast';
-                    document.body.setAttribute('data-theme', newTheme);
-                    localStorage.setItem('theme', newTheme);
-                    document.getElementById('theme-submit').click();
-                });
-                
-                // Push-to-talk toggle handler
-                const pushToTalkToggle = document.getElementById('push-to-talk-toggle');
-                pushToTalkToggle.checked = window.PushToTalk?.enabled || false;
-                pushToTalkToggle.addEventListener('change', function() {
-                    if (window.PushToTalk) {
-                        window.PushToTalk.updateSetting(this.checked);
-                    }
-                    document.getElementById('push-to-talk-submit').click();
-                });
-                
-                // Listen for push-to-talk updates
-                window.addEventListener('pushToTalkChanged', function(event) {
-                    pushToTalkToggle.checked = event.detail.enabled;
-                });
-                
-                // Listen for settings loaded event
-                window.addEventListener('userSettingsLoaded', function() {
-                    pushToTalkToggle.checked = window.PushToTalk?.enabled || false;
-                });
-            });
-        </script>
-
-        <script>
+            let isSpeaking = false;
+            let recognition;
+            let isRecognitionActive = false;
             // Function for Text-to-Speech (TTS)
             function speak(text) {
                 return new Promise((resolve) => {
-                    const synth = window.speechSynthesis;
-                    const utterance = new SpeechSynthesisUtterance(text);
-                    utterance.onend = () => resolve();
-                    synth.speak(utterance);
+                    // Add a small delay before starting speech
+                    setTimeout(() => {
+                        isSpeaking = true;
+                        if (recognition) recognition.stop();
+                        
+                        const synth = window.speechSynthesis;
+                        const utterance = new SpeechSynthesisUtterance(text);
+                        utterance.rate = 0.7;
+
+                        // Preload the speech synthesis engine
+                        synth.speak(new SpeechSynthesisUtterance(''));
+                        
+                        utterance.onend = () => {
+                            isSpeaking = false;
+                            
+                            // Only restart recognition if NOT in push-to-talk mode
+                            function isPushToTalkEnabled() {
+                                return window.PushToTalk?.enabled || localStorage.getItem('pushToTalk') === 'true';
+                            }
+                            
+                            if (recognition && isRecognitionActive && !isPushToTalkEnabled()) {
+                                recognition.start();
+                            }
+                            resolve();
+                            };
+                        
+                            // Short timeout to ensure the engine is ready
+                            setTimeout(() => synth.speak(utterance), 100);
+                    }, 200);
                 });
             }
 
             // Function to enable TTS when the page loads
             function enableTTS() {
                 // Trigger TTS every time the page loads
-                speak("Settings page. You can navigate by saying Open Home.")
+                speak("Preference page. You can navigate by saying Open Home.")
                 .then(() => {
                     // Start speech recognition after TTS is spoken
                     startSpeechRecognition();
@@ -169,6 +163,40 @@
                     console.log("Unknown command:", command);
                 }
             }
+        </script>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                // Theme toggle handler
+                const themeToggle = document.getElementById('theme-toggle');
+                themeToggle.checked = localStorage.getItem('theme') === 'high-contrast';
+                themeToggle.addEventListener('change', function() {
+                    const newTheme = this.checked ? 'high-contrast' : 'low-contrast';
+                    document.body.setAttribute('data-theme', newTheme);
+                    localStorage.setItem('theme', newTheme);
+                    document.getElementById('theme-submit').click();
+                });
+                
+                // Push-to-talk toggle handler
+                const pushToTalkToggle = document.getElementById('push-to-talk-toggle');
+                pushToTalkToggle.checked = window.PushToTalk?.enabled || false;
+                pushToTalkToggle.addEventListener('change', function() {
+                    if (window.PushToTalk) {
+                        window.PushToTalk.updateSetting(this.checked);
+                    }
+                    document.getElementById('push-to-talk-submit').click();
+                });
+                
+                // Listen for push-to-talk updates
+                window.addEventListener('pushToTalkChanged', function(event) {
+                    pushToTalkToggle.checked = event.detail.enabled;
+                });
+                
+                // Listen for settings loaded event
+                window.addEventListener('userSettingsLoaded', function() {
+                    pushToTalkToggle.checked = window.PushToTalk?.enabled || false;
+                });
+            });
         </script>
     </body>
 </html>
