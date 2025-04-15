@@ -3,15 +3,15 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>AudioReminder - Tasks</title>
         <link rel="stylesheet" href="../css/tasks.css">
-        
+
         <script>
             (function() {
-            const theme = localStorage.getItem('theme') || 'low-contrast';
-            document.documentElement.setAttribute('data-theme', theme);
+                const theme = localStorage.getItem('theme') || 'low-contrast';
+                document.documentElement.setAttribute('data-theme', theme);
             })();
         </script>
         
-        <script src="../js/theme-init.js"></script>
+        <script src="../js/settings.bundle.js"></script>
     </head>
     <body>
         <header>
@@ -29,220 +29,198 @@
             {{REMINDERS}}
         </div>
         <script>
-        
-// Global variable for speech recognition
-let recognition;
+            // Global variable for speech recognition
+            let recognition;
 
-// Function for Text-to-Speech (TTS)
-function speak(text) {
-    return new Promise((resolve) => {
-        // Stop speech recognition if it's running
-        if (recognition) {
-            recognition.stop();
-        }
+            // Function for Text-to-Speech (TTS)
+            function speak(text) {
+                return new Promise((resolve) => {
+                    // Add a small delay before starting speech
+                    setTimeout(() => {
+                        isSpeaking = true;
+                        if (recognition) recognition.stop();
+                        
+                        const synth = window.speechSynthesis;
+                        const utterance = new SpeechSynthesisUtterance(text);
+                        utterance.rate = 0.7;
 
-        const synth = window.speechSynthesis;
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.rate = 0.7;
-
-        utterance.onend = () => {
-            // Restart speech recognition after TTS is done
-            if (recognition) {
-                recognition.start();
+                        // Preload the speech synthesis engine
+                        synth.speak(new SpeechSynthesisUtterance(''));
+                        
+                        utterance.onend = () => {
+                            isSpeaking = false;
+                            
+                            // Only restart recognition if NOT in push-to-talk mode
+                            function isPushToTalkEnabled() {
+                                return window.PushToTalk?.enabled || localStorage.getItem('pushToTalk') === 'true';
+                            }
+                            
+                            if (recognition && isRecognitionActive && !isPushToTalkEnabled()) {
+                                recognition.start();
+                            }
+                            resolve();
+                            };
+                        
+                            // Short timeout to ensure the engine is ready
+                            setTimeout(() => synth.speak(utterance), 100);
+                    }, 200);
+                });
             }
-            resolve();
-        };
-        
-        synth.speak(utterance);
-    });
-}
 
-// Function to enable TTS when the page loads
-function enableTTS() {
-    // Trigger TTS every time the page loads
-    speak("Tasks page. You can navigate by saying 'New Task' to add a task, 'Open Home' to return to the homepage, 'Read all Reminders' to hear your upcoming tasks, 'Mark Complete' to go through your tasks, or 'Help' to hear this list of commands again.")
-    .then(() => {
-        // Start speech recognition after TTS is spoken
-        startSpeechRecognition();
-    });
-}
-
-// Start TTS and Speech Recognition once the page is loaded
-window.onload = enableTTS;
-
-// Speech Recognition setup
-const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-
-window.onbeforeunload = () => {
-    window.speechSynthesis.cancel(); // Stops any ongoing speech synthesis
-    if (recognition) {
-        recognition.stop(); // Stop speech recognition
-    }
-};
-
-// Global variables for mark complete process
-let isMarkingComplete = false;
-let currentReminderIndex = 0;
-let reminderElements = [];
-
-function startSpeechRecognition() {
-    if (SpeechRecognition) {
-        recognition = new SpeechRecognition();
-        recognition.continuous = true;
-        recognition.interimResults = false;
-
-        recognition.onresult = (event) => {
-            const transcript = event.results[event.results.length - 1][0].transcript.toLowerCase().trim();
-            console.log("Voice Command Detected:", transcript);
-            handleVoiceCommand(transcript);
-        };
-
-        recognition.onerror = (event) => console.error("Speech recognition error:", event.error);
-
-        recognition.onend = () => {
-            console.log("Voice recognition ended, restarting...");
-            if (!window.speechSynthesis.speaking) {
-                recognition.start();
+            // Function to enable TTS when the page loads
+            function enableTTS() {
+                // Trigger TTS every time the page loads
+                speak("Tasks page. You can navigate by saying 'New Task' to add a task, 'Open Home' to return to the homepage, 'Read all Reminders' to hear your upcoming tasks, 'Mark Complete' to go through your tasks, or 'Help' to hear this list of commands again.")
+                .then(() => {
+                    // Start speech recognition after TTS is spoken
+                    startSpeechRecognition();
+                });
             }
-        };
 
-        recognition.start();
-    } else {
-        console.error("Speech recognition is not supported in this browser.");
-    }
-}
+            // Start TTS and Speech Recognition once the page is loaded
+            window.onload = enableTTS;
 
-async function handleVoiceCommand(command) {
-    // If we're in the middle of marking tasks complete
-    if (isMarkingComplete) {
-        if (command.includes("yes") || command.includes("confirm")) {
-            // Mark current reminder as complete
-            const currentElement = reminderElements[currentReminderIndex];
-            const reminderId = currentElement.querySelector('.complete-btn').getAttribute('data-id');
-            await markReminderComplete(reminderId);
-            await speak("Task marked as complete.");
-            
-            // Move to next reminder
-            currentReminderIndex++;
-            await processNextReminder();
-        } 
-        else if (command.includes("no") || command.includes("skip")) {
-            // Skip this reminder
-            await speak("Skipping this task.");
-            currentReminderIndex++;
-            await processNextReminder();
-        }
-        else if (command.includes("cancel") || command.includes("stop")) {
-            // Cancel the mark complete process
-            isMarkingComplete = false;
-            await speak("Mark complete process cancelled.");
-        }
-        return;
-    }
+            // Speech Recognition setup
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
-    // Normal command processing
-    if (command.includes("new task") || command.includes("task")) {
-        speak("Creating new task").then(() => location.href = "newtask");            
-    } 
-    else if (command.includes("open home") || command.includes("home")) {
-        speak("Opening home").then(() => location.href = "/");            
-    } 
-    else if (command.includes("page")) {
-        const pageTitle = document.title;
-        speak("You are currently on the " + pageTitle + " page.");
-    }
-    else if (command.includes("read all reminders") || (command.includes("read reminders"))) {
-        speak("Reading reminders").then(() => readReminders());
-    }
-    else if (command.includes("mark complete") || command.includes("complete tasks")) {
-        startMarkCompleteProcess();
-    }
-    else if (command.includes("help")) {
-        speak("You can say 'New Task' to add a task, 'Open Home' to return to the homepage, 'Read all Reminders' to hear your upcoming tasks, 'Mark Complete' to go through your tasks, or 'Help' to hear this list of commands again.");
-    } 
-    else {
-        console.log("Unknown command:", command);
-    }
-}
+            window.onbeforeunload = () => {
+                window.speechSynthesis.cancel(); // Stops any ongoing speech synthesis
+                if (recognition) {
+                    recognition.stop(); // Stop speech recognition
+                }
+            };
 
-async function startMarkCompleteProcess() {
-    reminderElements = Array.from(document.querySelectorAll('.reminder-item'));
-    
-    if (reminderElements.length === 0) {
-        await speak("You have no tasks to mark as complete.");
-        return;
-    }
-    
-    isMarkingComplete = true;
-    currentReminderIndex = 0;
-    
-    await speak("Starting mark complete process. I will read each task. Say 'yes' to mark it complete, 'no' to skip it, or 'cancel' to stop.");
-    await processNextReminder();
-}
+            // Global variables for mark complete process
+            let isMarkingComplete = false;
+            let currentReminderIndex = 0;
+            let reminderElements = [];
 
-async function processNextReminder() {
-    if (currentReminderIndex >= reminderElements.length) {
-        await speak("You've gone through all your tasks. Mark complete process finished.");
-        isMarkingComplete = false;
-        return;
-    }
+            function startSpeechRecognition() {
+                if (SpeechRecognition) {
+                    recognition = new SpeechRecognition();
+                    recognition.continuous = true;
+                    recognition.interimResults = false;
 
-    const currentElement = reminderElements[currentReminderIndex];
-    if (!currentElement) {
-        console.error("Reminder element missing at index", currentReminderIndex);
-        currentReminderIndex++;
-        return processNextReminder(); // Skip to next task
-    }
+                    recognition.onresult = (event) => {
+                        const transcript = event.results[event.results.length - 1][0].transcript.toLowerCase().trim();
+                        console.log("Voice Command Detected:", transcript);
+                        handleVoiceCommand(transcript);
+                    };
 
-    // Clone the element to avoid modifying the original
-    const clone = currentElement.cloneNode(true);
+                    recognition.onerror = (event) => console.error("Speech recognition error:", event.error);
 
-    // Remove buttons (we don't want to read "Mark Complete" aloud)
-    clone.querySelectorAll('button').forEach(btn => btn.remove());
+                    recognition.onend = () => {
+                        console.log("Voice recognition ended, restarting...");
+                        if (!window.speechSynthesis.speaking) {
+                            recognition.start();
+                        }
+                    };
 
-    // Get all text content (without buttons)
-    const reminderText = clone.textContent.trim();
+                    recognition.start();
+                } else {
+                    console.error("Speech recognition is not supported in this browser.");
+                }
+            }
 
-    if (reminderText) {
-        await speak(`Task ${currentReminderIndex + 1} of ${reminderElements.length}: ${reminderText}. Say "yes" to mark complete, "no" to skip.`);
-    } else {
-        await speak("Could not read task details. Moving to next task.");
-    }
-}
+            async function handleVoiceCommand(command) {
+                // If we're in the middle of marking tasks complete
+                if (isMarkingComplete) {
+                    if (command.includes("yes") || command.includes("confirm")) {
+                        // Mark current reminder as complete
+                        const currentElement = reminderElements[currentReminderIndex];
+                        const reminderId = currentElement.querySelector('.complete-btn').getAttribute('data-id');
+                        await markReminderComplete(reminderId);
+                        await speak("Task marked as complete.");
+                        
+                        // Move to next reminder
+                        currentReminderIndex++;
+                        await processNextReminder();
+                    } 
+                    else if (command.includes("no") || command.includes("skip")) {
+                        // Skip this reminder
+                        await speak("Skipping this task.");
+                        currentReminderIndex++;
+                        await processNextReminder();
+                    }
+                    else if (command.includes("cancel") || command.includes("stop")) {
+                        // Cancel the mark complete process
+                        isMarkingComplete = false;
+                        await speak("Mark complete process cancelled.");
+                    }
+                    return;
+                }
 
-async function markReminderComplete(reminderId) {
-    // Create a form to submit
-    const form = document.createElement('form');
-    form.method = 'POST';
-    form.action = '/complete-reminder';
-    
-    // Create hidden input for reminder ID
-    const input = document.createElement('input');
-    input.type = 'hidden';
-    input.name = 'reminderId';
-    input.value = reminderId;
-    
-    // Add input to form and submit
-    form.appendChild(input);
-    document.body.appendChild(form);
-    form.submit();
-    
-    // Wait a moment for the form submission to process
-    await new Promise(resolve => setTimeout(resolve, 100));
-}
+                // Normal command processing
+                if (command.includes("new task") || command.includes("task")) {
+                    speak("Creating new task").then(() => location.href = "newtask");            
+                } 
+                else if (command.includes("open home") || command.includes("home")) {
+                    speak("Opening home").then(() => location.href = "/");            
+                } 
+                else if (command.includes("page")) {
+                    const pageTitle = document.title;
+                    speak("You are currently on the " + pageTitle + " page.");
+                }
+                else if (command.includes("read all reminders") || (command.includes("read reminders"))) {
+                    speak("Reading reminders").then(() => readReminders());
+                }
+                else if (command.includes("mark complete") || command.includes("complete tasks")) {
+                    startMarkCompleteProcess();
+                }
+                else if (command.includes("help")) {
+                    speak("You can say 'New Task' to add a task, 'Open Home' to return to the homepage, 'Read all Reminders' to hear your upcoming tasks, 'Mark Complete' to go through your tasks, or 'Help' to hear this list of commands again.");
+                } 
+                else {
+                    console.log("Unknown command:", command);
+                }
+            }
 
-document.addEventListener('DOMContentLoaded', function() {
-    // Find all "Mark Complete" buttons
-    const completeButtons = document.querySelectorAll('.complete-btn');
-    
-    // Add click event listener to each button
-    completeButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            // Get the reminder ID from the data attribute
-            const reminderId = this.getAttribute('data-id');
-            
-            // Simple confirmation
-            if (confirm("Mark this reminder as complete?")) {
+            async function startMarkCompleteProcess() {
+                reminderElements = Array.from(document.querySelectorAll('.reminder-item'));
+                
+                if (reminderElements.length === 0) {
+                    await speak("You have no tasks to mark as complete.");
+                    return;
+                }
+                
+                isMarkingComplete = true;
+                currentReminderIndex = 0;
+                
+                await speak("Starting mark complete process. I will read each task. Say 'yes' to mark it complete, 'no' to skip it, or 'cancel' to stop.");
+                await processNextReminder();
+            }
+
+            async function processNextReminder() {
+                if (currentReminderIndex >= reminderElements.length) {
+                    await speak("You've gone through all your tasks. Mark complete process finished.");
+                    isMarkingComplete = false;
+                    return;
+                }
+
+                const currentElement = reminderElements[currentReminderIndex];
+                if (!currentElement) {
+                    console.error("Reminder element missing at index", currentReminderIndex);
+                    currentReminderIndex++;
+                    return processNextReminder(); // Skip to next task
+                }
+
+                // Clone the element to avoid modifying the original
+                const clone = currentElement.cloneNode(true);
+
+                // Remove buttons (we don't want to read "Mark Complete" aloud)
+                clone.querySelectorAll('button').forEach(btn => btn.remove());
+
+                // Get all text content (without buttons)
+                const reminderText = clone.textContent.trim();
+
+                if (reminderText) {
+                    await speak(`Task ${currentReminderIndex + 1} of ${reminderElements.length}: ${reminderText}. Say "yes" to mark complete, "no" to skip.`);
+                } else {
+                    await speak("Could not read task details. Moving to next task.");
+                }
+            }
+
+            async function markReminderComplete(reminderId) {
                 // Create a form to submit
                 const form = document.createElement('form');
                 form.method = 'POST';
@@ -258,45 +236,77 @@ document.addEventListener('DOMContentLoaded', function() {
                 form.appendChild(input);
                 document.body.appendChild(form);
                 form.submit();
+                
+                // Wait a moment for the form submission to process
+                await new Promise(resolve => setTimeout(resolve, 100));
             }
-        });
-    });
-});
 
-function readReminders() {             
-    console.log("Read Reminders function called"); // Debugging log
+            document.addEventListener('DOMContentLoaded', function() {
+                // Find all "Mark Complete" buttons
+                const completeButtons = document.querySelectorAll('.complete-btn');
+                
+                // Add click event listener to each button
+                completeButtons.forEach(button => {
+                    button.addEventListener('click', function() {
+                        // Get the reminder ID from the data attribute
+                        const reminderId = this.getAttribute('data-id');
+                        
+                        // Simple confirmation
+                        if (confirm("Mark this reminder as complete?")) {
+                            // Create a form to submit
+                            const form = document.createElement('form');
+                            form.method = 'POST';
+                            form.action = '/complete-reminder';
+                            
+                            // Create hidden input for reminder ID
+                            const input = document.createElement('input');
+                            input.type = 'hidden';
+                            input.name = 'reminderId';
+                            input.value = reminderId;
+                            
+                            // Add input to form and submit
+                            form.appendChild(input);
+                            document.body.appendChild(form);
+                            form.submit();
+                        }
+                    });
+                });
+            });
 
-    const reminderContainer = document.getElementById("reminder_container");             
-    if (!reminderContainer) {
-        console.error("Reminder container not found.");
-        return;
-    }
+            function readReminders() {             
+                console.log("Read Reminders function called"); // Debugging log
 
-    // Clone the container to avoid modifying the original
-    const tempContainer = reminderContainer.cloneNode(true);
+                const reminderContainer = document.getElementById("reminder_container");             
+                if (!reminderContainer) {
+                    console.error("Reminder container not found.");
+                    return;
+                }
 
-    // Remove all buttons inside the container
-    tempContainer.querySelectorAll("button").forEach(btn => btn.remove());
+                // Clone the container to avoid modifying the original
+                const tempContainer = reminderContainer.cloneNode(true);
 
-    // Get only the remaining text
-    const reminders = tempContainer.innerText.trim();
+                // Remove all buttons inside the container
+                tempContainer.querySelectorAll("button").forEach(btn => btn.remove());
 
-    if (reminders) {                 
-        speak("Here are your upcoming tasks: " + reminders);             
-    } else {                 
-        speak("You have no upcoming tasks.");             
-    }         
-}
+                // Get only the remaining text
+                const reminders = tempContainer.innerText.trim();
 
-document.addEventListener('DOMContentLoaded', function() {
-    const readRemindersButton = document.getElementById("readRemindersButton");
-    if (readRemindersButton) {
-        readRemindersButton.addEventListener("click", function() {
-            readReminders();  // Call readReminders function on button click
-        });
-    }
-});
-        
+                if (reminders) {                 
+                    speak("Here are your upcoming tasks: " + reminders);             
+                } else {                 
+                    speak("You have no upcoming tasks.");             
+                }         
+            }
+
+            document.addEventListener('DOMContentLoaded', function() {
+                const readRemindersButton = document.getElementById("readRemindersButton");
+                if (readRemindersButton) {
+                    readRemindersButton.addEventListener("click", function() {
+                        readReminders();  // Call readReminders function on button click
+                    });
+                }
+            });
+                    
         </script>
     </body>
 </html>

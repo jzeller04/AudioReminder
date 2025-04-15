@@ -3,15 +3,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AudioReminder - Calendar</title>
     <link rel="stylesheet" href="../css/calendar.css">
-    
+
     <script>
         (function() {
             const theme = localStorage.getItem('theme') || 'low-contrast';
             document.documentElement.setAttribute('data-theme', theme);
         })();
-        </script>
-        
-    <script src="../js/theme-init.js"></script>
+    </script>
+    
+    <script src="../js/settings.bundle.js"></script>
 </head>
 <body>
     <header>
@@ -29,41 +29,38 @@
         
         function speak(text) {
             return new Promise((resolve) => {
-                // Stop recognition while speaking
-                if (recognition) {
-                    recognition.stop();
-                }
-                
-                isSpeaking = true;
-                const synth = window.speechSynthesis;
-                const utterance = new SpeechSynthesisUtterance(text);
-                utterance.rate = 0.7;
+                // Add a small delay before starting speech
+                setTimeout(() => {
+                    isSpeaking = true;
+                    if (recognition) recognition.stop();
+                    
+                    const synth = window.speechSynthesis;
+                    const utterance = new SpeechSynthesisUtterance(text);
+                    utterance.rate = 0.7;
 
-                utterance.onend = () => {
-                    isSpeaking = false;
-                    resolve();
-                    // Restart recognition after a short delay
-                    setTimeout(() => {
-                        if (!isSpeaking && recognition) {
+                    // Preload the speech synthesis engine
+                    synth.speak(new SpeechSynthesisUtterance(''));
+                    
+                    utterance.onend = () => {
+                        isSpeaking = false;
+                        
+                        // Only restart recognition if NOT in push-to-talk mode
+                        function isPushToTalkEnabled() {
+                            return window.PushToTalk?.enabled || localStorage.getItem('pushToTalk') === 'true';
+                        }
+                        
+                        if (recognition && isRecognitionActive && !isPushToTalkEnabled()) {
                             recognition.start();
                         }
-                    }, 500);
-                };
-                
-                utterance.onerror = () => {
-                    isSpeaking = false;
-                    resolve();
-                    // Restart recognition on error too
-                    setTimeout(() => {
-                        if (!isSpeaking && recognition) {
-                            recognition.start();
-                        }
-                    }, 500);
-                };
-                
-                synth.speak(utterance);
+                        resolve();
+                        };
+                    
+                        // Short timeout to ensure the engine is ready
+                        setTimeout(() => synth.speak(utterance), 100);
+                }, 200);
             });
         }
+
 
         window.onbeforeunload = () => {
             window.speechSynthesis.cancel(); // Stops any ongoing speech synthesis
