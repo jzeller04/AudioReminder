@@ -1,0 +1,237 @@
+<html>
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>AudioReminder - Settings</title>
+        <link rel="stylesheet" href="../css/settings.css">
+
+        <script>
+            (function() {
+                const theme = localStorage.getItem('theme') || 'low-contrast';
+                document.documentElement.setAttribute('data-theme', theme);
+            })();
+        </script>
+        
+        <script src="../js/settings.bundle.js"></script>
+    </head>
+    <body>
+        <header>
+            <h1>Preferences</h1>
+        </header>
+        <nav>
+            <button id="homeButton" onclick="location.href='/';">Home</button>
+        </nav>
+        
+        <section>
+            <!-- Theme toggle switch -->
+            <div class="theme-switch-container">
+                <span class="theme-switch-label">High Contrast Mode</span>
+                <label class="switch">
+                    <input type="checkbox" id="theme-toggle">
+                    <span class="slider round">
+                        <span class="theme-text on">ON</span>
+                        <span class="theme-text off">OFF</span>
+                    </span>
+                </label>
+            </div>
+            <form action="/preferences/updateSettings" method="POST" id="theme-form">
+                <input type="hidden" name="setting" value="highContrastHandle">
+                <button type="submit" id="theme-submit" style="display:none;">Update Theme</button>
+            </form>
+
+            <!-- Push-to-talk toggle switch -->
+            <div class="toggle-switch-container">
+                <span class="toggle-switch-label">Push To Talk Mode</span>
+                <label class="switch">
+                    <input type="checkbox" id="push-to-talk-toggle">
+                    <span class="slider round">
+                        <span class="theme-text on">ON</span>
+                        <span class="theme-text off">OFF</span>
+                    </span>
+                </label>
+                <p class="setting-description">When enabled, you'll need to hold the space bar to activate voice recognition.</p>
+            </div>
+            <form action="/preferences/updateSettings" method="POST" id="push-to-talk-form">
+                <input type="hidden" name="setting" value="pushToTalkHandle">
+                <button type="submit" id="push-to-talk-submit" style="display:none;">Update Push To Talk</button>
+            </form>
+            
+            <!-- Voice Commands toggle -->
+            <div class="toggle-switch-container">
+                <span class="toggle-switch-label">Voice Commands</span>
+                <label class="switch">
+                    <input type="checkbox" id="voice-commands-toggle">
+                    <span class="slider round">
+                        <span class="theme-text on">ON</span>
+                        <span class="theme-text off">OFF</span>
+                    </span>
+                </label>
+            </div>
+            <form action="/preferences/updateSettings" method="POST" id="voice-commands-form">
+                <input type="hidden" name="setting" value="voiceCommandHandle">
+                <button type="submit" id="voice-commands-submit" style="display:none;">Update Voice Commands</button>
+            </form>
+
+            <!-- Volume slider -->
+            <form action="/updateSettings" method="POST">
+                <label for="volume">Volume: </label>
+                <input type="range" id="volume" name="volume" min="0" max="100" value="50" />
+            </form>
+
+        </section>
+        <script>
+            let isSpeaking = false;
+            let recognition;
+            let isRecognitionActive = false;
+            
+            // Check if this is a page reload after settings change
+            const isSettingsReload = sessionStorage.getItem('settingsChanged') === 'true';
+            
+            // Function for Text-to-Speech (TTS)
+            function speak(text) {
+                return new Promise((resolve) => {
+                    // Add a small delay before starting speech
+                    setTimeout(() => {
+                        isSpeaking = true;
+                        if (recognition) recognition.stop();
+                        
+                        const synth = window.speechSynthesis;
+                        const utterance = new SpeechSynthesisUtterance(text);
+                        utterance.rate = 0.7;
+
+                        // Preload the speech synthesis engine
+                        synth.speak(new SpeechSynthesisUtterance(''));
+                        
+                        utterance.onend = () => {
+                            isSpeaking = false;
+                            
+                            // Only restart recognition if NOT in push-to-talk mode
+                            function isPushToTalkEnabled() {
+                                return window.PushToTalk?.enabled || localStorage.getItem('pushToTalk') === 'true';
+                            }
+                            
+                            if (recognition && isRecognitionActive && !isPushToTalkEnabled()) {
+                                recognition.start();
+                            }
+                            resolve();
+                            };
+                        
+                            // Short timeout to ensure the engine is ready
+                            setTimeout(() => synth.speak(utterance), 100);
+                    }, 200);
+                });
+            }
+
+            // Function to enable TTS when the page loads
+            function enableTTS() {
+                // Only speak if this is NOT a reload after settings change
+                if (!isSettingsReload) {
+                    speak("Preference page. You can navigate by saying Open Home.")
+                    .then(() => {
+                        // Start speech recognition after TTS is spoken
+                        startSpeechRecognition();
+                    });
+                } else {
+                    // Just start speech recognition without speaking
+                    startSpeechRecognition();
+                    
+                    // Clear the flag
+                    sessionStorage.removeItem('settingsChanged');
+                }
+            }
+            
+            window.onbeforeunload = () => {
+                window.speechSynthesis.cancel(); // Stops any ongoing speech synthesis
+            };
+
+            // Start TTS and Speech Recognition once the page is loaded
+            window.onload = enableTTS;
+
+            // Speech Recognition setup
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+            function startSpeechRecognition() {
+                if (SpeechRecognition) {
+                    recognition = new SpeechRecognition();
+                    recognition.continuous = true;
+                    recognition.interimResults = false;
+
+                    recognition.onresult = (event) => {
+                        const transcript = event.results[event.results.length - 1][0].transcript.toLowerCase().trim();
+                        console.log("Voice Command Detected:", transcript);
+                        handleVoiceCommand(transcript);
+                    };
+
+                    recognition.onerror = (event) => console.error("Speech recognition error:", event.error);
+
+                    recognition.onend = () => {
+                        console.log("Voice recognition ended, restarting...");
+                        recognition.start();
+                    };
+
+                    recognition.start();
+                } else {
+                    console.error("Speech recognition is not supported in this browser.");
+                }
+            }
+
+            // Handling voice commands
+            function handleVoiceCommand(command) {
+                if (command.includes("open home") || command.includes("home")) {
+                    location.href = "/";
+                } else {
+                    console.log("Unknown command:", command);
+                }
+            }
+        </script>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                // Theme toggle handler
+                const themeToggle = document.getElementById('theme-toggle');
+                themeToggle.checked = localStorage.getItem('theme') === 'high-contrast';
+                themeToggle.addEventListener('change', function() {
+                    const newTheme = this.checked ? 'high-contrast' : 'low-contrast';
+                    document.body.setAttribute('data-theme', newTheme);
+                    localStorage.setItem('theme', newTheme);
+                    
+                    // Set flag before submitting
+                    sessionStorage.setItem('settingsChanged', 'true');
+                    document.getElementById('theme-submit').click();
+                });
+                
+                // Push-to-talk toggle handler
+                const pushToTalkToggle = document.getElementById('push-to-talk-toggle');
+                pushToTalkToggle.checked = window.PushToTalk?.enabled || false;
+                pushToTalkToggle.addEventListener('change', function() {
+                    if (window.PushToTalk) {
+                        window.PushToTalk.updateSetting(this.checked);
+                    }
+                    
+                    // Set flag before submitting
+                    sessionStorage.setItem('settingsChanged', 'true');
+                    document.getElementById('push-to-talk-submit').click();
+                });
+                
+                // Voice commands toggle handler
+                const voiceCommandsToggle = document.getElementById('voice-commands-toggle');
+                voiceCommandsToggle.checked = window.VoiceCommands?.enabled || true;
+                voiceCommandsToggle.addEventListener('change', function() {
+                    // Set flag before submitting
+                    sessionStorage.setItem('settingsChanged', 'true');
+                    document.getElementById('voice-commands-submit').click();
+                });
+                
+                // Listen for push-to-talk updates
+                window.addEventListener('pushToTalkChanged', function(event) {
+                    pushToTalkToggle.checked = event.detail.enabled;
+                });
+                
+                // Listen for settings loaded event
+                window.addEventListener('userSettingsLoaded', function() {
+                    pushToTalkToggle.checked = window.PushToTalk?.enabled || false;
+                    voiceCommandsToggle.checked = window.VoiceCommands?.enabled || true;
+                });
+            });
+        </script>
+    </body>
+</html>

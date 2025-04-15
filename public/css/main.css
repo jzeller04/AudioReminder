@@ -1,0 +1,219 @@
+body {
+  font-family: Helvetica, Arial, sans-serif;
+}
+
+h1 {
+  font-size: 50px;
+  margin-bottom: 80px;
+  margin-top: 50px;
+  text-align: center;
+}
+
+.top-left-nav {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 100;
+}
+
+#readRemindersButton {
+  border-radius: 50px;
+  flex-grow: 1;
+  font-size: 50px;
+  height: auto;
+  margin: 0px 30px;
+  text-align: center;
+  transition-duration: 0.1s;
+  width: 260px;
+}
+
+#tasksButton, #calendarButton {
+  border-radius: 50px;
+  font-size: 60px;
+  height: 300px;
+  margin: 0px 30px;
+  text-align: center;
+  transition-duration: 0.1s;
+  width: 40%;
+}
+
+#preferencesButton {
+  border-radius: 50px;
+  flex-grow: 1;
+  font-size: 50px;
+  height: 100;
+  margin: 0px 30px;
+  text-align: center;
+  transition-duration: 0.1s;
+  width: 200px;
+}
+
+#preferencesButton:hover {
+  cursor: pointer;
+}
+
+
+#tasksButton:hover, #calendarButton:hover {
+  cursor: pointer;
+}
+
+.bottomWrapper{
+  align-items: center;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  margin: 60px 0px;
+}
+
+.topWrapper {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  margin: 20px 7%;
+}
+
+#reminder_container {
+  border-radius: 50px;
+  flex-grow: 3;
+  height: 200px;
+  margin: 0px 30px;
+  overflow-y: hidden;
+  padding: 10px 3%;
+}
+
+
+#text1 {
+  font-size: 40px;
+  font-weight: bold;
+  margin-left: 9%;
+}
+
+hr {
+  display: none;
+}
+
+[data-theme="low-contrast"]{
+  --bg-color: #f2ede9;
+  --heading-color: #632f0a;
+  --primary-btn: #a54907;
+  --secondary-btn: #632f0a;
+  --text-color: white;
+  --light-shadow: grey;
+
+  background-color: var(--bg-color);
+
+  & h1 {
+    color: var(--heading-color);
+  }
+
+  & #readRemindersButton {
+    background-color: var(--secondary-btn);
+    border: 6px solid var(--secondary-btn);
+    box-shadow: 0px 2px 6px var(--light-shadow);
+    color: var(--text-color);
+  }
+
+  & #readRemindersButton:hover {
+    background-color: var(--bg-color);
+    border: 6px solid var(--secondary-btn);
+    color: var(--secondary-btn);
+  }
+
+  & #tasksButton, & #calendarButton {
+    background-color: var(--primary-btn);
+    border: 6px solid var(--primary-btn);
+    box-shadow: 0px 2px 6px var(--light-shadow);
+    color: var(--text-color);
+  }
+
+  & #tasksButton:hover, & #calendarButton:hover {
+    background-color: var(--bg-color);
+    border: 10px solid var(--primary-btn);
+    color: var(--primary-btn);
+  }
+
+  & #preferencesButton {
+    background-color: var(--secondary-btn);
+    border: 6px solid var(--secondary-btn);
+    box-shadow: 0px 2px 6px var(--light-shadow);
+    color: var(--text-color);
+  }
+  
+  & #preferencesButton:hover {
+    background-color: var(--bg-color);
+    border: 6px solid var(--secondary-btn);
+    color: var(--secondary-btn);
+  }
+
+  & #reminder_container {
+    border:6px solid var(--heading-color);
+    box-shadow: 0px 2px 6px var(--light-shadow);
+  }
+
+  & #text1 {
+    color: var(--heading-color);
+  }
+}
+
+body[data-theme="high-contrast"]{
+  --bg-color: white;
+  --heading-color: black;
+  --primary-btn: black;
+  --secondary-btn: black;
+  --text-color: white;
+  --light-shadow: grey;
+
+  background-color: var(--bg-color);
+
+  & h1 {
+    color: var(--heading-color);
+  }
+
+  & #readRemindersButton {
+    background-color: var(--secondary-btn);
+    border: 6px solid var(--secondary-btn);
+    box-shadow: 0px 2px 6px var(--light-shadow);
+    color: var(--text-color);
+  }
+
+  & #readRemindersButton:hover {
+    background-color: var(--bg-color);
+    border: 6px solid var(--secondary-btn);
+    color: var(--secondary-btn);
+  }
+
+  & #tasksButton, & #calendarButton {
+    background-color: var(--primary-btn);
+    border: 6px solid var(--primary-btn);
+    box-shadow: 0px 2px 6px var(--light-shadow);
+    color: var(--text-color);
+  }
+
+  & #tasksButton:hover, & #calendarButton:hover {
+    background-color: var(--bg-color);
+    border: 10px solid var(--primary-btn);
+    color: var(--primary-btn);
+  }
+
+  & #preferencesButton {
+    background-color: var(--primary-btn);
+    border: 6px solid var(--primary-btn);
+    box-shadow: 0px 2px 6px var(--light-shadow);
+    color: var(--text-color);
+  }
+  
+  & #preferencesButton:hover {
+    background-color: var(--bg-color);
+    border: 10px solid var(--primary-btn);
+    color: var(--primary-btn);
+  }
+
+  & #reminder_container {
+    border:6px solid var(--heading-color);
+    box-shadow: 0px 2px 6px var(--light-shadow);
+  }
+
+  & #text1 {
+    color: var(--heading-color);
+  }
+}

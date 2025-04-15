@@ -1,0 +1,317 @@
+body {
+  font-family: Helvetica, Arial, sans-serif;
+}
+
+h1 {
+  font-size: 50px;
+  margin-bottom: 80px;
+  margin-top: 50px;
+  text-align: center;
+}
+
+div {
+  border-radius: 6px;
+}
+
+.buttonDiv {
+  display: flex;
+  justify-content: center; 
+  gap: 20px;
+  width: 900px;
+  margin: 0 auto;
+}
+
+button {
+  border-radius: 20px;
+  font-size: 40px;
+  height: 90px;
+  margin: 20px;
+  text-align: center;
+  transition-duration: 0.1s;
+  width: 400px;
+}
+
+button:hover {
+  cursor: pointer;
+}
+
+.readReminderBtn {
+  border-radius: 20px;
+  font-size: 40px;
+  height: 90px;
+  margin: 20px;
+  text-align: center;
+  transition-duration: 0.1s;
+  width: 400px;
+}
+.readReminderBtn:hover {
+  cursor: pointer;
+}
+.clearReminderBtn {
+  border-radius: 20px;
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: 40px;
+  height: 90px;
+  margin: 20px;
+  text-align: center;
+  margin-left: auto;            
+  margin-right: auto; 
+  transition-duration: 0.1s;
+  width: 400px;
+}
+
+.clearReminderBtn:hover {
+  cursor: pointer;
+}
+
+#titleLabel {
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: 40px;
+}
+
+#title {
+  border-radius: 8px;
+  box-sizing: border-box;
+  font-size: 40px;
+  height: 70px;
+  width: 100%;
+}
+
+.datetimeDiv {
+  display: flex;
+  justify-content: space-between;
+  margin: auto 0px;
+  width: 800px;
+}
+
+#dateLabel {
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: 40px;
+}
+
+#date {
+  border-radius: 8px;
+  box-sizing: border-box;
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: 40px;
+  height: 70px;
+  width: auto;
+}
+
+#timeLabel {
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: 40px;
+}
+
+#time {
+  border-radius: 8px;
+  box-sizing: border-box;
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: 40px;
+  height: 70px;
+  width: auto;
+}
+
+#memoLabel {
+  font-size: 40px;
+}
+
+#memo {
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: 30px;
+  height: 200px;
+  resize: none;
+  border-radius: 8px;
+  box-sizing: border-box;
+  font-size: 40px;
+  width: 100%;
+}
+
+.formWrapper {
+  border-radius: 50px;
+  display: flex;
+  flex-direction: column;
+  height: 60%;
+  margin: 20px 100px;
+  padding: 40px;
+}
+
+[data-theme="low-contrast"]{
+  --bg-color: #f2ede9;
+  --heading-color: #632f0a;
+  --primary-btn: #a54907;
+  --shadow-color: grey;
+
+  background-color: var(--bg-color);
+
+  & h1 {
+    color: var(--heading-color);
+  }
+
+  & button {
+    background-color: var(--primary-btn);
+    border: 6px solid var(--primary-btn);
+    color: var(--bg-color);
+  }
+  
+  & button:hover {
+    background-color: var(--bg-color);
+    border: 6px solid var(--primary-btn);
+    color: var(--primary-btn);
+  }
+  
+  & .readReminderBtn {
+    background-color: var(--primary-btn);
+    border: 6px solid var(--primary-btn);
+    color: var(--bg-color);
+  }
+
+  & .readReminderBtn:hover {
+    background-color: var(--bg-color);
+    border: 6px solid var(--primary-btn);
+    color: var(--primary-btn);
+  }
+
+  & .clearReminderBtn {
+    background-color: var(--primary-btn);
+    border: 6px solid var(--primary-btn);
+    color: var(--bg-color);
+  }
+  
+  & .clearReminderBtn:hover {
+    background-color: var(--bg-color);
+    border: 6px solid var(--primary-btn);
+    color: var(--primary-btn);
+  }
+  
+  & #titleLabel {
+    color: var(--heading-color);
+  }
+  
+  & #title {
+    border: 3px solid var(--heading-color);
+    box-shadow: 0px 2px 5px var(--shadow-color);
+  }
+  
+  & #dateLabel {
+    color: var(--heading-color);
+  }
+  
+  & #date {
+    border: 3px solid var(--heading-color);
+    box-shadow: 0px 2px 5px var(--shadow-color);
+  }
+  
+  & #timeLabel {
+    color: var(--heading-color);
+  }
+  
+  & #time {
+    border: 3px solid var(--heading-color);
+    box-shadow: 0px 2px 5px var(--shadow-color);
+  }
+  
+  & #memoLabel {
+    color: var(--heading-color);
+  }
+  
+  & #memo {
+    border: 3px solid var(--heading-color);
+    box-shadow: 0px 2px 5px var(--shadow-color);
+  }
+  
+  & .formWrapper {
+    border:10px solid var(--heading-color);
+    box-shadow: 0px 2px 6px var(--shadow-color);
+  }
+}
+
+[data-theme="high-contrast"]{
+  --bg-color: white;
+  --heading-color: black;
+  --primary-btn: black;
+  --shadow-color: grey;
+
+  background-color: var(--bg-color);
+
+  & h1 {
+    color: var(--heading-color);
+  }
+
+  & button {
+    background-color: var(--primary-btn);
+    border: 6px solid var(--primary-btn);
+    color: var(--bg-color);
+  }
+  
+  & button:hover {
+    background-color: var(--bg-color);
+    border: 6px solid var(--primary-btn);
+    color: var(--primary-btn);
+  }
+  
+  & .readReminderBtn {
+    background-color: var(--primary-btn);
+    border: 6px solid var(--primary-btn);
+    color: var(--bg-color);
+  }
+
+  & .readReminderBtn:hover {
+    background-color: var(--bg-color);
+    border: 6px solid var(--primary-btn);
+    color: var(--primary-btn);
+  }
+
+  & .clearReminderBtn {
+    background-color: var(--primary-btn);
+    border: 6px solid var(--primary-btn);
+    color: var(--bg-color);
+  }
+  
+  & .clearReminderBtn:hover {
+    background-color: var(--bg-color);
+    border: 6px solid var(--primary-btn);
+    color: var(--primary-btn);
+  }
+  
+  & #titleLabel {
+    color: var(--heading-color);
+  }
+  
+  & #title {
+    border: 3px solid var(--heading-color);
+    box-shadow: 0px 2px 5px var(--shadow-color);
+  }
+  
+  & #dateLabel {
+    color: var(--heading-color);
+  }
+  
+  & #date {
+    border: 3px solid var(--heading-color);
+    box-shadow: 0px 2px 5px var(--shadow-color);
+  }
+  
+  & #timeLabel {
+    color: var(--heading-color);
+  }
+  
+  & #time {
+    border: 3px solid var(--heading-color);
+    box-shadow: 0px 2px 5px var(--shadow-color);
+  }
+  
+  & #memoLabel {
+    color: var(--heading-color);
+  }
+  
+  & #memo {
+    border: 3px solid var(--heading-color);
+    box-shadow: 0px 2px 5px var(--shadow-color);
+  }
+  
+  & .formWrapper {
+    border:10px solid var(--heading-color);
+    box-shadow: 0px 2px 6px var(--shadow-color);
+  }
+}

@@ -4,6 +4,8 @@
 
   "version": "0.0.0",
 
+  "type": "module",
+
   "private": true,
 
   "main": "index.js",
@@ -14,7 +16,9 @@
 
     "dev": "nodemon app.js",
 
-    "serve": "node app.js --open"
+    "serve": "node app.js --open",
+
+    "lint": "eslint . --ext .js"
 
   },
 
@@ -30,7 +34,9 @@
 
     "dependencies": "^0.0.1",
 
-    "dotenv": "^16.4.7",
+    "docker": "^1.0.0",
+
+    "dotenv": "^16.5.0",
 
     "express": "^4.21.2",
 
@@ -55,6 +61,10 @@
   },
 
   "devDependencies": {
+
+    "@eslint/js": "^9.24.0",
+
+    "eslint": "^9.0.0",
 
     "nodemon": "^3.0.1"
 

@@ -1,0 +1,188 @@
+body {
+  font-family: Helvetica, Arial, sans-serif;
+}
+
+h1 {
+  font-size: 50px;
+  margin-bottom: 80px;
+  margin-top: 50px;
+  text-align: center;
+}
+
+.buttonWrapper {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+}
+
+#newtaskButton, #homeButton, #readRemindersButton {
+  border-radius: 50px;
+  font-size: 40px;
+  height: 120px;
+  margin: 0px 30px;
+  text-align: center;
+  transition-duration: 0.1s;
+  width: 20%;
+}
+
+#newtaskButton:hover, #homeButton:hover, #readRemindersButton:hover {
+  cursor: pointer;
+}
+
+.reminder-item {
+  padding: 15px;
+  margin: 0px 20px;
+  margin-top: 20px;
+  border-radius: 5px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.task-content {
+  flex: 1;
+}
+
+.complete-btn {
+  padding: 8px 10px;
+  font-size: 18px;
+  cursor: pointer;
+  margin-left: 15px;
+  align-self: flex-start;
+  border-radius: 50px;
+  font-size: 40px;
+  height: 120px;
+  margin: auto 30px;
+  text-align: center;
+  transition-duration: 0.1s;
+  width: 20%;
+}
+
+.complete-btn:hover, .complete-btn:focus {
+  cursor: pointer;
+}
+
+.complete-btn:active {
+  transform: translateY(1px);
+}
+
+hr {
+  display: none;
+}
+
+#text1 {
+  font-size: 36px;
+  font-weight: bold;
+  margin: 20px;
+}
+
+[data-theme="low-contrast"]{
+  --bg-color: #f2ede9;
+  --text-color: white;
+  --hover-btn: #cecac7;
+  --heading-color: #632f0a;
+  --primary-btn: #a54907;
+  --secondary-btn: #632f0a;
+  --shadow-color: grey;
+  --box-shadow: black;
+
+  background-color: var(--bg-color);
+
+  & h1 {
+    color: var(--heading-color);
+  }
+
+  & #newtaskButton, & #homeButton, & #readRemindersButton {
+    background-color: var(--primary-btn);
+    border: 6px solid var(--primary-btn);
+    box-shadow: 0px 2px 6px var(--shadow-color);
+    color: var(--text-color);
+  }
+
+  & #newtaskButton:hover, & #homeButton:hover, & #readRemindersButton:hover {
+    background-color: var(--bg-color);
+    border: 6px solid var(--primary-btn);
+    color: var(--primary-btn);
+  }
+
+  & .reminder-item {
+    border:3px solid var(--heading-color);
+    background-color: var(--text-color);
+  }
+
+  & .complete-btn {
+    background-color: var(--heading-color);
+    border: 6px solid var(--heading-color);
+    color: var(--text-color);
+  }
+
+  & .complete-btn:hover, & .complete-btn:focus {
+    background-color: var(--bg-color);
+    border: 6px solid var(--heading-color);
+    color: var(--heading-color);
+  }
+
+  & .complete-btn:active {
+    box-shadow: 0 1px 2px var(--box-shadow);
+  }
+
+  & #text1 {
+    color: var(--heading-color);
+  }
+}
+
+[data-theme="high-contrast"]{
+  --bg-color: white;
+  --text-color: white;
+  --hover-btn: white;
+  --heading-color: black;
+  --primary-btn: black;
+  --secondary-btn: white;
+  --shadow-color: grey;
+  --box-shadow: black;
+
+
+  background-color: var(--bg-color);
+
+  & h1 {
+    color: var(--heading-color);
+  }
+
+  & #newtaskButton, & #homeButton, & #readRemindersButton {
+    background-color: var(--primary-btn);
+    border: 6px solid var(--primary-btn);
+    box-shadow: 0px 2px 6px var(--shadow-color);
+    color: var(--text-color);
+  }
+
+  & #newtaskButton:hover, & #homeButton:hover, & #readRemindersButton:hover {
+    background-color: var(--bg-color);
+    border: 6px solid var(--primary-btn);
+    color: var(--primary-btn);
+  }
+
+  & .reminder-item {
+    border:3px solid var(--heading-color);
+    background-color: var(--text-color);
+  }
+
+  & .complete-btn {
+    color: var(--text-color);
+    background-color: var(--heading-color);
+    border: 6px solid var(--heading-color);
+  }
+
+  & .complete-btn:hover, & .complete-btn:focus {
+    background-color: var(--bg-color);
+    border: 6px solid var(--heading-color);
+    color: var(--heading-color);
+  }
+
+  & .complete-btn:active {
+    box-shadow: 0 1px 2px var(--box-shadow);
+  }
+
+  & #text1 {
+    color: var(--heading-color);
+  }
+}
