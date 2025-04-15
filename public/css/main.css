@@ -1,40 +1,80 @@
 body {
   font-family: Helvetica, Arial, sans-serif;
+  margin: 0px;
 }
 
 h1 {
-  font-size: 50px;
-  margin-bottom: 80px;
-  margin-top: 50px;
+  font-size: 4rem;
+  margin-bottom: 5rem;
+  margin-top: 3rem;
   text-align: center;
-}
-
-.top-left-nav {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  z-index: 100;
 }
 
 #readRemindersButton {
   border-radius: 50px;
   flex-grow: 1;
-  font-size: 50px;
+  font-size: 3rem;
+  font-weight: bold;
   height: auto;
-  margin: 0px 30px;
+  margin: 0px 2rem;
   text-align: center;
   transition-duration: 0.1s;
-  width: 260px;
+  width: 15%;
+}
+
+#readRemindersButton:hover {
+  cursor: pointer;
 }
 
 #tasksButton, #calendarButton {
   border-radius: 50px;
-  font-size: 60px;
-  height: 300px;
-  margin: 0px 30px;
+  font-size: 4rem;
+  font-weight: bold;
+  height: 20rem;
+  margin: 0px 2rem;
+  min-height: fit-content;
   text-align: center;
   transition-duration: 0.1s;
   width: 40%;
+}
+
+#tasksButton:hover, #calendarButton:hover {
+  cursor: pointer;
+}
+
+.bottomWrapper{
+  align-items: center;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  margin: 4rem 0px;
+}
+
+.topWrapper {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  margin: 1.5rem 7%;
+}
+
+#reminder_container {
+  border-radius: 50px;
+  flex-grow: 3;
+  height: 12rem;
+  margin: 0px 2rem;
+  overflow-y: hidden;
+  padding: 10px 3%;
+}
+
+
+#text1 {
+  font-size: 2.5rem;
+  font-weight: bold;
+  margin-left: 9%;
+}
+
+hr {
+  display: none;
 }
 
 #preferencesButton {
@@ -53,52 +93,13 @@ h1 {
 }
 
 
-#tasksButton:hover, #calendarButton:hover {
-  cursor: pointer;
-}
-
-.bottomWrapper{
-  align-items: center;
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  margin: 60px 0px;
-}
-
-.topWrapper {
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  margin: 20px 7%;
-}
-
-#reminder_container {
-  border-radius: 50px;
-  flex-grow: 3;
-  height: 200px;
-  margin: 0px 30px;
-  overflow-y: hidden;
-  padding: 10px 3%;
-}
-
-
-#text1 {
-  font-size: 40px;
-  font-weight: bold;
-  margin-left: 9%;
-}
-
-hr {
-  display: none;
-}
-
 [data-theme="low-contrast"]{
   --bg-color: #f2ede9;
   --heading-color: #632f0a;
   --primary-btn: #a54907;
   --secondary-btn: #632f0a;
   --text-color: white;
-  --light-shadow: grey;
+  --light-shadow: #857e78;
 
   background-color: var(--bg-color);
 
@@ -147,7 +148,7 @@ hr {
 
   & #reminder_container {
     border:6px solid var(--heading-color);
-    box-shadow: 0px 2px 6px var(--light-shadow);
+    box-shadow: 1px 2px 6px var(--light-shadow);
   }
 
   & #text1 {
@@ -196,21 +197,21 @@ body[data-theme="high-contrast"]{
   }
 
   & #preferencesButton {
-    background-color: var(--primary-btn);
-    border: 6px solid var(--primary-btn);
+    background-color: var(--secondary-btn);
+    border: 6px solid var(--secondary-btn);
     box-shadow: 0px 2px 6px var(--light-shadow);
     color: var(--text-color);
   }
   
   & #preferencesButton:hover {
     background-color: var(--bg-color);
-    border: 10px solid var(--primary-btn);
-    color: var(--primary-btn);
+    border: 6px solid var(--secondary-btn);
+    color: var(--secondary-btn);
   }
 
   & #reminder_container {
     border:6px solid var(--heading-color);
-    box-shadow: 0px 2px 6px var(--light-shadow);
+    box-shadow: 1px 2px 6px var(--light-shadow);
   }
 
   & #text1 {
