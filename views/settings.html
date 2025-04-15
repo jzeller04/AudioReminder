@@ -23,6 +23,7 @@
         
         <section>
             <!-- Theme toggle switch -->
+            <p id="vision-header">Vision</p>
             <div class="theme-switch-container">
                 <span class="theme-switch-label">High Contrast Mode</span>
                 <label class="switch">
@@ -38,6 +39,8 @@
                 <button type="submit" id="theme-submit" style="display:none;">Update Theme</button>
             </form>
 
+            <p id="control-header">Controls</p>
+            <div class="controlWrapper">
             <!-- Push-to-talk toggle switch -->
             <div class="toggle-switch-container">
                 <span class="toggle-switch-label">Push To Talk Mode</span>
@@ -48,8 +51,9 @@
                         <span class="theme-text off">OFF</span>
                     </span>
                 </label>
-                <p class="setting-description">When enabled, you'll need to hold the space bar to activate voice recognition.</p>
             </div>
+                <p class="setting-description">When enabled, you'll need to hold the space bar to activate voice recognition.</p>
+            
             <form action="/preferences/updateSettings" method="POST" id="push-to-talk-form">
                 <input type="hidden" name="setting" value="pushToTalkHandle">
                 <button type="submit" id="push-to-talk-submit" style="display:none;">Update Push To Talk</button>
@@ -73,9 +77,12 @@
 
             <!-- Volume slider -->
             <form action="/updateSettings" method="POST">
-                <label for="volume">Volume: </label>
-                <input type="range" id="volume" name="volume" min="0" max="100" value="50" />
+                <div class="volumeWrapper">
+                <label for="volume" id="volume-button">Volume: </label>
+                    <input type="range" id="volume" name="volume" min="0" max="100" value="50" />
+                </div>
             </form>
+            </div>
 
         </section>
         <script>

@@ -10,10 +10,11 @@ h1 {
 }
 
 button {
-  border-radius: 20px;
+  border-radius: 50px;
   display: block;
   font-family: Helvetica, Arial, sans-serif;
   font-size: 40px;
+  font-weight: bold;
   height: 90px;
   margin: 18px;
   margin-left: auto;
