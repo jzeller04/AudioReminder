@@ -67,7 +67,7 @@
             // Function to enable TTS when the page loads
             function enableTTS() {
                 // Trigger TTS every time the page loads
-                speak("Calendar Page. You can navigate by saying Schedule to read this months schedule, Previous to see the past month, Next to see the next month, or Add Event to set a reminder, Home to go back to home, 'Page' to hear what you're currently on, or 'Help' to repeat these options.")
+                speak("Calendar Page. You can navigate by saying Schedule to read this months schedule, Previous to see the past month, Next to see the next month, or New Task to set a reminder, Home to go back to home, 'Page' to hear what you're currently on, or 'Help' to repeat these options.")
                 .then(() => {
                     setTimeout(() => {
                         // Start speech recognition after TTS is spoken
@@ -179,13 +179,13 @@
                     speak("next").then(() => document.getElementById('next-month').click());
                 } else if (command.includes("previous") || command.includes("back")) {
                     speak("previous").then(() => document.getElementById('prev-month').click());
-                } else if (command.includes("new event") || command.includes("event") || command.includes("new reminder")) {
+                } else if (command.includes("new event") || command.includes("event") || command.includes("new reminder") || command.includes("new task")) {
                     speak("adding event").then(() => document.getElementById('add-task-btn').click());
                 } else if (command.includes("page")) {
                     const pageTitle = document.title;
                     speak("page").then(() => speak("You are currently on the " + pageTitle + " page."));
                 } else if (command.includes("help")) {
-                    speak("help").then(() => speak("You can navigate by saying Schedule to see this months schedule, Previous to see the past month, Next to see the next month, Add Event to set a reminder, Home to go back to home, 'Page' to hear what page you are currently on, or 'Help' to repeat these options."));
+                    speak("help").then(() => speak("You can navigate by saying Schedule to see this months schedule, Previous to see the past month, Next to see the next month,  new task to set a reminder, Home to go back to home, 'Page' to hear what page you are currently on, or 'Help' to repeat these options."));
                 } else if (command.includes("what's my schedule") || command.includes("schedule")) {
                     speak("getting schedule").then(() => getMonthlySchedule());
                 } else {
