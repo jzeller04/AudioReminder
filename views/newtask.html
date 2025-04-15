@@ -3,15 +3,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AudioReminder - New Task</title>
     <link rel="stylesheet" href="../css/newtask.css">
-
+    
     <script>
         (function() {
-            const theme = localStorage.getItem('theme') || 'low-contrast';
-            document.documentElement.setAttribute('data-theme', theme);
+          const theme = localStorage.getItem('theme') || 'low-contrast';
+          document.documentElement.setAttribute('data-theme', theme);
         })();
-    </script>
-    
-    <script src="../js/settings.bundle.js"></script>
+      </script>
+      
+        <script src="../js/theme-init.js"></script>
 </head>
 <body>
     <header>
@@ -60,38 +60,25 @@
 
         function speak(text) {
             return new Promise((resolve) => {
-                // Add a small delay before starting speech
-                setTimeout(() => {
-                    isSpeaking = true;
-                    if (recognition) recognition.stop();
-                    
-                    const synth = window.speechSynthesis;
-                    const utterance = new SpeechSynthesisUtterance(text);
-                    utterance.rate = 0.7;
+                const synth = window.speechSynthesis;
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.rate = 0.7;
 
-                    // Preload the speech synthesis engine
-                    synth.speak(new SpeechSynthesisUtterance(''));
-                    
-                    utterance.onend = () => {
-                        isSpeaking = false;
-                        
-                        // Only restart recognition if NOT in push-to-talk mode
-                        function isPushToTalkEnabled() {
-                            return window.PushToTalk?.enabled || localStorage.getItem('pushToTalk') === 'true';
-                        }
-                        
-                        if (recognition && isRecognitionActive && !isPushToTalkEnabled()) {
-                            recognition.start();
-                        }
-                        resolve();
-                        };
-                    
-                        // Short timeout to ensure the engine is ready
-                        setTimeout(() => synth.speak(utterance), 100);
-                }, 200);
+                // Ensure voices are loaded before speaking
+                const voices = synth.getVoices();
+                if (voices.length > 0) {
+                    utterance.voice = voices[0]; // Set a default voice
+                } else {
+                    synth.onvoiceschanged = () => {
+                        utterance.voice = synth.getVoices()[0];
+                        synth.speak(utterance);
+                    };
+                }
+
+                utterance.onend = () => resolve();
+                synth.speak(utterance);
             });
         }
-
 
         function startRecognition() {
             return new Promise((resolve) => {
