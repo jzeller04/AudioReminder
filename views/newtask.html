@@ -82,9 +82,13 @@
                             return window.PushToTalk?.enabled || localStorage.getItem('pushToTalk') === 'true';
                         }
                         
-                        if (recognition && isRecognitionActive && !isPushToTalkEnabled()) {
-                            recognition.start();
-                        }
+                        // Add a longer delay before restarting recognition
+                        setTimeout(() => {
+                            if (recognition && isRecognitionActive && !isPushToTalkEnabled()) {
+                                recognition.start();
+                            }
+                        }, 300); // Increased from immediate start to 300ms delay
+                        
                         resolve();
                     };
                     
