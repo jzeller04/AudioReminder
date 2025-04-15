@@ -1,96 +1,102 @@
 body {
     background-color: #f2ede9;
     font-family: Helvetica, Arial, sans-serif;
+    margin: 0px;
 }
 
 #header {
     color: #632f0a;
-    font-size: 56px;
+    font-size: 3rem;
     font-weight: bold;
-    margin-left: 90px;
+    margin-left: 10%;
 }
 
 .leftWrapper {
     float: left;
-    font-size: 40px;
-    width: 50%;
+    font-size: 2.5rem;
+    width: 55%;
 }
 
 .loginWrapper {
     border:10px solid #632f0a;
     border-radius: 50px;
-    box-shadow: 0px 2px 6px grey;
+    box-shadow: 1px 2px 6px #857e78;
     display: flex;
     flex-direction: column;
     height: 60%;
-    margin: 20px 50px;
+    margin: 2% 7%;
+    min-height: fit-content;
 }
 
 .rightBox {
     background-color: #a54907;
-    border-top-left-radius: 50px;
-    border-bottom-left-radius: 50px;
     float: right;
-    font-size: 40px;
+    font-size: 2.5rem;
     height: 100%;
-    width: 50%;
+    min-height: fit-content;
+    min-width: fit-content;
+    width: 45%;
 }
 
 .emailDiv {
-    margin: 60px 70px auto 70px;
+    margin: 6% 7% auto 7%;
 }
 
 .passwordDiv {
-    margin: 20px 70px auto 70px;
+    margin: 3% 7% auto 7%;
 }
 
 #email, #password {
     border: 3px solid #632f0a;
     border-radius: 8px;
-    box-shadow: 0px 2px 5px grey;
+    box-shadow: 1px 2px 6px #857e78;
     box-sizing: border-box;
-    font-size: 40px;
-    height: 70px;
+    font-size: 2rem;
+    height: 4.5rem;
     margin: 18px 0px;
+    padding: 10px;
     width: 100%;
 }
 
 #email:focus, #password:focus {
-    border-width: 4px;
+    border-width: 5px;
 }
 
 #login {
     background-color: #632f0a;
-    border: none;
+    border: 6px solid #632f0a;
     border-radius: 45px;
-    box-shadow: 1px 3px 8px grey;
+    box-shadow: 1px 3px 8px #857e78;
     color: #f2ede9;
-    font-size: 40px;
-    height: 80px;
-    margin: 40px auto;
+    font-size: 2.5rem;
+    font-weight: bold;
+    height: 5rem;
+    margin: 5% 6%;
     transition-duration: 0.1s;
-    width: 85%;
 }
 
 #login:hover {
-    background-color: rgb(36, 20, 9);
+    background-color: #f2ede9;
+    color: #632f0a;
     cursor: pointer;
 }
 
 #signup {
-    background-color: #f2ede9;
-    border: none;
+    background-color: white;
+    border: 6px solid white;
     border-radius: 45px;
     box-shadow: 1px 3px 8px #632f0a;
     color: #632f0a;
-    font-size: 40px;
-    height: 80px;
+    font-size: 2.5rem;
+    font-weight: bold;
+    height: 5rem;
     transition-duration: 0.1s;
-    width: 180px;
+    width: 80%;
 }
 
 #signup:hover {
-    background-color: #cecac7;
+    background-color: #a54907;
+    color: white;
     cursor: pointer;
 }
 
@@ -100,16 +106,15 @@ body {
 
 #para1 {
     color: white;
-    font-size: 50px;
+    font-size: 3rem;
     font-weight: bold;
     margin-top: 10%;
 }
 
 #para2 {
     color: white;
-    font-size: 70px;
+    font-size: 4rem;
     font-weight: bold;
-    letter-spacing: 2px;
 }
 
 #para3 {
