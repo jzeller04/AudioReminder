@@ -77,7 +77,7 @@ const UserSettingsManager = {
       }
       
       // Update push-to-talk if it exists
-      if (data.preferences.hasOwnProperty('pushToTalk')) {
+      if (Object.prototype.hasOwnProperty.call(data.preferences, 'pushToTalk')) {
         PushToTalk.updateSetting(data.preferences.pushToTalk);
       }
       
