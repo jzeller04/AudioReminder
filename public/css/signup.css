@@ -102,6 +102,7 @@ body {
 
 #emailLabel, #passwordLabel {
     color: #632f0a;
+    font-weight: bold;
 }
 
 #para1 {
