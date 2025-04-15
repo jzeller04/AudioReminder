@@ -7,12 +7,12 @@
 
     <script>
         (function() {
-          const theme = localStorage.getItem('theme') || 'low-contrast';
-          document.documentElement.setAttribute('data-theme', theme);
+            const theme = localStorage.getItem('theme') || 'low-contrast';
+            document.documentElement.setAttribute('data-theme', theme);
         })();
-      </script>
-
-    <script src="../js/theme-init.js"></script>
+    </script>
+    
+    <script src="../js/settings.bundle.js"></script>
 </head>
 <body>
     <header>
@@ -48,19 +48,35 @@
     
         function speak(text) {
             return new Promise((resolve) => {
-                isSpeaking = true;
-                if (recognition) recognition.stop();
-                
-                const synth = window.speechSynthesis;
-                const utterance = new SpeechSynthesisUtterance(text);
-                utterance.rate = 0.7;
+                // Add a small delay before starting speech
+                setTimeout(() => {
+                    isSpeaking = true;
+                    if (recognition) recognition.stop();
+                    
+                    const synth = window.speechSynthesis;
+                    const utterance = new SpeechSynthesisUtterance(text);
+                    utterance.rate = 0.7;
 
-                utterance.onend = () => {
-                    isSpeaking = false;
-                    if (recognition && isRecognitionActive) recognition.start();
-                    resolve();
-                };
-                synth.speak(utterance);
+                    // Preload the speech synthesis engine
+                    synth.speak(new SpeechSynthesisUtterance(''));
+                    
+                    utterance.onend = () => {
+                        isSpeaking = false;
+                        
+                        // Only restart recognition if NOT in push-to-talk mode
+                        function isPushToTalkEnabled() {
+                            return window.PushToTalk?.enabled || localStorage.getItem('pushToTalk') === 'true';
+                        }
+                        
+                        if (recognition && isRecognitionActive && !isPushToTalkEnabled()) {
+                            recognition.start();
+                        }
+                        resolve();
+                    };
+                    
+                    // Short timeout to ensure the engine is ready
+                    setTimeout(() => synth.speak(utterance), 100);
+                }, 200);
             });
         }
     
@@ -84,18 +100,18 @@
         }
 
         window.onload = () => {
-    enableTTS();
-    const readButton = document.getElementById("readRemindersButton");
-    if (readButton) {
-        readButton.addEventListener("click", readReminders);
-    } else {
-        console.error("Button not found! Make sure your HTML is correctly loaded.");
-    }
-    isRecognitionActive = true; // <-- Always active now
-    startSpeechRecognition();
-};
+            enableTTS();
+            const readButton = document.getElementById("readRemindersButton");
+            if (readButton) {
+                readButton.addEventListener("click", readReminders);
+            } else {
+                console.error("Button not found! Make sure your HTML is correctly loaded.");
+            }
+            isRecognitionActive = true; // <-- Always active now
+            startSpeechRecognition();
+        };
 
-// Remove toggleSpeechRecognition completely
+        // Remove toggleSpeechRecognition completely
 
 
         window.onbeforeunload = () => {
@@ -108,10 +124,17 @@
         function startSpeechRecognition() {
             if (SpeechRecognition) {
                 recognition = new SpeechRecognition();
-                recognition.continuous = true;
+
+                // Function to check if push-to-talk is enabled
+                function isPushToTalkEnabled() {
+                    return window.PushToTalk?.enabled || localStorage.getItem('pushToTalk') === 'true';
+                }
+                
+                // Configure recognition based on push-to-talk setting
+                recognition.continuous = !isPushToTalkEnabled();  // Call the function here
                 recognition.interimResults = false;
                 recognition.lang = 'en-US';
-    
+
                 recognition.onresult = (event) => {
                     if (isSpeaking) return;
                     
@@ -119,20 +142,54 @@
                     console.log("Voice Command Detected:", transcript);
                     handleVoiceCommand(transcript);
                 };
-    
+
                 recognition.onerror = (event) => {
                     console.error("Speech recognition error:", event.error);
-                    if (event.error !== 'no-speech') {
+                    // Only auto-restart if we're NOT in push-to-talk mode
+                    if (event.error !== 'no-speech' && !isPushToTalkEnabled()) {  // Call the function here
                         setTimeout(() => recognition.start(), 1000);
                     }
                 };
-    
-                recognition.onend = () => {
-    if (isRecognitionActive && !isSpeaking) {
-        recognition.start();
-    }
-};
 
+                recognition.onend = () => {
+                    // Only auto-restart if not in push-to-talk mode
+                    if (isRecognitionActive && !isSpeaking && !isPushToTalkEnabled()) {  // Call the function here
+                        recognition.start();
+                    }
+                };
+        
+                // Only auto-start if not in push-to-talk mode
+                if (!isPushToTalkEnabled()) {  // Call the function here
+                    recognition.start();
+                }
+
+                    // Add listeners for push-to-talk events
+                window.addEventListener('pttKeyDown', function() {
+                    if (isPushToTalkEnabled() && !isSpeaking) {  // Call the function here
+                        recognition.start();
+                    }
+                });
+                
+                window.addEventListener('pttKeyUp', function() {
+                    if (isPushToTalkEnabled()) {  // Call the function here
+                        recognition.stop();
+                    }
+                });
+
+                // Listen for setting changes
+                window.addEventListener('pushToTalkChanged', function(event) {
+                    const newPttState = event.detail.enabled;
+                    recognition.continuous = !newPttState;
+                    
+                    if (recognition.active) {
+                        recognition.stop();
+                    }
+            
+                    if (!newPttState && isRecognitionActive && !isSpeaking) {
+                        // Auto-start if switching to continuous mode
+                        setTimeout(() => recognition.start(), 100);
+                    }
+                });
             } else {
                 console.error("Speech recognition is not supported in this browser.");
             }
