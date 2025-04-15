@@ -22,8 +22,9 @@ div {
 }
 
 button {
-  border-radius: 20px;
+  border-radius: 50px;
   font-size: 40px;
+  font-weight: bold;
   height: 90px;
   margin: 20px;
   text-align: center;
@@ -36,7 +37,6 @@ button:hover {
 }
 
 .readReminderBtn {
-  border-radius: 20px;
   font-size: 40px;
   height: 90px;
   margin: 20px;
@@ -48,7 +48,6 @@ button:hover {
   cursor: pointer;
 }
 .clearReminderBtn {
-  border-radius: 20px;
   font-family: Helvetica, Arial, sans-serif;
   font-size: 40px;
   height: 90px;
@@ -67,6 +66,7 @@ button:hover {
 #titleLabel {
   font-family: Helvetica, Arial, sans-serif;
   font-size: 40px;
+  font-weight: bold;
 }
 
 #title {
@@ -87,6 +87,7 @@ button:hover {
 #dateLabel {
   font-family: Helvetica, Arial, sans-serif;
   font-size: 40px;
+  font-weight: bold;
 }
 
 #date {
@@ -101,6 +102,7 @@ button:hover {
 #timeLabel {
   font-family: Helvetica, Arial, sans-serif;
   font-size: 40px;
+  font-weight: bold;
 }
 
 #time {
@@ -114,6 +116,7 @@ button:hover {
 
 #memoLabel {
   font-size: 40px;
+  font-weight: bold;
 }
 
 #memo {
@@ -141,6 +144,7 @@ button:hover {
   --heading-color: #632f0a;
   --primary-btn: #a54907;
   --shadow-color: grey;
+  --text-color: white;
 
   background-color: var(--bg-color);
 
@@ -151,7 +155,7 @@ button:hover {
   & button {
     background-color: var(--primary-btn);
     border: 6px solid var(--primary-btn);
-    color: var(--bg-color);
+    color: var(--text-color);
   }
   
   & button:hover {
@@ -163,7 +167,7 @@ button:hover {
   & .readReminderBtn {
     background-color: var(--primary-btn);
     border: 6px solid var(--primary-btn);
-    color: var(--bg-color);
+    color: var(--text-color);
   }
 
   & .readReminderBtn:hover {
@@ -175,7 +179,7 @@ button:hover {
   & .clearReminderBtn {
     background-color: var(--primary-btn);
     border: 6px solid var(--primary-btn);
-    color: var(--bg-color);
+    color: var(--text-color);
   }
   
   & .clearReminderBtn:hover {
