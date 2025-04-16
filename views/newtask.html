@@ -9,9 +9,9 @@
           const theme = localStorage.getItem('theme') || 'low-contrast';
           document.documentElement.setAttribute('data-theme', theme);
         })();
-      </script>
+    </script>
       
-      <script src="../js/settings.bundle.js"></script>
+    <script src="../js/settings.bundle.js"></script>
 </head>
 <body>
     <header>
@@ -52,13 +52,67 @@
     </form>
 
     <script>
+        // Global variables
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        const recognition = new SpeechRecognition();
-        recognition.continuous = false;
-        recognition.interimResults = false;
-        recognition.lang = "en-US"; 
+        let recognition = null;
         let isSpeaking = false;
-        let isRecognitionActive = true
+        let isRecognitionActive = true;
+        
+        // Function to check if push-to-talk is enabled
+        function isPushToTalkEnabled() {
+            return window.PushToTalk?.enabled || localStorage.getItem('pushToTalk') === 'true';
+        }
+
+        // Initialize recognition object with proper settings
+        function initSpeechRecognition() {
+            if (!SpeechRecognition) {
+                console.error("Speech recognition is not supported in this browser.");
+                return;
+            }
+            
+            recognition = new SpeechRecognition();
+            recognition.continuous = !isPushToTalkEnabled();
+            recognition.interimResults = false;
+            recognition.lang = "en-US";
+            
+            recognition.onerror = (event) => {
+                console.error("Speech recognition error:", event.error);
+            };
+            
+            recognition.onend = () => {
+                console.log("Recognition ended");
+            };
+            
+            // Add listeners for push-to-talk events
+            window.addEventListener('pttKeyDown', function() {
+                if (isPushToTalkEnabled() && !isSpeaking && recognition) {
+                    recognition.start();
+                }
+            });
+            
+            window.addEventListener('pttKeyUp', function() {
+                if (isPushToTalkEnabled() && recognition) {
+                    recognition.stop();
+                }
+            });
+            
+            // Listen for setting changes
+            window.addEventListener('pushToTalkChanged', function(event) {
+                if (recognition) {
+                    const newPttState = event.detail.enabled;
+                    recognition.continuous = !newPttState;
+                    
+                    if (recognition.active) {
+                        recognition.stop();
+                    }
+                    
+                    if (!newPttState && isRecognitionActive && !isSpeaking) {
+                        // Auto-start if switching to continuous mode
+                        setTimeout(() => recognition.start(), 100);
+                    }
+                }
+            });
+        }
 
         function speak(text) {
             return new Promise((resolve) => {
@@ -77,17 +131,12 @@
                     utterance.onend = () => {
                         isSpeaking = false;
                         
-                        // Only restart recognition if NOT in push-to-talk mode
-                        function isPushToTalkEnabled() {
-                            return window.PushToTalk?.enabled || localStorage.getItem('pushToTalk') === 'true';
-                        }
-                        
                         // Add a longer delay before restarting recognition
                         setTimeout(() => {
                             if (recognition && isRecognitionActive && !isPushToTalkEnabled()) {
                                 recognition.start();
                             }
-                        }, 300); // Increased from immediate start to 300ms delay
+                        }, 300); // Longer delay to avoid false restarts
                         
                         resolve();
                     };
@@ -100,16 +149,20 @@
 
         function startRecognition() {
             return new Promise((resolve) => {
+                if (!recognition) {
+                    initSpeechRecognition();
+                }
+                
                 recognition.onresult = (event) => {
                     const transcript = event.results[0][0].transcript.trim();
                     console.log("Speech input:", transcript);
                     resolve(transcript);
                 };
-                recognition.onerror = (event) => {
-                    console.error("Speech recognition error:", event.error);
-                    resolve("");
-                };
-                recognition.start();
+                
+                // Only start recognition if it's not already running
+                if (recognition.state !== 'running') {
+                    recognition.start();
+                }
             });
         }
 
@@ -190,6 +243,11 @@
         async function promptReminder() {
             await speak("Would you like to set a reminder? Say 'Yes' to continue or 'No' to return to the task page.");
             const response = await startRecognition();
+            
+            // Stop recognition after getting the response if in push-to-talk mode
+            if (isPushToTalkEnabled() && recognition) {
+                recognition.stop();
+            }
             
             if (response.toLowerCase().includes("yes")) {
                 await promptUserForInputs(); // Proceed with reminder setup
@@ -300,12 +358,16 @@
 
         window.onbeforeunload = () => {
             window.speechSynthesis.cancel(); // Stops any ongoing speech synthesis
+            if (recognition) {
+                recognition.stop();
+            }
         };
 
         function enableTTS() {
+            // Initialize the recognition system
+            initSpeechRecognition();
+            
             const unlockTTS = new SpeechSynthesisUtterance("");
-
-
             unlockTTS.onend = () => {
                 console.log("TTS unlocked, starting prompts...");
                 promptReminder();
