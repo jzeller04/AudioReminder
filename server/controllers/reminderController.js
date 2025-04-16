@@ -124,6 +124,27 @@ const completeReminder = async (req, res) => {
     }
 };
 
+const flagReminder = async (req, res) => {
+    console.log('debug')
+    const reminderId = req.body.reminderIdFlag; // tdl for frontend (or Justin)
+    try {
+        const result = await User.updateOne(
+            { _id: req.session.userId },
+            {"reminders._id": reminderId},
+            {
+                $set: {
+                    "reminders.$.flagged": true
+                }
+            }
+        );
+        return res.redirect('/tasks');
+    } catch (error) {
+        console.log('Error removing reminder:', error);
+        return res.redirect('/tasks');
+    }
+    
+};
+
 // Fetch user reminders
 async function fetch(userId) {
     try {
@@ -195,7 +216,7 @@ async function updateUserReminders(userId) {
 }
 
 // Save reminder to user
-async function saveReminderToUser(title, description, time, date, userId) {
+async function saveReminderToUser(title, description, time, date, userId, flag) {
     try {
       // Store date in UTC to avoid timezone issues
       const normalizedDate = normalizeDate(date);
@@ -205,6 +226,7 @@ async function saveReminderToUser(title, description, time, date, userId) {
       // Create reminder
       const reminder = {
         title: title,
+        flagged: flag,
         description: description || "",
         date: normalizedDate,
         time: time
@@ -230,5 +252,6 @@ export {
     getUpcomingReminder,
     getAllReminders,
     createReminder,
-    completeReminder
+    completeReminder,
+    flagReminder
 };
