@@ -2,7 +2,7 @@ import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
-import {getUpcomingReminder,getAllReminders,createReminder,completeReminder} from '../controllers/reminderController.js';
+import {getUpcomingReminder,getAllReminders,createReminder,completeReminder, flagReminder} from '../controllers/reminderController.js';
 import authMiddleware from '../middleware/auth.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -26,5 +26,7 @@ router.post('/submit', authMiddleware.isAuthenticated, createReminder);
 
 // Mark reminder as complete
 router.post('/complete-reminder', authMiddleware.isAuthenticated, completeReminder);
+
+router.post('/markflagged' , authMiddleware.isAuthenticated, flagReminder); // TDL: create this post req in html
 
 export default router;
