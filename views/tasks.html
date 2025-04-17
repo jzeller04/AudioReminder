@@ -31,10 +31,16 @@
         <script>
             // Global variable for speech recognition
             let recognition;
+            let isSpeaking = false;
+            let stopRequested = false;
 
             // Function for Text-to-Speech (TTS)
             function speak(text) {
                 return new Promise((resolve) => {
+                    const speechSpeed = parseFloat(sessionStorage.getItem('speechSpeed')) || 1;
+                    window.speechSynthesis.cancel();
+                    let stopRequested = false;
+
                     // Add a small delay before starting speech
                     setTimeout(() => {
                         isSpeaking = true;
@@ -42,7 +48,7 @@
                         
                         const synth = window.speechSynthesis;
                         const utterance = new SpeechSynthesisUtterance(text);
-                        utterance.rate = 0.7;
+                        utterance.rate = speechSpeed
 
                         // Preload the speech synthesis engine
                         synth.speak(new SpeechSynthesisUtterance(''));
@@ -60,7 +66,11 @@
                             }
                             resolve();
                             };
-                        
+                            if (!stopRequested) {
+                synth.speak(utterance);
+            } else {
+                resolve(); // Resolve early if stopped
+            }
                             // Short timeout to ensure the engine is ready
                             setTimeout(() => synth.speak(utterance), 100);
                     }, 200);
@@ -70,7 +80,7 @@
             // Function to enable TTS when the page loads
             function enableTTS() {
                 // Trigger TTS every time the page loads
-                speak("Tasks page. You can navigate by saying 'New Task' to add a task, 'Open Home' to return to the homepage, 'Read all Reminders' to hear your upcoming tasks, 'Mark Complete' to go through your tasks, or 'Help' to hear this list of commands again.")
+                speak("Task Page - say help for list of commands.")
                 .then(() => {
                     // Start speech recognition after TTS is spoken
                     startSpeechRecognition();
@@ -123,6 +133,18 @@
             }
 
             async function handleVoiceCommand(command) {
+                if (command.includes("stop") || command.includes("cancel")) {
+                stopRequested = true;
+                window.speechSynthesis.cancel();
+
+                if (isMarkingComplete) {
+                    isMarkingComplete = false;
+                    await speak("Mark complete process cancelled.");
+                } else if (isSpeaking) {
+                    await speak("Reading interrupted.");
+                }
+                return;
+            }
                 // If we're in the middle of marking tasks complete
                 if (isMarkingComplete) {
                     if (command.includes("yes") || command.includes("confirm")) {
@@ -275,6 +297,7 @@
 
             function readReminders() {             
                 console.log("Read Reminders function called"); // Debugging log
+                stopRequested = false;
 
                 const reminderContainer = document.getElementById("reminder_container");             
                 if (!reminderContainer) {
@@ -291,9 +314,9 @@
                 // Get only the remaining text
                 const reminders = tempContainer.innerText.trim();
 
-                if (reminders) {                 
+                if (reminders && !stopRequested) {                 
                     speak("Here are your upcoming tasks: " + reminders);             
-                } else {                 
+                } else if (!stopRequested){                 
                     speak("You have no upcoming tasks.");             
                 }         
             }
