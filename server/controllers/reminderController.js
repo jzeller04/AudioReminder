@@ -99,7 +99,7 @@ const createReminder = async (req, res) => {
     const time = req.body.time;
     const flag = true;
 
-    if(title.length < 30 && description.length < 300)
+    if(title.length <= 30 && description.length <= 300)
     {
         if (title) {
             try {
