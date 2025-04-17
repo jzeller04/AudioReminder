@@ -21,7 +21,9 @@
     <form action="/submit" method="POST">
         <div class="formWrapper">
             <label for="title" id="titleLabel">Reminder Name</label><br>
-            <input type="text" id="title" name="title" maxlength="30" placeholder="Title">
+            <input type="text" id="title" name="title" placeholder="Title">
+            <small id="charCount"> 0 / 30</small>
+
        
             <div class="datetimeDiv">
                 <div class="dateDiv">
@@ -36,7 +38,31 @@
             </div>
 
             <label for="memo" id="memoLabel">Description</label><br>
-            <textarea id="memo" name="memo" maxlength="300" placeholder="Enter task description"></textarea>
+            <textarea id="memo" name="memo" placeholder="Enter task description"></textarea>
+            <small id="charCountMemo"> 0 / 300</small>
+            <script>
+                const titleInput = document.getElementById('title');
+                const titleCounter = document.getElementById('charCount');
+                const titleMax = 30;
+            
+                const memoInput = document.getElementById('memo');
+                const memoCounter = document.getElementById('charCountMemo');
+                const memoMax = 300;
+            
+                titleInput.addEventListener('input', () => {
+                    if (titleInput.value.length > titleMax) {
+                        titleInput.value = titleInput.value.slice(0, titleMax);
+                    }
+                    titleCounter.textContent = `${titleInput.value.length} / ${titleMax}`;
+                });
+            
+                memoInput.addEventListener('input', () => {
+                    if (memoInput.value.length > memoMax) {
+                        memoInput.value = memoInput.value.slice(0, memoMax);
+                    }
+                    memoCounter.textContent = `${memoInput.value.length} / ${memoMax}`;
+                });
+            </script>
         </div>
 
         <div class="buttonDiv">
