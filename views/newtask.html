@@ -21,7 +21,7 @@
     <form action="/submit" method="POST">
         <div class="formWrapper">
             <label for="title" id="titleLabel">Reminder Name</label><br>
-            <input type="text" id="title" name="title" placeholder="Title">
+            <input type="text" id="title" name="title" maxlength="30" placeholder="Title">
        
             <div class="datetimeDiv">
                 <div class="dateDiv">
@@ -36,7 +36,7 @@
             </div>
 
             <label for="memo" id="memoLabel">Description</label><br>
-            <textarea id="memo" name="memo" placeholder="Enter task description"></textarea>
+            <textarea id="memo" name="memo" maxlength="300" placeholder="Enter task description"></textarea>
         </div>
 
         <div class="buttonDiv">

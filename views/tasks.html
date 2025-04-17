@@ -273,6 +273,38 @@
                 });
             });
 
+            document.addEventListener('DOMContentLoaded', function() {
+                // Find all "Mark Complete" buttons
+                const flagButtons = document.querySelectorAll('.flag-btn');
+                
+                // Add click event listener to each button
+                flagButtons.forEach(button => {
+                    button.addEventListener('click', function() {
+                        // Get the reminder ID from the data attribute
+                        const reminderId = this.getAttribute('data-id');
+                        
+                        // Simple confirmation
+                        if (confirm("Mark this reminder as important?")) {
+                            // Create a form to submit
+                            const form = document.createElement('form');
+                            form.method = 'POST';
+                            form.action = '/markflagged';
+                            
+                            // Create hidden input for reminder ID
+                            const input = document.createElement('input');
+                            input.type = 'hidden';
+                            input.name = 'reminderId';
+                            input.value = reminderId;
+                            
+                            // Add input to form and submit
+                            form.appendChild(input);
+                            document.body.appendChild(form);
+                            form.submit();
+                        }
+                    });
+                });
+            });
+
             function readReminders() {             
                 console.log("Read Reminders function called"); // Debugging log
 

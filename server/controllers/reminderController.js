@@ -4,6 +4,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import { promises as fs } from 'fs';
+import mongoose from 'mongoose';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -23,10 +24,11 @@ const getUpcomingReminder = async (req, res) => {
             reminderHTML =
                 `<div class="reminder-item"> 
                     <div class="reminder-content">
-                        <p class="reminder-title">${reminder.title || 'No reminder found'}</p>
-                        <p class="reminder-description">${reminder.description || 'No reminder found'}</p>
-                        <p class="reminder-date">${dateToReadable(reminder.date) || 'No reminder found'}</p>
-                        <p class="reminder-time">${timeToTwelveSystem(reminder.time) || 'No reminder found'}</p>
+                        <p class="reminder-title">${reminder.title || 'Missing title'}</p>
+                        <p class="reminder-description">${reminder.description || ''}</p>
+                        <p class="reminder-flagged">${reminder.flagged || ''}</p>
+                        <p class="reminder-date">${dateToReadable(reminder.date) || 'Missing date'}</p>
+                        <p class="reminder-time">${timeToTwelveSystem(reminder.time) || 'Missing time'}</p>
                     </div>
                 </div>`;
         } else {
@@ -69,11 +71,13 @@ const getAllReminders = async (req, res) => {
         let reminderHTML = reminders.map(reminder =>
             `<div class="reminder-item"> 
                 <div class="reminder-content">
-                    <p class="reminder-title">${reminder.title || 'No reminder found'}</p>
-                    <p class="reminder-description">${reminder.description || 'No reminder found'}</p>
-                    <p class="reminder-date">${dateToReadable(reminder.date) || 'No reminder found'}</p>
-                    <p class="reminder-time">${timeToTwelveSystem(reminder.time) || 'No reminder found'}</p>
+                    <p class="reminder-title">${reminder.title || 'Missing title'}</p>
+                    <p class="reminder-description">${reminder.description || ''}</p>
+                    <p class="reminder-flagged">${reminder.flagged || ''}</p>
+                    <p class="reminder-date">${dateToReadable(reminder.date) || 'Missing date'}</p>
+                    <p class="reminder-time">${timeToTwelveSystem(reminder.time) || 'Missing time'}</p>
                 </div>
+                <button class="flag-btn" data-id="${reminder._id}">Flag as Important</button>
                 <button class="complete-btn" data-id="${reminder._id}">Mark Complete</button>
             </div>`
         ).join('');
@@ -93,18 +97,28 @@ const createReminder = async (req, res) => {
     const description = req.body.memo;
     const date = req.body.date;
     const time = req.body.time;
-    
-    if (title) {
-        try {
-            await saveReminderToUser(title, description, time, date, req.session.userId);
-            return res.redirect('/newtask');
-        } catch (error) {
-            console.log(error);
-            return res.status(500).send("Error saving reminder");
+    const flag = true;
+
+    if(title.length < 30 && description.length < 300)
+    {
+        if (title) {
+            try {
+                await saveReminderToUser(title, description, time, date, req.session.userId, flag);
+                return res.redirect('/newtask');
+            } catch (error) {
+                console.log(error);
+                return res.status(500).send("Error saving reminder");
+            }
+        } else {
+            return res.status(400).send("No title received");
         }
-    } else {
-        return res.status(400).send("No title received");
     }
+    else
+    {
+        return res.redirect('newtask');
+    }
+    
+    
 };
 
 // Mark reminder as complete
@@ -125,12 +139,15 @@ const completeReminder = async (req, res) => {
 };
 
 const flagReminder = async (req, res) => {
-    console.log('debug')
-    const reminderId = req.body.reminderIdFlag; // tdl for frontend (or Justin)
+    console.log('reminderID:', req.body.reminderId);
+    console.log("valid?: ", mongoose.Types.ObjectId.isValid(req.body.reminderId));
+    const reminderId = req.body.reminderId; // tdl for frontend (or Justin)
     try {
-        const result = await User.updateOne(
-            { _id: req.session.userId },
-            {"reminders._id": reminderId},
+        await User.findOneAndUpdate(
+            {
+                _id: req.session.userId,
+                "reminders._id": reminderId
+            },
             {
                 $set: {
                     "reminders.$.flagged": true
@@ -139,7 +156,7 @@ const flagReminder = async (req, res) => {
         );
         return res.redirect('/tasks');
     } catch (error) {
-        console.log('Error removing reminder:', error);
+        console.log('Error flagging reminder:', error);
         return res.redirect('/tasks');
     }
     

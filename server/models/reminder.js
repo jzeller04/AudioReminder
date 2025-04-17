@@ -9,7 +9,8 @@ const reminderSchema = new Schema({
     },
     flagged: {
         type: Boolean,
-        default: false
+        default: false,
+        required: true
     },
     description: {
         type: String
