@@ -31,15 +31,11 @@
         <script>
             // Global variable for speech recognition
             let recognition;
-            let isSpeaking = false;
-            let stopRequested = false;
 
             // Function for Text-to-Speech (TTS)
             function speak(text) {
                 return new Promise((resolve) => {
                     const speechSpeed = parseFloat(sessionStorage.getItem('speechSpeed')) || 1;
-                    window.speechSynthesis.cancel();
-                    let stopRequested = false;
 
                     // Add a small delay before starting speech
                     setTimeout(() => {
@@ -56,8 +52,8 @@
                         utterance.onend = () => {
                             isSpeaking = false;
                             
-                            // Only restart recognition if NOT in push-to-talk mode
-                            function isPushToTalkEnabled() {
+                             // Only restart recognition if NOT in push-to-talk mode
+                             function isPushToTalkEnabled() {
                                 return window.PushToTalk?.enabled || localStorage.getItem('pushToTalk') === 'true';
                             }
                             
@@ -66,11 +62,7 @@
                             }
                             resolve();
                             };
-                            if (!stopRequested) {
-                synth.speak(utterance);
-            } else {
-                resolve(); // Resolve early if stopped
-            }
+                        
                             // Short timeout to ensure the engine is ready
                             setTimeout(() => synth.speak(utterance), 100);
                     }, 200);
@@ -88,7 +80,9 @@
             }
 
             // Start TTS and Speech Recognition once the page is loaded
-            window.onload = enableTTS;
+            document.addEventListener('DOMContentLoaded', function() {
+                enableTTS();
+            });
 
             // Speech Recognition setup
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -133,19 +127,6 @@
             }
 
             async function handleVoiceCommand(command) {
-                if (command.includes("stop") || command.includes("cancel")) {
-                stopRequested = true;
-                window.speechSynthesis.cancel();
-
-                if (isMarkingComplete) {
-                    isMarkingComplete = false;
-                    await speak("Mark complete process cancelled.");
-                } else if (isSpeaking) {
-                    await speak("Reading interrupted.");
-                }
-                return;
-            }
-                // If we're in the middle of marking tasks complete
                 if (isMarkingComplete) {
                     if (command.includes("yes") || command.includes("confirm")) {
                         // Mark current reminder as complete
@@ -184,7 +165,7 @@
                     speak("You are currently on the " + pageTitle + " page.");
                 }
                 else if (command.includes("read all reminders") || (command.includes("read reminders"))) {
-                    speak("Reading reminders").then(() => readReminders());
+                    readReminders();
                 }
                 else if (command.includes("mark complete") || command.includes("complete tasks")) {
                     startMarkCompleteProcess();
@@ -263,7 +244,39 @@
                 await new Promise(resolve => setTimeout(resolve, 100));
             }
 
+            function readReminders() {             
+                console.log("Read Reminders function called");
+
+                const reminderContainer = document.getElementById("reminder_container");             
+                if (!reminderContainer) {
+                    console.error("Reminder container not found.");
+                    return;
+                }
+
+                // Clone the container to avoid modifying the original
+                const tempContainer = reminderContainer.cloneNode(true);
+
+                // Remove all buttons inside the container
+                tempContainer.querySelectorAll("button").forEach(btn => btn.remove());
+
+                // Get only the remaining text
+                const reminders = tempContainer.innerText.trim();
+
+                if (reminders) {                 
+                    speak("Here are your upcoming tasks: " + reminders);             
+                } else {                 
+                    speak("You have no upcoming tasks.");             
+                }         
+            }
+
             document.addEventListener('DOMContentLoaded', function() {
+                const readRemindersButton = document.getElementById("readRemindersButton");
+                if (readRemindersButton) {
+                    readRemindersButton.addEventListener("click", function() {
+                        readReminders();
+                    });
+                }
+
                 // Find all "Mark Complete" buttons
                 const completeButtons = document.querySelectorAll('.complete-btn');
                 
@@ -293,9 +306,7 @@
                         }
                     });
                 });
-            });
 
-            document.addEventListener('DOMContentLoaded', function() {
                 // Find all "Mark Complete" buttons
                 const flagButtons = document.querySelectorAll('.flag-btn');
                 
@@ -326,42 +337,6 @@
                     });
                 });
             });
-
-            function readReminders() {             
-                console.log("Read Reminders function called"); // Debugging log
-                stopRequested = false;
-
-                const reminderContainer = document.getElementById("reminder_container");             
-                if (!reminderContainer) {
-                    console.error("Reminder container not found.");
-                    return;
-                }
-
-                // Clone the container to avoid modifying the original
-                const tempContainer = reminderContainer.cloneNode(true);
-
-                // Remove all buttons inside the container
-                tempContainer.querySelectorAll("button").forEach(btn => btn.remove());
-
-                // Get only the remaining text
-                const reminders = tempContainer.innerText.trim();
-
-                if (reminders && !stopRequested) {                 
-                    speak("Here are your upcoming tasks: " + reminders);             
-                } else if (!stopRequested){                 
-                    speak("You have no upcoming tasks.");             
-                }         
-            }
-
-            document.addEventListener('DOMContentLoaded', function() {
-                const readRemindersButton = document.getElementById("readRemindersButton");
-                if (readRemindersButton) {
-                    readRemindersButton.addEventListener("click", function() {
-                        readReminders();  // Call readReminders function on button click
-                    });
-                }
-            });
-                    
         </script>
     </body>
 </html>
