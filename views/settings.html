@@ -83,6 +83,12 @@
                 </div>
             </form>
             </div>
+            <!-- Speech Speed slider -->
+            <div class="speedWrapper">
+                <label for="speech-speed" id="speed-button">Speech Speed: </label>
+                <input type="range" id="speech-speed" name="speech-speed" min="0.5" max="2" step="0.1" value="1" />
+                <span id="speed-value">1.0x</span>
+            </div>
 
         </section>
         <script>
@@ -96,6 +102,8 @@
             // Function for Text-to-Speech (TTS)
             function speak(text) {
                 return new Promise((resolve) => {
+                    const speechSpeed = parseFloat(sessionStorage.getItem('speechSpeed')) || 1;
+
                     // Add a small delay before starting speech
                     setTimeout(() => {
                         isSpeaking = true;
@@ -103,7 +111,7 @@
                         
                         const synth = window.speechSynthesis;
                         const utterance = new SpeechSynthesisUtterance(text);
-                        utterance.rate = 0.7;
+                        utterance.rate = speedhSpeed;
 
                         // Preload the speech synthesis engine
                         synth.speak(new SpeechSynthesisUtterance(''));
@@ -132,7 +140,7 @@
             function enableTTS() {
                 // Only speak if this is NOT a reload after settings change
                 if (!isSettingsReload) {
-                    speak("Preference page. You can navigate by saying Open Home.")
+                    speak("Preference Page - say help for list of commands")
                     .then(() => {
                         // Start speech recognition after TTS is spoken
                         startSpeechRecognition();
@@ -185,6 +193,9 @@
             function handleVoiceCommand(command) {
                 if (command.includes("open home") || command.includes("home")) {
                     location.href = "/";
+                } else if (command.includes("help")){
+
+                speak("You can say yadayadayada")
                 } else {
                     console.log("Unknown command:", command);
                 }
@@ -238,7 +249,25 @@
                     pushToTalkToggle.checked = window.PushToTalk?.enabled || false;
                     voiceCommandsToggle.checked = window.VoiceCommands?.enabled || true;
                 });
-            });
+                
+                const speedSlider = document.getElementById('speech-speed');
+                const speedValueDisplay = document.getElementById('speed-value');
+
+                // Load saved speed value from sessionStorage if available
+                const savedSpeed = sessionStorage.getItem('speechSpeed');
+                if (savedSpeed && speedSlider && speedValueDisplay) {
+                    speedSlider.value = savedSpeed;
+                    speedValueDisplay.textContent = `${parseFloat(savedSpeed).toFixed(1)}x`;
+                }
+
+                if (speedSlider && speedValueDisplay) {
+                    speedSlider.addEventListener('input', function () {
+                        const speed = parseFloat(this.value).toFixed(1);
+                        speedValueDisplay.textContent = `${speed}x`;
+                        sessionStorage.setItem('speechSpeed', speed);
+                    });
+                }
+                            });
         </script>
     </body>
 </html>

@@ -85,6 +85,8 @@
         recognition.lang = "en-US";
 
         function speak(text) {
+            const speechSpeed = parseFloat(sessionStorage.getItem('speechSpeed')) || 1;
+
             return new Promise((resolve) => {
                 // Add a small delay before starting speech
                 setTimeout(() => {
@@ -93,7 +95,7 @@
                     
                     const synth = window.speechSynthesis;
                     const utterance = new SpeechSynthesisUtterance(text);
-                    utterance.rate = 0.7;
+                    utterance.rate = speechSpeed;
 
                     // Preload the speech synthesis engine
                     synth.speak(new SpeechSynthesisUtterance(''));
