@@ -1,229 +1,228 @@
 <html>
-<head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AudioReminder</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="../css/main.css">
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>AudioReminder</title>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+        <link rel="stylesheet" href="../css/main.css">
 
-    <script>
-        (function() {
-            const theme = localStorage.getItem('theme') || 'low-contrast';
-            document.documentElement.setAttribute('data-theme', theme);
-        })();
-    </script>
-    
-    <script src="../js/settings.bundle.js"></script>
-</head>
-<body>
-    <header>
-        <div class="top-left-nav">
-            <button id="preferencesButton" 
-                    onclick="location.href='/preferences';" 
-                    aria-label="Preferences">
-                <i class="bi bi-gear-fill" style="font-size:55px;"></i>
-            </button>
+        <script>
+            (function() {
+                const theme = localStorage.getItem('theme') || 'low-contrast';
+                document.documentElement.setAttribute('data-theme', theme);
+            })();
+        </script>
+        
+        <script src="../js/settings.bundle.js"></script>
+    </head>
+    <body>
+        <header>
+            <div class="top-left-nav">
+                <button id="preferencesButton" 
+                        onclick="location.href='/preferences';" 
+                        aria-label="Preferences">
+                    <i class="bi bi-gear-fill" style="font-size:55px;"></i>
+                </button>
+            </div>
+            </div>
+            <h1>Home</h1>
+        </header>
+        <r id="text1">Upcoming Task</r>
+        
+        <div class="topWrapper">
+            <div id="reminder_container">
+                {{REMINDERS}}
+            </div>
+            <button id="readRemindersButton" onclick="readReminders();">Read Reminder</button>
         </div>
-        </div>
-        <h1>Home</h1>
-    </header>
-    <r id="text1">Upcoming Task</r>
-    
-    <div class="topWrapper">
-        <div id="reminder_container">
-            {{REMINDERS}}
-        </div>
-        <button id="readRemindersButton" onclick="readReminders();">Read Reminder</button>
-    </div>
 
-    <nav>
-        <div class="bottomWrapper">
-            <button id="tasksButton" onclick="location.href='/tasks';">Tasks</button>
-            <button id="calendarButton" onclick="location.href='/calendar';">Calendar</button>
-        </div>
-    </nav>
-    <script>
-        let isSpeaking = false;
-        let recognition;
-        let isRecognitionActive = false;
-    
-        function speak(text) {
-            return new Promise((resolve) => {
-                const speechSpeed = parseFloat(sessionStorage.getItem('speechSpeed')) || 1;
+        <nav>
+            <div class="bottomWrapper">
+                <button id="tasksButton" onclick="location.href='/tasks';">Tasks</button>
+                <button id="calendarButton" onclick="location.href='/calendar';">Calendar</button>
+            </div>
+        </nav>
+        <script>
+            let isSpeaking = false;
+            let recognition;
+            let isRecognitionActive = false;
+        
+            function speak(text) {
+                return new Promise((resolve) => {
+                    const speechSpeed = parseFloat(sessionStorage.getItem('speechSpeed')) || 1;
 
-                // Add a small delay before starting speech
-                setTimeout(() => {
-                    isSpeaking = true;
-                    if (recognition) recognition.stop();
-                    
-                    const synth = window.speechSynthesis;
-                    const utterance = new SpeechSynthesisUtterance(text);
-                    utterance.rate = speechSpeed;
-
-                    // Preload the speech synthesis engine
-                    synth.speak(new SpeechSynthesisUtterance(''));
-                    
-                    utterance.onend = () => {
-                        isSpeaking = false;
+                    // Add a small delay before starting speech
+                    setTimeout(() => {
+                        isSpeaking = true;
+                        if (recognition) recognition.stop();
                         
-                        // Only restart recognition if NOT in push-to-talk mode
-                        function isPushToTalkEnabled() {
-                            return window.PushToTalk?.enabled || localStorage.getItem('pushToTalk') === 'true';
+                        const synth = window.speechSynthesis;
+                        const utterance = new SpeechSynthesisUtterance(text);
+                        utterance.rate = speechSpeed;
+
+                        // Preload the speech synthesis engine
+                        synth.speak(new SpeechSynthesisUtterance(''));
+                        
+                        utterance.onend = () => {
+                            isSpeaking = false;
+                            
+                            // Only restart recognition if NOT in push-to-talk mode
+                            function isPushToTalkEnabled() {
+                                return window.PushToTalk?.enabled || localStorage.getItem('pushToTalk') === 'true';
+                            }
+                            
+                            if (recognition && isRecognitionActive && !isPushToTalkEnabled()) {
+                                recognition.start();
+                            }
+                            resolve();
+                        };
+                        
+                        // Short timeout to ensure the engine is ready
+                        setTimeout(() => synth.speak(utterance), 100);
+                    }, 200);
+                });
+            }
+        
+            function readReminders() {
+                if (isSpeaking) return; 
+                
+                const reminderContainer = document.getElementById("reminder_container");
+                const reminders = reminderContainer.innerText.trim();
+                
+                if (reminders) {
+                    speak("Here is your upcoming task: " + reminders);
+                } else {
+                    speak("You have no upcoming task.");
+                }
+            }
+        
+            function enableTTS() {
+                // Trigger TTS every time the page loads
+                speak("Home Page - say help for list of commands.")
+                .then(() => {
+                    // Start speech recognition after TTS is spoken
+                    startSpeechRecognition();
+                });
+            }
+
+            window.onload = () => {
+                enableTTS();
+                const readButton = document.getElementById("readRemindersButton");
+                if (readButton) {
+                    readButton.addEventListener("click", readReminders);
+                } else {
+                    console.error("Button not found! Make sure your HTML is correctly loaded.");
+                }
+                isRecognitionActive = true;
+            };
+
+            // Remove toggleSpeechRecognition completely
+
+
+            window.onbeforeunload = () => {
+                window.speechSynthesis.cancel();
+                if (recognition) recognition.stop();
+            };
+        
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        
+            function startSpeechRecognition() {
+                if (SpeechRecognition) {
+                    recognition = new SpeechRecognition();
+
+                    // Function to check if push-to-talk is enabled
+                    function isPushToTalkEnabled() {
+                        return window.PushToTalk?.enabled || localStorage.getItem('pushToTalk') === 'true';
+                    }
+                    
+                    // Configure recognition based on push-to-talk setting
+                    recognition.continuous = !isPushToTalkEnabled();  // Call the function here
+                    recognition.interimResults = false;
+                    recognition.lang = 'en-US';
+
+                    recognition.onresult = (event) => {
+                        if (isSpeaking) return;
+                        
+                        const transcript = event.results[event.results.length - 1][0].transcript.toLowerCase().trim();
+                        console.log("Voice Command Detected:", transcript);
+                        handleVoiceCommand(transcript);
+                    };
+
+                    recognition.onerror = (event) => {
+                        console.error("Speech recognition error:", event.error);
+                        // Only auto-restart if we're NOT in push-to-talk mode
+                        if (event.error !== 'no-speech' && !isPushToTalkEnabled()) {  // Call the function here
+                            setTimeout(() => recognition.start(), 1000);
                         }
-                        
-                        if (recognition && isRecognitionActive && !isPushToTalkEnabled()) {
+                    };
+
+                    recognition.onend = () => {
+                        // Only auto-restart if not in push-to-talk mode
+                        if (isRecognitionActive && !isSpeaking && !isPushToTalkEnabled()) {  // Call the function here
                             recognition.start();
                         }
-                        resolve();
                     };
-                    
-                    // Short timeout to ensure the engine is ready
-                    setTimeout(() => synth.speak(utterance), 100);
-                }, 200);
-            });
-        }
-    
-        function readReminders() {
-            if (isSpeaking) return; 
             
-            const reminderContainer = document.getElementById("reminder_container");
-            const reminders = reminderContainer.innerText.trim();
-            
-            if (reminders) {
-                speak("Here is your upcoming task: " + reminders);
-            } else {
-                speak("You have no upcoming task.");
-            }
-        }
-    
-        function enableTTS() {
-            // Trigger TTS every time the page loads
-            speak("Home Page - say help for list of commands.")
-            .then(() => {
-                // Start speech recognition after TTS is spoken
-                startSpeechRecognition();
-            });
-        }
-
-        window.onload = () => {
-            enableTTS();
-            const readButton = document.getElementById("readRemindersButton");
-            if (readButton) {
-                readButton.addEventListener("click", readReminders);
-            } else {
-                console.error("Button not found! Make sure your HTML is correctly loaded.");
-            }
-            isRecognitionActive = true;
-        };
-
-        // Remove toggleSpeechRecognition completely
-
-
-        window.onbeforeunload = () => {
-            window.speechSynthesis.cancel();
-            if (recognition) recognition.stop();
-        };
-    
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    
-        function startSpeechRecognition() {
-            if (SpeechRecognition) {
-                recognition = new SpeechRecognition();
-
-                // Function to check if push-to-talk is enabled
-                function isPushToTalkEnabled() {
-                    return window.PushToTalk?.enabled || localStorage.getItem('pushToTalk') === 'true';
-                }
-                
-                // Configure recognition based on push-to-talk setting
-                recognition.continuous = !isPushToTalkEnabled();  // Call the function here
-                recognition.interimResults = false;
-                recognition.lang = 'en-US';
-
-                recognition.onresult = (event) => {
-                    if (isSpeaking) return;
-                    
-                    const transcript = event.results[event.results.length - 1][0].transcript.toLowerCase().trim();
-                    console.log("Voice Command Detected:", transcript);
-                    handleVoiceCommand(transcript);
-                };
-
-                recognition.onerror = (event) => {
-                    console.error("Speech recognition error:", event.error);
-                    // Only auto-restart if we're NOT in push-to-talk mode
-                    if (event.error !== 'no-speech' && !isPushToTalkEnabled()) {  // Call the function here
-                        setTimeout(() => recognition.start(), 1000);
-                    }
-                };
-
-                recognition.onend = () => {
-                    // Only auto-restart if not in push-to-talk mode
-                    if (isRecognitionActive && !isSpeaking && !isPushToTalkEnabled()) {  // Call the function here
+                    // Only auto-start if not in push-to-talk mode
+                    if (!isPushToTalkEnabled()) {  // Call the function here
                         recognition.start();
                     }
-                };
+
+                        // Add listeners for push-to-talk events
+                    window.addEventListener('pttKeyDown', function() {
+                        if (isPushToTalkEnabled() && !isSpeaking) {  // Call the function here
+                            recognition.start();
+                        }
+                    });
+                    
+                    window.addEventListener('pttKeyUp', function() {
+                        if (isPushToTalkEnabled()) {  // Call the function here
+                            recognition.stop();
+                        }
+                    });
+
+                    // Listen for setting changes
+                    window.addEventListener('pushToTalkChanged', function(event) {
+                        const newPttState = event.detail.enabled;
+                        recognition.continuous = !newPttState;
+                        
+                        if (recognition.active) {
+                            recognition.stop();
+                        }
+                
+                        if (!newPttState && isRecognitionActive && !isSpeaking) {
+                            // Auto-start if switching to continuous mode
+                            setTimeout(() => recognition.start(), 100);
+                        }
+                    });
+                } else {
+                    console.error("Speech recognition is not supported in this browser.");
+                }
+            }
+
+            // Start/Stop speech recognition when button is pressed
         
-                // Only auto-start if not in push-to-talk mode
-                if (!isPushToTalkEnabled()) {  // Call the function here
-                    recognition.start();
-                }
-
-                    // Add listeners for push-to-talk events
-                window.addEventListener('pttKeyDown', function() {
-                    if (isPushToTalkEnabled() && !isSpeaking) {  // Call the function here
-                        recognition.start();
-                    }
-                });
+        
+            function handleVoiceCommand(command) {
+                if (isSpeaking) return;
                 
-                window.addEventListener('pttKeyUp', function() {
-                    if (isPushToTalkEnabled()) {  // Call the function here
-                        recognition.stop();
-                    }
-                });
-
-                // Listen for setting changes
-                window.addEventListener('pushToTalkChanged', function(event) {
-                    const newPttState = event.detail.enabled;
-                    recognition.continuous = !newPttState;
-                    
-                    if (recognition.active) {
-                        recognition.stop();
-                    }
-            
-                    if (!newPttState && isRecognitionActive && !isSpeaking) {
-                        // Auto-start if switching to continuous mode
-                        setTimeout(() => recognition.start(), 100);
-                    }
-                });
-            } else {
-                console.error("Speech recognition is not supported in this browser.");
+                if (command.includes("open tasks") || command.includes("task") || command.includes("tasks") || command.includes("open task")) {
+                    speak("Opening Tasks").then(() => location.href = "tasks"); 
+                } else if (command.includes("open calendar") || command.includes("calendar")) {
+                    speak("Opening Calendar").then(() => location.href = "calendar");            
+                } else if (command.includes("read reminder") || command.includes("reminders")) {
+                    speak("Reading reminder").then(() => readReminders());
+                } else if (command.includes("page"))  {
+                    const pageTitle = document.title;
+                    speak("You are currently on the " + pageTitle+" page.");}else if (command.includes("help")) {
+                    speak("You can say 'Read reminder' to hear your upcoming task, 'Open Tasks' to go to the tasks page, 'Open Calendar' for your schedule, ‘Page’ to hear what page you’re currently on or 'Help' to hear this list of commands again.");
+                } else {
+                    console.log("Unknown command:", command);
+                }
+                /* add into function once settings page is developed
+                else if (command.includes("open settings") || command.includes("setting") || command.includes("settings")) {
+                    location.href = "settings.html";
+                } */
             }
-        }
-
-        // Start/Stop speech recognition when button is pressed
-      
-    
-        function handleVoiceCommand(command) {
-            if (isSpeaking) return;
-            
-            if (command.includes("open tasks") || command.includes("task") || command.includes("tasks") || command.includes("open task")) {
-                speak("Opening Tasks").then(() => location.href = "tasks"); 
-            } else if (command.includes("open calendar") || command.includes("calendar")) {
-                speak("Opening Calendar").then(() => location.href = "calendar");            
-            } else if (command.includes("read reminder") || command.includes("reminders")) {
-                speak("Reading reminder").then(() => readReminders());
-            } 
-            else if (command.includes("page"))  {
-        const pageTitle = document.title;
-        speak("You are currently on the " + pageTitle+" page.");}else if (command.includes("help")) {
-                speak("You can say 'Read reminder' to hear your upcoming task, 'Open Tasks' to go to the tasks page, 'Open Calendar' for your schedule, ‘Page’ to hear what page you’re currently on or 'Help' to hear this list of commands again.");
-            } else {
-                console.log("Unknown command:", command);
-            }
-            /* add into function once settings page is developed
-            else if (command.includes("open settings") || command.includes("setting") || command.includes("settings")) {
-                location.href = "settings.html";
-            } */
-        }
-    </script>
-</body>
+        </script>
+    </body>
 </html>
