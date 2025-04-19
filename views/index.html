@@ -96,9 +96,12 @@
         }
     
         function enableTTS() {
-            if (isSpeaking) return;
-
-            speak("Home Page - say help for list of commands");
+            // Trigger TTS every time the page loads
+            speak("Home Page - say help for list of commands.")
+            .then(() => {
+                // Start speech recognition after TTS is spoken
+                startSpeechRecognition();
+            });
         }
 
         window.onload = () => {
@@ -109,8 +112,7 @@
             } else {
                 console.error("Button not found! Make sure your HTML is correctly loaded.");
             }
-            isRecognitionActive = true; // <-- Always active now
-            startSpeechRecognition();
+            isRecognitionActive = true;
         };
 
         // Remove toggleSpeechRecognition completely

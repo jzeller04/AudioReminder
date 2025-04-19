@@ -61,10 +61,10 @@
                                 recognition.start();
                             }
                             resolve();
-                            };
+                        };
                         
-                            // Short timeout to ensure the engine is ready
-                            setTimeout(() => synth.speak(utterance), 100);
+                        // Short timeout to ensure the engine is ready
+                        setTimeout(() => synth.speak(utterance), 100);
                     }, 200);
                 });
             }
