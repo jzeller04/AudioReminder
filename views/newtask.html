@@ -89,6 +89,32 @@
             return window.PushToTalk?.enabled || localStorage.getItem('pushToTalk') === 'true';
         }
 
+        function playReadyCue() {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            function playDing(startTime, frequency) {
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.type = 'sine';
+                oscillator.frequency.value = frequency;
+                
+                gainNode.gain.setValueAtTime(0, startTime);
+                gainNode.gain.linearRampToValueAtTime(0.4, startTime + 0.01); // Faster fade in
+                gainNode.gain.linearRampToValueAtTime(0, startTime + 0.1); // Faster fade out
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.start(startTime);
+                oscillator.stop(startTime + 0.1);
+            }
+            
+            // Play two dings
+            const now = audioContext.currentTime;
+            playDing(now, 600); // First ding
+            playDing(now + 0.12, 700); // Second ding
+        }
+
         // Setup speech recognition based on current push-to-talk setting
         function setupSpeechRecognition() {
             if (!SpeechRecognition) {
@@ -197,10 +223,8 @@
                 console.log("Starting recognition in conversation mode, PTT enabled:", isPushToTalkEnabled());
 
                 if (isPushToTalkEnabled()) {
-                    // In push-to-talk mode, we need to prompt the user to press the space bar
-                    speak("Please press and hold the space bar to speak").then(() => {
-                        // We don't automatically start recognition here - the user will press space
-                    });
+                    // In push-to-talk mode, just play an audio cue
+                    playReadyCue();
                 } else {
                     // In continuous mode, we start the recognition automatically
                     try {
