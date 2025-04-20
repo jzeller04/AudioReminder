@@ -1,204 +1,244 @@
 <html>
-<head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AudioReminder - Calendar</title>
-    <link rel="stylesheet" href="../css/calendar.css">
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>AudioReminder - Calendar</title>
+        <link rel="stylesheet" href="../css/calendar.css">
 
-    <script>
-        (function() {
-            const theme = localStorage.getItem('theme') || 'low-contrast';
-            document.documentElement.setAttribute('data-theme', theme);
-        })();
-    </script>
-    
-    <script src="../js/settings.bundle.js"></script>
-</head>
-<body>
-    <header>
-        <h1>Calendar</h1>
-    </header>
-    <nav>
-        <button id="homeButton" onclick="location.href='/';">Home</button>
-    </nav>
-    
-    <script src="../js/calendar.js"></script>
-    
-    <script>
-        let recognition;
-        let isSpeaking = false;
+        <script>
+            (function() {
+                const theme = localStorage.getItem('theme') || 'low-contrast';
+                document.documentElement.setAttribute('data-theme', theme);
+            })();
+        </script>
         
-        function speak(text) {
-            const speechSpeed = parseFloat(sessionStorage.getItem('speechSpeed')) || 1;
+        <script src="../js/settings.bundle.js"></script>
+    </head>
+    <body>
+        <header>
+            <h1>Calendar</h1>
+        </header>
+        <nav>
+            <button id="homeButton" onclick="location.href='/';">Home</button>
+        </nav>
+        
+        <script src="../js/calendar.js"></script>
+        
+        <script>
+            let isSpeaking = false;
+            let recognition;
+            let isRecognitionActive = false;
+            
+            function speak(text) {
+                return new Promise((resolve) => {
+                    const speechSpeed = parseFloat(sessionStorage.getItem('speechSpeed')) || 1;
 
-            return new Promise((resolve) => {
-                // Add a small delay before starting speech
-                setTimeout(() => {
-                    isSpeaking = true;
-                    if (recognition) recognition.stop();
-                    
-                    const synth = window.speechSynthesis;
-                    const utterance = new SpeechSynthesisUtterance(text);
-                    utterance.rate = speechSpeed;
+                    // Add a small delay before starting speech
+                    setTimeout(() => {
+                        isSpeaking = true;
+                        if (recognition) recognition.stop();
+                        
+                        const synth = window.speechSynthesis;
+                        const utterance = new SpeechSynthesisUtterance(text);
+                        utterance.rate = speechSpeed;
 
-                    // Preload the speech synthesis engine
-                    synth.speak(new SpeechSynthesisUtterance(''));
-                    
-                    utterance.onend = () => {
-                        isSpeaking = false;
+                        // Preload the speech synthesis engine
+                        synth.speak(new SpeechSynthesisUtterance(''));
                         
-                        // Only restart recognition if NOT in push-to-talk mode
-                        function isPushToTalkEnabled() {
-                            return window.PushToTalk?.enabled || localStorage.getItem('pushToTalk') === 'true';
-                        }
-                        
-                        if (recognition && isRecognitionActive && !isPushToTalkEnabled()) {
-                            recognition.start();
-                        }
-                        resolve();
+                        utterance.onend = () => {
+                            isSpeaking = false;
+                            
+                            // Only restart recognition if NOT in push-to-talk mode
+                            function isPushToTalkEnabled() {
+                                return window.PushToTalk?.enabled || localStorage.getItem('pushToTalk') === 'true';
+                            }
+                            
+                            if (recognition && isRecognitionActive && !isPushToTalkEnabled()) {
+                                recognition.start();
+                            }
+                            resolve();
                         };
-                    
+                        
                         // Short timeout to ensure the engine is ready
                         setTimeout(() => synth.speak(utterance), 100);
-                }, 200);
-            });
-        }
-
-
-        window.onbeforeunload = () => {
-            window.speechSynthesis.cancel(); // Stops any ongoing speech synthesis
-            if (recognition) {
-                recognition.stop();
+                    }, 200);
+                });
             }
-        };
 
-        // Function to enable TTS when the page loads
-        function enableTTS() {
-            // Trigger TTS every time the page loads
-            speak("Calendar Page - say help for list of commands.")
-            .then(() => {
-                setTimeout(() => {
+            function enableTTS() {
+                // Trigger TTS every time the page loads
+                speak("Calendar Page - say help for list of commands.")
+                .then(() => {
                     // Start speech recognition after TTS is spoken
-                    if (recognition && !isSpeaking) {
+                    startSpeechRecognition();
+                });
+            }         
+            
+            window.onload = () => {
+                enableTTS();
+                const readButton = document.getElementById("readRemindersButton");
+                if (readButton) {
+                    readButton.addEventListener("click", readReminders);
+                } else {
+                    console.error("Button not found! Make sure your HTML is correctly loaded.");
+                }
+                isRecognitionActive = true;
+            };
+
+            window.onbeforeunload = () => {
+                window.speechSynthesis.cancel();
+                if (recognition) recognition.stop();
+            };
+
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+            function startSpeechRecognition() {
+                if (SpeechRecognition) {
+                    recognition = new SpeechRecognition();
+
+                    // Function to check if push-to-talk is enabled
+                    function isPushToTalkEnabled() {
+                        return window.PushToTalk?.enabled || localStorage.getItem('pushToTalk') === 'true';
+                    }
+                    
+                    // Configure recognition based on push-to-talk setting
+                    recognition.continuous = !isPushToTalkEnabled();  // Call the function here
+                    recognition.interimResults = false;
+                    recognition.lang = 'en-US';
+
+                    recognition.onresult = (event) => {
+                        if (isSpeaking) return;
+                        
+                        const transcript = event.results[event.results.length - 1][0].transcript.toLowerCase().trim();
+                        console.log("Voice Command Detected:", transcript);
+                        handleVoiceCommand(transcript);
+                    };
+
+                    recognition.onerror = (event) => {
+                        console.error("Speech recognition error:", event.error);
+                        // Only auto-restart if we're NOT in push-to-talk mode
+                        if (event.error !== 'no-speech' && !isPushToTalkEnabled()) {  // Call the function here
+                            setTimeout(() => recognition.start(), 1000);
+                        }
+                    };
+
+                    recognition.onend = () => {
+                        // Only auto-restart if not in push-to-talk mode
+                        if (isRecognitionActive && !isSpeaking && !isPushToTalkEnabled()) {  // Call the function here
+                            recognition.start();
+                        }
+                    };
+            
+                    // Only auto-start if not in push-to-talk mode
+                    if (!isPushToTalkEnabled()) {  // Call the function here
                         recognition.start();
                     }
-                }, 1000);
-            });
-        }
 
-        // Initialize speech recognition
-        function initSpeechRecognition() {
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            if (SpeechRecognition) {
-                recognition = new SpeechRecognition();
-                recognition.continuous = false;
-                recognition.interimResults = false;
-    
-                recognition.onresult = (event) => {
-                    const transcript = event.results[event.results.length - 1][0].transcript.toLowerCase().trim();
-                    console.log("Voice Command Detected:", transcript);
-                    handleVoiceCommand(transcript);
-                };
-    
-                recognition.onerror = (event) => {
-                    console.error("Speech recognition error:", event.error);
-                    // Restart recognition unless we're currently speaking
-                    if (!isSpeaking) {
-                        setTimeout(() => recognition.start(), 500);
-                    }
-                };
-    
-                recognition.onend = () => {
-                    console.log("Voice recognition ended");
-                    // Only restart if we're not currently speaking
-                    if (!isSpeaking) {
-                        setTimeout(() => recognition.start(), 500);
-                    }
-                };
-            } else {
-                console.error("Speech recognition is not supported in this browser.");
-            }
-        }
-        
-        // Automatically start speech recognition and set up TTS trigger for the first click
-        window.onload = function() {
-            initSpeechRecognition();
-            enableTTS();
-        };
-    
-        function getMonthlySchedule() {
-            // Get the current month and year
-            const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
-                                'July', 'August', 'September', 'October', 'November', 'December'];
-            const currentMonth = monthNames[Calendar.selectedDate.getMonth()];
-            const currentYear = Calendar.selectedDate.getFullYear();
-            
-            // Filter the tasks for the current month
-            const tasksForMonth = Calendar.tasks.filter(task => {
-                const taskDate = task.date instanceof Date ? task.date : new Date(task.date);
-                return taskDate.getMonth() === Calendar.selectedDate.getMonth() && 
-                        taskDate.getFullYear() === Calendar.selectedDate.getFullYear();
-            });
-
-            if (tasksForMonth.length === 0) {
-                speak("You have no tasks for " + currentMonth + " " + currentYear + ".");
-            } else {
-                speak("Here is your schedule for " + currentMonth + " " + currentYear + ":");
-                
-                // Group tasks by day for better organization
-                const tasksByDay = {};
-                tasksForMonth.forEach(task => {
-                    const taskDate = task.date instanceof Date ? task.date : new Date(task.date);
-                    const day = taskDate.getDate();
-                    
-                    if (!tasksByDay[day]) {
-                        tasksByDay[day] = [];
-                    }
-                    tasksByDay[day].push(task);
-                });
-
-                // Loop through days with tasks
-                for (const day in tasksByDay) {
-                    const dayTasks = tasksByDay[day];
-                    const dayOrdinal = getOrdinal(day);
-                    
-                    speak(`On the ${dayOrdinal}:`);
-                    
-                    // Loop through tasks for this day
-                    dayTasks.forEach((task, index) => {
-                        const taskTime = task.time ? Calendar.formatTime(task.time) : "all day";
-                        speak(`Task ${index + 1}: ${task.title} at ${taskTime}.`);
+                        // Add listeners for push-to-talk events
+                    window.addEventListener('pttKeyDown', function() {
+                        if (isPushToTalkEnabled() && !isSpeaking) {  // Call the function here
+                            recognition.start();
+                        }
                     });
+                    
+                    window.addEventListener('pttKeyUp', function() {
+                        if (isPushToTalkEnabled()) {  // Call the function here
+                            recognition.stop();
+                        }
+                    });
+
+                    // Listen for setting changes
+                    window.addEventListener('pushToTalkChanged', function(event) {
+                        const newPttState = event.detail.enabled;
+                        recognition.continuous = !newPttState;
+                        
+                        if (recognition.active) {
+                            recognition.stop();
+                        }
+                
+                        if (!newPttState && isRecognitionActive && !isSpeaking) {
+                            // Auto-start if switching to continuous mode
+                            setTimeout(() => recognition.start(), 100);
+                        }
+                    });
+                } else {
+                    console.error("Speech recognition is not supported in this browser.");
                 }
             }
-        }
+            
+            function getMonthlySchedule() {
+                // Get the current month and year
+                const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
+                                    'July', 'August', 'September', 'October', 'November', 'December'];
+                const currentMonth = monthNames[Calendar.selectedDate.getMonth()];
+                const currentYear = Calendar.selectedDate.getFullYear();
+                
+                // Filter the tasks for the current month
+                const tasksForMonth = Calendar.tasks.filter(task => {
+                    const taskDate = task.date instanceof Date ? task.date : new Date(task.date);
+                    return taskDate.getMonth() === Calendar.selectedDate.getMonth() && 
+                            taskDate.getFullYear() === Calendar.selectedDate.getFullYear();
+                });
 
-        // Helper function to get ordinal (1st, 2nd, 3rd, etc.)
-        function getOrdinal(n) {
-            const s = ["th", "st", "nd", "rd"];
-            const v = n % 100;
-            return n + (s[(v - 20) % 10] || s[v] || s[0]);
-        }
+                if (tasksForMonth.length === 0) {
+                    speak("You have no tasks for " + currentMonth + " " + currentYear + ".");
+                } else {
+                    speak("Here is your schedule for " + currentMonth + " " + currentYear + ":");
+                    
+                    // Group tasks by day for better organization
+                    const tasksByDay = {};
+                    tasksForMonth.forEach(task => {
+                        const taskDate = task.date instanceof Date ? task.date : new Date(task.date);
+                        const day = taskDate.getDate();
+                        
+                        if (!tasksByDay[day]) {
+                            tasksByDay[day] = [];
+                        }
+                        tasksByDay[day].push(task);
+                    });
 
-        function handleVoiceCommand(command) {
-            if (command.includes("open home") || command.includes("home")) {
-                speak("Opening home").then(() => location.href = "/");            
-            } else if (command.includes("next")) {
-                speak("next").then(() => document.getElementById('next-month').click());
-            } else if (command.includes("previous") || command.includes("back")) {
-                speak("previous").then(() => document.getElementById('prev-month').click());
-            } else if (command.includes("new event") || command.includes("event") || command.includes("new reminder")) {
-                speak("adding event").then(() => document.getElementById('add-task-btn').click());
-            } else if (command.includes("page")) {
-                const pageTitle = document.title;
-                speak("page").then(() => speak("You are currently on the " + pageTitle + " page."));
-            } else if (command.includes("help")) {
-                speak("help").then(() => speak("You can navigate by saying Schedule to see this months schedule, Previous to see the past month, Next to see the next month, Add Event to set a reminder, Home to go back to home, 'Page' to hear what page you are currently on, or 'Help' to repeat these options."));
-            } else if (command.includes("what's my schedule") || command.includes("schedule")) {
-                speak("getting schedule").then(() => getMonthlySchedule());
-            } else {
-                console.log("Unknown command:", command);
+                    // Loop through days with tasks
+                    for (const day in tasksByDay) {
+                        const dayTasks = tasksByDay[day];
+                        const dayOrdinal = getOrdinal(day);
+                        
+                        speak(`On the ${dayOrdinal}:`);
+                        
+                        // Loop through tasks for this day
+                        dayTasks.forEach((task, index) => {
+                            const taskTime = task.time ? Calendar.formatTime(task.time) : "all day";
+                            speak(`Task ${index + 1}: ${task.title} at ${taskTime}.`);
+                        });
+                    }
+                }
             }
-        }
-    </script>
-</body>
+
+            // Helper function to get ordinal (1st, 2nd, 3rd, etc.)
+            function getOrdinal(n) {
+                const s = ["th", "st", "nd", "rd"];
+                const v = n % 100;
+                return n + (s[(v - 20) % 10] || s[v] || s[0]);
+            }
+
+            function handleVoiceCommand(command) {
+                if (command.includes("open home") || command.includes("home")) {
+                    speak("Opening home").then(() => location.href = "/");            
+                } else if (command.includes("next")) {
+                    speak("next").then(() => document.getElementById('next-month').click());
+                } else if (command.includes("previous") || command.includes("back")) {
+                    speak("previous").then(() => document.getElementById('prev-month').click());
+                } else if (command.includes("new event") || command.includes("event") || command.includes("new reminder")) {
+                    speak("adding event").then(() => document.getElementById('add-task-btn').click());
+                } else if (command.includes("page")) {
+                    const pageTitle = document.title;
+                    speak("page").then(() => speak("You are currently on the " + pageTitle + " page."));
+                } else if (command.includes("help")) {
+                    speak("help").then(() => speak("You can navigate by saying Schedule to see this months schedule, Previous to see the past month, Next to see the next month, Add Event to set a reminder, Home to go back to home, 'Page' to hear what page you are currently on, or 'Help' to repeat these options."));
+                } else if (command.includes("what's my schedule") || command.includes("schedule")) {
+                    speak("getting schedule").then(() => getMonthlySchedule());
+                } else {
+                    console.log("Unknown command:", command);
+                }
+            }
+        </script>
+    </body>
 </html>

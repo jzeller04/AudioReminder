@@ -30,7 +30,9 @@
         </div>
         <script>
             // Global variable for speech recognition
+            let isSpeaking = false;
             let recognition;
+            let isRecognitionActive = false;
 
             // Function for Text-to-Speech (TTS)
             function speak(text) {
@@ -61,10 +63,10 @@
                                 recognition.start();
                             }
                             resolve();
-                            };
+                        };
                         
-                            // Short timeout to ensure the engine is ready
-                            setTimeout(() => synth.speak(utterance), 100);
+                        // Short timeout to ensure the engine is ready
+                        setTimeout(() => synth.speak(utterance), 100);
                     }, 200);
                 });
             }
@@ -79,20 +81,23 @@
                 });
             }
 
-            // Start TTS and Speech Recognition once the page is loaded
-            document.addEventListener('DOMContentLoaded', function() {
+            window.onload = () => {
                 enableTTS();
-            });
-
-            // Speech Recognition setup
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                const readButton = document.getElementById("readRemindersButton");
+                if (readButton) {
+                    readButton.addEventListener("click", readReminders);
+                } else {
+                    console.error("Button not found! Make sure your HTML is correctly loaded.");
+                }
+                isRecognitionActive = true;
+            };
 
             window.onbeforeunload = () => {
                 window.speechSynthesis.cancel(); // Stops any ongoing speech synthesis
-                if (recognition) {
-                    recognition.stop(); // Stop speech recognition
-                }
+                if (recognition) recognition.stop(); // Stop speech recognition
             };
+
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
             // Global variables for mark complete process
             let isMarkingComplete = false;
@@ -102,31 +107,80 @@
             function startSpeechRecognition() {
                 if (SpeechRecognition) {
                     recognition = new SpeechRecognition();
-                    recognition.continuous = true;
+
+                    // Function to check if push-to-talk is enabled
+                    function isPushToTalkEnabled() {
+                        return window.PushToTalk?.enabled || localStorage.getItem('pushToTalk') === 'true';
+                    }
+
+                    // Configure recognition based on push-to-talk setting
+                    recognition.continuous = !isPushToTalkEnabled();  // Call the function here
                     recognition.interimResults = false;
+                    recognition.lang = 'en-US';
 
                     recognition.onresult = (event) => {
+                        if (isSpeaking) return;
+                    
                         const transcript = event.results[event.results.length - 1][0].transcript.toLowerCase().trim();
                         console.log("Voice Command Detected:", transcript);
                         handleVoiceCommand(transcript);
                     };
 
-                    recognition.onerror = (event) => console.error("Speech recognition error:", event.error);
-
-                    recognition.onend = () => {
-                        console.log("Voice recognition ended, restarting...");
-                        if (!window.speechSynthesis.speaking) {
-                            recognition.start();
+                    recognition.onerror = (event) => {
+                        console.error("Speech recognition error:", event.error);
+                        // Only auto-restart if we're NOT in push-to-talk mode
+                        if (event.error !== 'no-speech' && !isPushToTalkEnabled()) {  // Call the function here
+                            setTimeout(() => recognition.start(), 1000);
                         }
                     };
 
-                    recognition.start();
+                    recognition.onend = () => {
+                        // Only auto-restart if not in push-to-talk mode
+                        if (isRecognitionActive && !isSpeaking && !isPushToTalkEnabled()) {  // Call the function here
+                            recognition.start();
+                        }
+                    };
+                    
+                    // Only auto-start if not in push-to-talk mode
+                    if (!isPushToTalkEnabled()) {  // Call the function here
+                        recognition.start();
+                    }
+
+                    // Add listeners for push-to-talk events
+                    window.addEventListener('pttKeyDown', function() {
+                        if (isPushToTalkEnabled() && !isSpeaking) {  // Call the function here
+                            recognition.start();
+                        }
+                    });
+                
+                    window.addEventListener('pttKeyUp', function() {
+                        if (isPushToTalkEnabled()) {  // Call the function here
+                            recognition.stop();
+                        }
+                    });
+
+                    // Listen for setting changes
+                    window.addEventListener('pushToTalkChanged', function(event) {
+                        const newPttState = event.detail.enabled;
+                        recognition.continuous = !newPttState;
+                    
+                        if (recognition.active) {
+                            recognition.stop();
+                        }
+            
+                        if (!newPttState && isRecognitionActive && !isSpeaking) {
+                            // Auto-start if switching to continuous mode
+                            setTimeout(() => recognition.start(), 100);
+                        }
+                    });
                 } else {
                     console.error("Speech recognition is not supported in this browser.");
                 }
             }
 
             async function handleVoiceCommand(command) {
+                if (isSpeaking) return;
+
                 if (isMarkingComplete) {
                     if (command.includes("yes") || command.includes("confirm")) {
                         // Mark current reminder as complete
@@ -179,6 +233,7 @@
             }
 
             async function startMarkCompleteProcess() {
+                if (isSpeaking) return;
                 reminderElements = Array.from(document.querySelectorAll('.reminder-item'));
                 
                 if (reminderElements.length === 0) {
@@ -188,7 +243,7 @@
                 
                 isMarkingComplete = true;
                 currentReminderIndex = 0;
-                
+                if (isSpeaking) return;
                 await speak("Starting mark complete process. I will read each task. Say 'yes' to mark it complete, 'no' to skip it, or 'cancel' to stop.");
                 await processNextReminder();
             }
