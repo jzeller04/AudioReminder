@@ -80,6 +80,13 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
+      - name: Bump patch version
+        run: |
+          CURRENT=$(node -p "require('./package.json').version")
+          NEW=$(npx semver $CURRENT -i patch)
+          echo "Bumping $CURRENT → $NEW"
+          jq ".version=\"$NEW\"" package.json > temp.json && mv temp.json package.json
+
       - name: Publish to GitHub Packages
         run: pnpm publish --no-git-checks
         env:
