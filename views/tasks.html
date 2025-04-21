@@ -22,6 +22,7 @@
                 <button id="homeButton" onclick="location.href='/';">Home</button>
                 <button id="newtaskButton" onclick="location.href='newtask';">New Task</button>
                 <button id="readRemindersButton">Read All Reminders</button>
+                <button id="stopTTSButton" style="display: none;">Stop Speaking</button>
             </div>
         </nav>
         <r id="text1">Upcoming Tasks</r>
@@ -34,10 +35,23 @@
             let recognition;
             let isRecognitionActive = false;
 
+            // Function to stop TTS
+            function stopTTS() {
+                window.speechSynthesis.cancel();
+                isSpeaking = false;
+                document.getElementById('stopTTSButton').style.display = 'none';
+                if (recognition && isRecognitionActive && !(window.PushToTalk?.enabled || localStorage.getItem('pushToTalk') === 'true')) {
+                    recognition.start();
+                }
+            }
+
             // Function for Text-to-Speech (TTS)
             function speak(text) {
                 return new Promise((resolve) => {
                     const speechSpeed = parseFloat(sessionStorage.getItem('speechSpeed')) || 1;
+
+                    // Show stop button when starting to speak
+                    document.getElementById('stopTTSButton').style.display = 'inline-block';
 
                     // Add a small delay before starting speech
                     setTimeout(() => {
@@ -53,6 +67,7 @@
                         
                         utterance.onend = () => {
                             isSpeaking = false;
+                            document.getElementById('stopTTSButton').style.display = 'none';
                             
                              // Only restart recognition if NOT in push-to-talk mode
                              function isPushToTalkEnabled() {
@@ -84,11 +99,20 @@
             window.onload = () => {
                 enableTTS();
                 const readButton = document.getElementById("readRemindersButton");
+                const stopButton = document.getElementById("stopTTSButton");
+                
                 if (readButton) {
                     readButton.addEventListener("click", readReminders);
                 } else {
-                    console.error("Button not found! Make sure your HTML is correctly loaded.");
+                    console.error("Read button not found!");
                 }
+                
+                if (stopButton) {
+                    stopButton.addEventListener("click", stopTTS);
+                } else {
+                    console.error("Stop button not found!");
+                }
+                
                 isRecognitionActive = true;
             };
 
@@ -224,8 +248,11 @@
                 else if (command.includes("mark complete") || command.includes("complete tasks")) {
                     startMarkCompleteProcess();
                 }
+                else if (command.includes("stop") || command.includes("quiet") || command.includes("shut up")) {
+                    stopTTS();
+                }
                 else if (command.includes("help")) {
-                    speak("You can say 'New Task' to add a task, 'Open Home' to return to the homepage, 'Read all Reminders' to hear your upcoming tasks, 'Mark Complete' to go through your tasks, or 'Help' to hear this list of commands again.");
+                    speak("You can say 'New Task' to add a task, 'Open Home' to return to the homepage, 'Read all Reminders' to hear your upcoming tasks, 'Mark Complete' to go through your tasks, 'Stop' to stop speaking, or 'Help' to hear this list of commands again.");
                 } 
                 else {
                     console.log("Unknown command:", command);
@@ -330,6 +357,11 @@
                     readRemindersButton.addEventListener("click", function() {
                         readReminders();
                     });
+                }
+
+                const stopTTSButton = document.getElementById("stopTTSButton");
+                if (stopTTSButton) {
+                    stopTTSButton.addEventListener("click", stopTTS);
                 }
 
                 // Find all "Mark Complete" buttons
