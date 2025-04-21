@@ -49,7 +49,7 @@
             function speak(text) {
                 return new Promise((resolve) => {
                     const speechSpeed = parseFloat(sessionStorage.getItem('speechSpeed')) || 1;
-
+                    const speechVolume = parseFloat(sessionStorage.getItem('speechVolume')) || 0.5;
                     // Show stop button when starting to speak
                     document.getElementById('stopTTSButton').style.display = 'inline-block';
 
@@ -61,7 +61,7 @@
                         const synth = window.speechSynthesis;
                         const utterance = new SpeechSynthesisUtterance(text);
                         utterance.rate = speechSpeed
-
+                        utterance.volume = speechVolume
                         // Preload the speech synthesis engine
                         synth.speak(new SpeechSynthesisUtterance(''));
                         
