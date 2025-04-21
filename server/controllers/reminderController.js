@@ -66,9 +66,22 @@ const getUpcomingReminder = async (req, res) => {
 const getAllReminders = async (req, res) => {
     try {
         const template = await fs.readFile(path.join(__dirname, '../../views/tasks.html'), 'utf8');
+        const importantReminders = await fetchImportant(req.session.userId);
         const reminders = await fetch(req.session.userId);
 
-        let reminderHTML = reminders.map(reminder =>
+        let reminderHTML = importantReminders.map(reminder =>
+            `<div class="reminder-item"> 
+                <div class="reminder-content">
+                    <p class="reminder-title">${reminder.title || 'Missing title'}</p>
+                    <p class="reminder-description">${reminder.description || ''}</p>
+                    <p class="reminder-flagged">${reminder.flagged || ''}</p>
+                    <p class="reminder-date">${dateToReadable(reminder.date) || 'Missing date'}</p>
+                    <p class="reminder-time">${timeToTwelveSystem(reminder.time) || 'Missing time'}</p>
+                </div>
+                <button class="flag-btn" data-id="${reminder._id}">Flag as Important</button>
+                <button class="complete-btn" data-id="${reminder._id}">Mark Complete</button>
+            </div>`
+        ).join('') + reminders.map(reminder =>
             `<div class="reminder-item"> 
                 <div class="reminder-content">
                     <p class="reminder-title">${reminder.title || 'Missing title'}</p>
@@ -97,7 +110,7 @@ const createReminder = async (req, res) => {
     const description = req.body.memo;
     const date = req.body.date;
     const time = req.body.time;
-    const flag = true;
+    const flag = false;
 
     if(title.length <= 30 && description.length <= 300)
     {
@@ -143,20 +156,21 @@ const flagReminder = async (req, res) => {
     console.log("valid?: ", mongoose.Types.ObjectId.isValid(req.body.reminderId));
     const reminderId = req.body.reminderId; // tdl for frontend (or Justin)
     try {
-        await User.findOneAndUpdate(
-            {
-                _id: req.session.userId,
-                "reminders._id": reminderId
-            },
-            {
-                $set: {
-                    "reminders.$.flagged": true
-                }
-            }
-        );
+        const user = await User.findOne({ _id: req.session.userId });
+
+        if (!user) throw new Error("User not found");
+
+        const reminder = user.reminders.id(reminderId);
+        if (!reminder) throw new Error("Reminder not found");
+
+        // Toggle flagged
+        reminder.flagged = !reminder.flagged;
+
+        await user.save();
+
         return res.redirect('/tasks');
     } catch (error) {
-        console.log('Error flagging reminder:', error);
+        console.error('Error toggling reminder flag:', error);
         return res.redirect('/tasks');
     }
     
@@ -181,7 +195,57 @@ async function fetch(userId) {
       // Filter relevant reminders
       const reminders = user.reminders.filter(reminder => {
         const reminderDate = new Date(reminder.date);
-        return reminderDate >= today && reminderDate <= nextWeek;
+        return reminderDate >= today && reminderDate <= nextWeek && reminder.flagged == false;
+      });
+      
+      // Sort reminders by date and time
+      reminders.sort((a, b) => {
+        // First compare by date
+        const dateA = new Date(a.date);
+        const dateB = new Date(b.date);
+        
+        if (dateA.getTime() !== dateB.getTime()) {
+          return dateA - dateB;
+        }
+        
+        // If same date, compare by time
+        const [hoursA, minutesA] = a.time.split(':').map(Number);
+        const [hoursB, minutesB] = b.time.split(':').map(Number);
+        
+        if (hoursA !== hoursB) {
+          return hoursA - hoursB;
+        }
+        
+        return minutesA - minutesB;
+      });
+      
+      console.log("Fetched and sorted reminders:", reminders.length);
+      return reminders;
+    } catch (error) {
+      console.error('Error fetching reminders:', error);
+      return [];
+    }
+}
+
+async function fetchImportant(userId) {
+    try {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const nextWeek = new Date(today);
+      nextWeek.setDate(today.getDate() + 6);
+      nextWeek.setHours(23, 59, 59, 999);
+      
+      const user = await User.findById(userId, {reminders: 1});
+      
+      if (!user || !user.reminders) {
+        return [];
+      }
+      
+      // Filter relevant reminders
+      const reminders = user.reminders.filter(reminder => {
+        const reminderDate = new Date(reminder.date);
+        return reminderDate >= today && reminderDate <= nextWeek && reminder.flagged == true;
       });
       
       // Sort reminders by date and time
@@ -270,5 +334,6 @@ export {
     getAllReminders,
     createReminder,
     completeReminder,
-    flagReminder
+    flagReminder,
+    fetchImportant
 };

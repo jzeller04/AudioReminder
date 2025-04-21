@@ -103,6 +103,7 @@
             function speak(text) {
                 return new Promise((resolve) => {
                     const speechSpeed = parseFloat(sessionStorage.getItem('speechSpeed')) || 1;
+                    const speechVolume = parseFloat(sessionStorage.getItem('speechVolume')) || 0.5;
 
                     // Add a small delay before starting speech
                     setTimeout(() => {
@@ -111,7 +112,8 @@
                         
                         const synth = window.speechSynthesis;
                         const utterance = new SpeechSynthesisUtterance(text);
-                        utterance.rate = speedhSpeed;
+                        utterance.rate = speechSpeed;
+                        utterance.volume = speechVolume;
 
                         // Preload the speech synthesis engine
                         synth.speak(new SpeechSynthesisUtterance(''));
@@ -252,9 +254,8 @@
                 
                 const speedSlider = document.getElementById('speech-speed');
                 const speedValueDisplay = document.getElementById('speed-value');
-
-                // Load saved speed value from sessionStorage if available
                 const savedSpeed = sessionStorage.getItem('speechSpeed');
+
                 if (savedSpeed && speedSlider && speedValueDisplay) {
                     speedSlider.value = savedSpeed;
                     speedValueDisplay.textContent = `${parseFloat(savedSpeed).toFixed(1)}x`;
@@ -267,7 +268,20 @@
                         sessionStorage.setItem('speechSpeed', speed);
                     });
                 }
-                            });
+
+                const volumeSlider = document.getElementById('volume');
+                const savedVolume = sessionStorage.getItem('speechVolume');
+                if (savedVolume && volumeSlider) {
+                    volumeSlider.value = savedVolume * 100;
+                }
+
+                if (volumeSlider) {
+                    volumeSlider.addEventListener('input', function () {
+                        const volume = parseInt(this.value, 10) / 100;
+                        sessionStorage.setItem('speechVolume', volume);
+                    });
+                }
+            });
         </script>
     </body>
 </html>
