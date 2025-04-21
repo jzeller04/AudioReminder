@@ -86,7 +86,7 @@
 
         function speak(text) {
             const speechSpeed = parseFloat(sessionStorage.getItem('speechSpeed')) || 1;
-
+            const speechVolume = parseFloat(sessionStorage.getItem('speechVolume')) || 0.5;
             return new Promise((resolve) => {
                 // Add a small delay before starting speech
                 setTimeout(() => {
@@ -96,6 +96,7 @@
                     const synth = window.speechSynthesis;
                     const utterance = new SpeechSynthesisUtterance(text);
                     utterance.rate = speechSpeed;
+                    utterance.volume = speechVolume;
 
                     // Preload the speech synthesis engine
                     synth.speak(new SpeechSynthesisUtterance(''));
