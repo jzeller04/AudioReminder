@@ -79,19 +79,122 @@
 
     <script>
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        const recognition = new SpeechRecognition();
-        recognition.continuous = false;
-        recognition.interimResults = false;
-        recognition.lang = "en-US";
+        let recognition;
+        let isSpeaking = false;
+        let isRecognitionActive = true;
+        let inConversationMode = false; // Flag to track if we're in the conversation mode
+        let conversationResolve = null; // Used to resolve the conversation promise
+
+        function isPushToTalkEnabled() {
+            return window.PushToTalk?.enabled || localStorage.getItem('pushToTalk') === 'true';
+        }
+
+        function playReadyCue() {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            function playDing(startTime, frequency) {
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.type = 'sine';
+                oscillator.frequency.value = frequency;
+                
+                gainNode.gain.setValueAtTime(0, startTime);
+                gainNode.gain.linearRampToValueAtTime(0.4, startTime + 0.01); // Faster fade in
+                gainNode.gain.linearRampToValueAtTime(0, startTime + 0.1); // Faster fade out
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.start(startTime);
+                oscillator.stop(startTime + 0.1);
+            }
+            
+            // Play two dings
+            const now = audioContext.currentTime;
+            playDing(now, 600); // First ding
+            playDing(now + 0.12, 700); // Second ding
+        }
+
+        // Setup speech recognition based on current push-to-talk setting
+        function setupSpeechRecognition() {
+            if (!SpeechRecognition) {
+                console.error("Speech recognition is not supported in this browser.");
+                return;
+            }
+
+            recognition = new SpeechRecognition();
+            recognition.continuous = false; // Always set to false for our conversation-based approach
+            recognition.interimResults = false;
+            recognition.lang = "en-US";
+
+            // The main result handler that distinguishes between conversation mode and command mode
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript.trim();
+                console.log("Speech input detected:", transcript);
+                
+                if (inConversationMode && conversationResolve) {
+                    // If we're in conversation mode and have a resolve function, use it
+                    const resolveFunc = conversationResolve;
+                    conversationResolve = null;
+                    inConversationMode = false;
+                    resolveFunc(transcript);
+                } else if (!inConversationMode) {
+                    // Only process commands when not in conversation mode
+                    handleVoiceCommand(transcript.toLowerCase());
+                }
+            };
+
+            recognition.onerror = (event) => {
+                console.error("Speech recognition error:", event.error);
+                
+                // If we're in conversation mode and have a resolve function, resolve with empty string
+                if (inConversationMode && conversationResolve) {
+                    const resolveFunc = conversationResolve;
+                    conversationResolve = null;
+                    inConversationMode = false;
+                    resolveFunc("");
+                }
+            };
+
+            recognition.onend = () => {
+                console.log("Voice recognition ended");
+                // Do not auto-restart in this component - we manage recognition differently
+            };
+
+            // Set up push-to-talk event listeners
+            window.addEventListener('pttKeyDown', function() {
+                if (isPushToTalkEnabled() && !isSpeaking) {
+                    recognition.start();
+                }
+            });
+            
+            window.addEventListener('pttKeyUp', function() {
+                if (isPushToTalkEnabled()) {
+                    recognition.stop();
+                }
+            });
+
+            // Listen for setting changes
+            window.addEventListener('pushToTalkChanged', function(event) {
+                console.log("Push-to-talk setting changed:", event.detail.enabled);
+            });
+        }
 
         function speak(text) {
-            const speechSpeed = parseFloat(sessionStorage.getItem('speechSpeed')) || 1;
-            const speechVolume = parseFloat(sessionStorage.getItem('speechVolume')) || 0.5;
             return new Promise((resolve) => {
+                const speechSpeed = parseFloat(sessionStorage.getItem('speechSpeed')) || 1;
+                const speechVolume = parseFloat(sessionStorage.getItem('speechVolume')) || 0.5;
+
                 // Add a small delay before starting speech
                 setTimeout(() => {
                     isSpeaking = true;
-                    if (recognition) recognition.stop();
+                    if (recognition) {
+                        try {
+                            recognition.stop();
+                        } catch (e) {
+                            console.log("Error stopping recognition:", e);
+                        }
+                    }
                     
                     const synth = window.speechSynthesis;
                     const utterance = new SpeechSynthesisUtterance(text);
@@ -103,20 +206,11 @@
                     
                     utterance.onend = () => {
                         isSpeaking = false;
-                        
-                        // Only restart recognition if NOT in push-to-talk mode
-                        function isPushToTalkEnabled() {
-                            return window.PushToTalk?.enabled || localStorage.getItem('pushToTalk') === 'true';
-                        }
-                        
-                        if (recognition && isRecognitionActive && !isPushToTalkEnabled()) {
-                            recognition.start();
-                        }
                         resolve();
-                        };
+                    };
                     
-                        // Short timeout to ensure the engine is ready
-                        setTimeout(() => synth.speak(utterance), 100);
+                    // Short timeout to ensure the engine is ready
+                    setTimeout(() => synth.speak(utterance), 100);
                 }, 200);
             });
         }
@@ -124,16 +218,27 @@
 
         function startRecognition() {
             return new Promise((resolve) => {
-                recognition.onresult = (event) => {
-                    const transcript = event.results[0][0].transcript.trim();
-                    console.log("Speech input:", transcript);
-                    resolve(transcript);
-                };
-                recognition.onerror = (event) => {
-                    console.error("Speech recognition error:", event.error);
-                    resolve("");
-                };
-                recognition.start();
+                // Set the conversation mode flag to true
+                inConversationMode = true;
+                conversationResolve = resolve;
+
+                console.log("Starting recognition in conversation mode, PTT enabled:", isPushToTalkEnabled());
+
+                if (isPushToTalkEnabled()) {
+                    // In push-to-talk mode, just play an audio cue
+                    playReadyCue();
+                } else {
+                    // In continuous mode, we start the recognition automatically
+                    try {
+                        recognition.start();
+                    } catch (e) {
+                        console.error("Error starting recognition:", e);
+                        // If there was an error, resolve with empty string
+                        inConversationMode = false;
+                        conversationResolve = null;
+                        resolve("");
+                    }
+                }
             });
         }
 
@@ -324,6 +429,9 @@
 
         window.onbeforeunload = () => {
             window.speechSynthesis.cancel(); // Stops any ongoing speech synthesis
+            if (recognition) {
+                recognition.stop(); // Stop speech recognition
+            }
         };
 
         function enableTTS() {
@@ -377,6 +485,23 @@
             }
         }
 
+        // Function to handle voice commands when not in conversation mode
+        async function handleVoiceCommand(command) {
+            if (command.includes("read reminder")) {
+                await readReminder();
+            } else if (command.includes("clear reminder")) {
+                await clearReminder();
+            } else if (command.includes("save reminder") || command.includes("sav reminder")) {
+                document.getElementById("save").click();
+            } else if (command.includes("cancel")) {
+                window.location.href = "tasks";
+            } else if (command.includes("help")) {
+                await speak("You can say 'Read Reminder' to hear your reminder, 'Clear Reminder' to reset the form, 'Save Reminder' to submit, or 'Cancel' to return to the tasks page.");
+            } else {
+                console.log("Unknown command:", command);
+            }
+        }
+
         // Function to get URL parameters
         function getUrlParams() {
             const params = {};
@@ -393,8 +518,15 @@
             return params;
         }
 
-        // Set the date field if it was provided in URL
+        // Set up the page when it loads
         document.addEventListener('DOMContentLoaded', function() {
+            // Initialize speech recognition
+            setupSpeechRecognition();
+            
+            // Log initial push-to-talk state
+            console.log("Initial push-to-talk state:", isPushToTalkEnabled());
+            
+            // Set the date field if it was provided in URL
             const params = getUrlParams();
             if (params.date) {
                 document.getElementById('date').value = params.date;
