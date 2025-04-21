@@ -1,193 +1,171 @@
-// Google API Config
+// Google API Config with Calendar scope
 const GOOGLE_CONFIG = {
-  CLIENT_ID: '1009864072987-cmpm10gg8f73q21uteji2suo7eoklsml.apps.googleusercontent.com',
-  SCOPES: 'https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/calendar'
-};
-
-// Stores authentication state and methods
-const GoogleAuth = {
-  // Track state
-  isLoggedIn: false,
-  userData: null,
-  // Set up the Google Sign-In elements
-  setupGoogleSignIn: function() {
-      // Load custom CSS for Google buttons if it's not already loaded
-      if (!document.querySelector('link[href="css/google.css"]')) {
-          const link = document.createElement('link');
-          link.rel = 'stylesheet';
-          link.href = 'css/google.css';
-          document.head.appendChild(link);
-      }
-
-      // Check if Google API script is already loaded
-      if (!document.querySelector('script[src="https://accounts.google.com/gsi/client"]')) {
-          // Load the Google API script
-          const script = document.createElement('script');
-          script.src = 'https://accounts.google.com/gsi/client';
-          script.async = true;
-          script.defer = true;
-          document.head.appendChild(script);
-      }
-
-      // Find or create the container for Google Sign-In
-      let container = document.querySelector('.login-container');
-
-      if (!container) {
-          // If no container exists yet, create one
-          container = document.createElement('div');
-          container.className = 'login-container';
-          // Custom location of button depending on page.
-          const pageName = window.location.pathname.split('/').pop().replace('.html', '') || 'index';
-          container.classList.add(`login-container-${pageName}`);
-
-          // Find a good place to insert button
-          const nav = document.querySelector('nav');
-          if (nav) {
-              nav.parentNode.insertBefore(container, nav.nextSibling);
-          } else {
-              document.body.appendChild(container);
-          }
-      }
-      
-      // Check if the Google Sign-In elements already exist
-      if (!document.getElementById('g_id_onload')) {
-          // Create the initialization element
-          const gIdOnload = document.createElement('div');
-          gIdOnload.id = 'g_id_onload';
-          gIdOnload.setAttribute('data-client_id', GOOGLE_CONFIG.CLIENT_ID);
-          gIdOnload.setAttribute('data-callback', 'handleCredentialResponse');
-          container.appendChild(gIdOnload);
-          
-          // Create the sign-in button element
-          const gIdSignin = document.createElement('div');
-          gIdSignin.className = 'g_id_signin';
-          gIdSignin.setAttribute('data-type', 'standard');
-          gIdSignin.setAttribute('data-shape', 'rectangular');
-          gIdSignin.setAttribute('data-theme', 'filled_black');
-          gIdSignin.setAttribute('data-text', 'signin_with');
-          gIdSignin.setAttribute('data-size', 'large');
-          gIdSignin.setAttribute('data-width', '240');
-          gIdSignin.setAttribute('data-logo_alignment', 'left');
-          container.appendChild(gIdSignin);
-          
-          // Create user info display
-          const userInfo = document.createElement('div');
-          userInfo.id = 'userInfo';
-          userInfo.style.display = 'none';
-                userInfo.innerHTML = 
-              `<p>Welcome, <span id="userName"></span></p>
-               <p>Email: <span id="userEmail"></span></p>`;
-          container.appendChild(userInfo);
-          
-          // Create logout button
-          const logoutButton = document.createElement('button');
-          logoutButton.id = 'logoutButton';
-          logoutButton.textContent = 'Sign Out';
-          logoutButton.style.display = 'none';
-          container.appendChild(logoutButton);
-      }
-  },
+    CLIENT_ID: '1009864072987-cmpm10gg8f73q21uteji2suo7eoklsml.apps.googleusercontent.com',
+    SCOPES: 'https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/calendar.readonly',
+    DISCOVERY_DOC: 'https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest'
+  };
   
-  // Initialize the auth module
-  init: function() {
-      // Check if user is already logged in on page load
+  // Stores authentication state and methods
+  const GoogleAuth = {
+    // Track state
+    isLoggedIn: false,
+    userData: null,
+    gapiLoaded: false,
+    gisLoaded: false,
+    tokenClient: null,
+    
+    // Initialize the auth module
+    init: function() {
+      // Check if user is already logged in from localStorage
       this.checkLoginStatus();
       
-      // Set up event listeners
-      if (document.getElementById('logoutButton')) {
-          document.getElementById('logoutButton').addEventListener('click', this.signOut.bind(this));
+      // Load required Google API scripts
+      this.loadGapiScript();
+      this.loadGisScript();
+    },
+    
+    // Load Google API client script
+    loadGapiScript: function() {
+      const script = document.createElement('script');
+      script.src = 'https://apis.google.com/js/api.js';
+      script.async = true;
+      script.defer = true;
+      script.onload = () => this.handleGapiLoaded();
+      document.head.appendChild(script);
+    },
+    
+    // Load Google Identity Services script
+    loadGisScript: function() {
+      const script = document.createElement('script');
+      script.src = 'https://accounts.google.com/gsi/client';
+      script.async = true;
+      script.defer = true;
+      script.onload = () => this.handleGisLoaded();
+      document.head.appendChild(script);
+    },
+    
+    // Handle GAPI loaded
+    handleGapiLoaded: function() {
+      gapi.load('client', async () => {
+        try {
+          await gapi.client.init({
+            discoveryDocs: [GOOGLE_CONFIG.DISCOVERY_DOC],
+          });
+          this.gapiLoaded = true;
+          this.maybeEnableButtons();
+          console.log('GAPI client initialized');
+        } catch (err) {
+          console.error('Error initializing GAPI client:', err);
+        }
+      });
+    },
+    
+    // Handle GIS loaded
+    handleGisLoaded: function() {
+      this.tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: GOOGLE_CONFIG.CLIENT_ID,
+        scope: GOOGLE_CONFIG.SCOPES,
+        callback: (tokenResponse) => this.handleAuthResponse(tokenResponse),
+      });
+      this.gisLoaded = true;
+      this.maybeEnableButtons();
+      console.log('Google Identity Services initialized');
+    },
+    
+    // Enable auth buttons if APIs are loaded
+    maybeEnableButtons: function() {
+      if (this.gapiLoaded && this.gisLoaded) {
+        const buttons = document.querySelectorAll('.google-auth-btn');
+        buttons.forEach(button => {
+          button.disabled = false;
+        });
       }
-  },
-  
-  // Process the response from Google Sign-In
-  handleCredentialResponse: function(response) {
-      // Decode the JWT ID token from Google
-      const responsePayload = this.parseJwt(response.credential);
+    },
+    
+    // Sign in with Google
+    signIn: function() {
+      if (!this.tokenClient) {
+        console.error('Token client not initialized yet');
+        return;
+      }
       
-      // Store user data
-      this.userData = {
-          name: responsePayload.name,
-          email: responsePayload.email,
-          picture: responsePayload.picture
-      };
-      this.isLoggedIn = true;
-      
-      // Update UI
-      this.updateUI();
-      
-      // Store login status in localStorage
-      localStorage.setItem('isLoggedIn', 'true');
-      localStorage.setItem('userName', responsePayload.name);
-      localStorage.setItem('userEmail', responsePayload.email);
-      localStorage.setItem('userPicture', responsePayload.picture || '');
-      
-      // Dispatch login event that other components can listen for
-      window.dispatchEvent(new CustomEvent('userLoggedIn', { 
-          detail: this.userData 
-      }));
-
-      // Initialize calendar if on calendar page
-    if (window.location.pathname.includes('calendar.html') && window.Calendar) {
-        window.Calendar.loadCalendarEvents();
-    }
-      
-      console.log("User successfully logged in:", this.userData);
-  },
-  
-  // Update the UI based on authentication state
-  updateUI: function() {
-      if (this.isLoggedIn && this.userData) {
-          // Update user info display if elements exist
-          if (document.getElementById('userName')) {
-              document.getElementById('userName').textContent = this.userData.name;
-          }
-          if (document.getElementById('userEmail')) {
-              document.getElementById('userEmail').textContent = this.userData.email;
-          }
-          if (document.getElementById('userInfo')) {
-              document.getElementById('userInfo').style.display = 'block';
-          }
-          if (document.getElementById('logoutButton')) {
-              document.getElementById('logoutButton').style.display = 'block';
-          }
-          
-          // Hide the Google Sign-In button
-          const signInButton = document.querySelector('.g_id_signin');
-          if (signInButton) {
-              signInButton.style.display = 'none';
-          }
+      if (gapi.client.getToken() === null) {
+        // Prompt the user to select a Google Account and ask for consent
+        this.tokenClient.requestAccessToken({prompt: 'consent'});
       } else {
-          // Hide user info and logout button
-          if (document.getElementById('userInfo')) {
-              document.getElementById('userInfo').style.display = 'none';
-          }
-          if (document.getElementById('logoutButton')) {
-              document.getElementById('logoutButton').style.display = 'none';
-          }
-          
-          // Show the Google Sign-In button
-          const signInButton = document.querySelector('.g_id_signin');
-          if (signInButton) {
-              signInButton.style.display = 'block';
-          }
+        // Skip account chooser for an existing session
+        this.tokenClient.requestAccessToken({prompt: ''});
       }
-  },
-  
-  // Check if user is already logged in from localStorage
-  checkLoginStatus: function() {
-      if (localStorage.getItem('isLoggedIn') === 'true') {
-          this.isLoggedIn = true;
-          this.userData = {
-              name: localStorage.getItem('userName'),
-              email: localStorage.getItem('userEmail'),
-              picture: localStorage.getItem('userPicture')
-          };
-          this.updateUI();
+    },
+    
+    // Handle auth response from Google
+    handleAuthResponse: function(response) {
+      if (response.error !== undefined) {
+        console.error(response);
+        return;
       }
-  },
-  
-  // Handle Sign Out
-  signOut: function() {
+      
+      // Access token was successfully obtained
+      console.log('Google authentication successful');
+      
+      // Get user info
+      this.fetchUserInfo();
+    },
+    
+    // Fetch Google user info
+    fetchUserInfo: async function() {
+      try {
+        const response = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+          headers: {
+            'Authorization': `Bearer ${gapi.client.getToken().access_token}`
+          }
+        });
+        
+        const userInfo = await response.json();
+        
+        // Store user data
+        this.userData = {
+          name: userInfo.name,
+          email: userInfo.email,
+          picture: userInfo.picture
+        };
+        this.isLoggedIn = true;
+        
+        // Update UI
+        this.updateUI();
+        
+        // Store login status in localStorage
+        localStorage.setItem('isLoggedIn', 'true');
+        localStorage.setItem('userName', userInfo.name);
+        localStorage.setItem('userEmail', userInfo.email);
+        localStorage.setItem('userPicture', userInfo.picture || '');
+        
+        // Dispatch login event
+        window.dispatchEvent(new CustomEvent('userLoggedIn', { 
+          detail: this.userData 
+        }));
+        
+        console.log('User info retrieved:', this.userData);
+        
+        // Initialize calendar if on calendar page
+        if (window.location.pathname.includes('calendar') && window.Calendar) {
+          window.Calendar.loadCalendarEvents();
+        }
+      } catch (error) {
+        console.error('Error fetching user info:', error);
+      }
+    },
+    
+    // Handle Sign Out
+    signOut: function() {
+      const token = gapi.client.getToken();
+      if (token !== null) {
+        google.accounts.oauth2.revoke(token.access_token, () => {
+          console.log('Token revoked');
+        });
+        gapi.client.setToken(null);
+      }
+      
       // Reset authentication state
       this.isLoggedIn = false;
       this.userData = null;
@@ -204,41 +182,115 @@ const GoogleAuth = {
       // Dispatch logout event
       window.dispatchEvent(new CustomEvent('userLoggedOut'));
       
-      console.log("User signed out");
-  },
-  
-  // Helper function to parse JWT tokens
-  parseJwt: function(token) {
-      const base64Url = token.split('.')[1];
-      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-      const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-      }).join(''));
-      return JSON.parse(jsonPayload);
-  },
-  
-  // Get current user data
-  getUserData: function() {
+      console.log('User signed out');
+    },
+    
+    // Update the UI based on authentication state
+    updateUI: function() {
+      const signInButtons = document.querySelectorAll('.google-signin-btn');
+      const signOutButtons = document.querySelectorAll('.google-signout-btn');
+      const userInfoElements = document.querySelectorAll('.user-info');
+      
+      if (this.isLoggedIn && this.userData) {
+        // User is logged in - update UI
+        signInButtons.forEach(btn => btn.style.display = 'none');
+        signOutButtons.forEach(btn => btn.style.display = 'inline-block');
+        
+        userInfoElements.forEach(element => {
+          element.style.display = 'block';
+          const nameSpan = element.querySelector('.user-name');
+          const emailSpan = element.querySelector('.user-email');
+          
+          if (nameSpan) nameSpan.textContent = this.userData.name;
+          if (emailSpan) emailSpan.textContent = this.userData.email;
+        });
+      } else {
+        // User is logged out - update UI
+        signInButtons.forEach(btn => btn.style.display = 'inline-block');
+        signOutButtons.forEach(btn => btn.style.display = 'none');
+        userInfoElements.forEach(element => element.style.display = 'none');
+      }
+    },
+    
+    // Check if user is already logged in from localStorage
+    checkLoginStatus: function() {
+      if (localStorage.getItem('isLoggedIn') === 'true') {
+        this.isLoggedIn = true;
+        this.userData = {
+          name: localStorage.getItem('userName'),
+          email: localStorage.getItem('userEmail'),
+          picture: localStorage.getItem('userPicture')
+        };
+        this.updateUI();
+      }
+    },
+    
+    // Get current user data
+    getUserData: function() {
       return this.userData;
-  },
-  
-  // Check if user is authenticated
-  isAuthenticated: function() {
+    },
+    
+    // Check if user is authenticated
+    isAuthenticated: function() {
       return this.isLoggedIn;
-  }
-};
-
-// Initialize the auth module when the DOM is fully loaded
-document.addEventListener('DOMContentLoaded', function() {
-  // Dynamically create the Google Sign-In elements
-  GoogleAuth.setupGoogleSignIn();
-  GoogleAuth.init();
-  
-  // Set up global callback for Google authentication
-  window.handleCredentialResponse = function(response) {
-      GoogleAuth.handleCredentialResponse(response);
+    },
+    
+    // Fetch Google Calendar events
+    fetchCalendarEvents: async function() {
+      if (!this.isLoggedIn || !gapi.client.getToken()) {
+        console.log('User not logged in or token not available');
+        return [];
+      }
+      
+      try {
+        const response = await gapi.client.calendar.events.list({
+          'calendarId': 'primary',
+          'timeMin': (new Date()).toISOString(),
+          'showDeleted': false,
+          'singleEvents': true,
+          'maxResults': 10,
+          'orderBy': 'startTime'
+        });
+        
+        const events = response.result.items;
+        console.log('Google Calendar events:', events);
+        
+        // Format events to match AudioReminder's format
+        return events.map(event => {
+          const start = event.start.dateTime || event.start.date;
+          const startDate = new Date(start);
+          
+          return {
+            id: event.id,
+            title: event.summary || 'Untitled Event',
+            description: event.description || '',
+            date: startDate,
+            time: this.formatTime(startDate),
+            source: 'google'
+          };
+        });
+      } catch (error) {
+        console.error('Error fetching Google Calendar events:', error);
+        return [];
+      }
+    },
+    
+    // Format time for calendar events
+    formatTime: function(date) {
+      if (!date) return '';
+      
+      const hours = date.getHours().toString().padStart(2, '0');
+      const minutes = date.getMinutes().toString().padStart(2, '0');
+      
+      return `${hours}:${minutes}`;
+    }
   };
-});
-
-// Export the GoogleAuth object so it can be used in other files
-window.GoogleAuth = GoogleAuth;
+  
+  // Initialize the auth module when the DOM is fully loaded
+  document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Google Auth
+    GoogleAuth.init();
+  });
+  
+  // Export the GoogleAuth object so it can be used in other files
+  window.GoogleAuth = GoogleAuth;
