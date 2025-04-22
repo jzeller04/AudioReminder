@@ -1,90 +1,89 @@
-/* Container for login elements */
-.login-container {
+/* public/css/google.css */
+
+/* Google Auth Container */
+.google-auth-container {
   margin: 15px 0;
-  text-align: center;
-}
-
-/* Google Sign-In button container */
-.g_id_signin {
-  display: inline-block;
-  margin: 5px auto;
-}
-
-/* Dark theme overrides for the button */
-.nsm7Bb-HzV7m-LgbsSe.Bz112c-LgbsSe {
-  background-color: #202124 !important;
-  color: #fff !important;
-  border-color: #5f6368 !important;
-}
-
-/* Override default button size */
-.nsm7Bb-HzV7m-LgbsSe {
-  height: 50px !important;
-  min-width: 240px !important;
-  border-radius: 4px !important;
-}
-
-/* Style the button text */
-.nsm7Bb-HzV7m-LgbsSe .nsm7Bb-HzV7m-LgbsSe-BPrWId {
-  font-size: 14px !important;
-  font-weight: 500 !important;
-  line-height: 50px !important;
-  color: #fff !important;
-}
-
-/* Hover effect */
-.nsm7Bb-HzV7m-LgbsSe:hover {
-  box-shadow: 0 2px 4px rgba(0,0,0,0.4) !important;
-  background-color: #303134 !important;
-}
-
-/* User info display after login */
-#userInfo {
-  margin-top: 10px;
-  font-size: 14px;
-  color: #333;
   padding: 10px;
-  background-color: #f8f9fa;
-  border-radius: 4px;
-  max-width: 240px;
-  margin-left: auto;
-  margin-right: auto;
+  background-color: #f5f5f5;
+  border-radius: 8px;
+  border: 1px solid #ddd;
 }
 
-/* Logout button styling */
-#logoutButton {
-  display: none;
-  padding: 10px 20px;
-  background-color: #202124;
-  color: white;
-  border: 1px solid #5f6368;
+/* Google Buttons */
+.google-btn {
+  padding: 8px 16px;
   border-radius: 4px;
-  cursor: pointer;
-  margin-top: 10px;
   font-size: 14px;
-  transition: background-color 0.2s;
-  max-width: 240px;
-  width: 100%;
+  cursor: pointer;
+  margin-right: 10px;
+  margin-bottom: 10px;
 }
 
-#logoutButton:hover {
-  background-color: #303134;
+.google-signin-btn {
+  background-color: #4285F4;
+  color: white;
+  border: none;
 }
 
-.login-container-index { /* Position for home page */
-    position: absolute;
-    bottom: 20px;
-    left: 20px;
+.google-signout-btn {
+  background-color: #EA4335;
+  color: white;
+  border: none;
 }
 
-.login-container-tasks{
-    /* Position for tasks page */
+/* Google Auth Status */
+.google-auth-status {
+  font-size: 14px;
+  color: #555;
+  margin-top: 5px;
 }
 
-.login-container-calendar{
-    /* Position for calendar page */
+/* Google Calendar Controls */
+.google-calendar-controls {
+  margin: 15px 0;
+  padding: 10px;
+  background-color: #f0f8ff;
+  border-radius: 8px;
+  border: 1px solid #cce5ff;
 }
 
-.login-container-settings{
-    /* Position for settings page */
+.sync-calendar-btn {
+  padding: 8px 16px;
+  background-color: #34A853;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+/* Task Source Label */
+.task-source {
+  font-size: 12px;
+  color: #4285F4;
+  margin-top: 4px;
+  font-style: italic;
+}
+
+/* High Contrast Mode */
+[data-theme="high-contrast"] .google-auth-container,
+[data-theme="high-contrast"] .google-calendar-controls {
+  background-color: #000;
+  border-color: #fff;
+  color: #fff;
+}
+
+[data-theme="high-contrast"] .google-btn,
+[data-theme="high-contrast"] .sync-calendar-btn {
+  background-color: #fff;
+  color: #000;
+  border: 1px solid #fff;
+}
+
+[data-theme="high-contrast"] .google-auth-status {
+  color: #fff;
+}
+
+[data-theme="high-contrast"] .task-source {
+  color: #fff;
 }
