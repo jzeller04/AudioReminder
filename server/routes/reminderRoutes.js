@@ -3,6 +3,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import {getUpcomingReminder,getAllReminders,createReminder,completeReminder, flagReminder} from '../controllers/reminderController.js';
+import { syncGoogleEvents } from '../controllers/googleCalendarController.js';
 import authMiddleware from '../middleware/auth.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -28,5 +29,7 @@ router.post('/submit', authMiddleware.isAuthenticated, createReminder);
 router.post('/complete-reminder', authMiddleware.isAuthenticated, completeReminder);
 
 router.post('/markflagged' , authMiddleware.isAuthenticated, flagReminder); // TDL: create this post req in html
+
+router.post('/api/sync-google-events', authMiddleware.isAuthenticated, syncGoogleEvents);
 
 export default router;
