@@ -8,12 +8,20 @@ const Calendar = {
     // Initializes the calendar
     init: function() {
         console.log('Calendar module initialized');
-
+    
         // Load from server
         this.loadCalendarEvents();
-
+    
         // Initialize calendar UI elements
         this.initCalendarUI();
+        
+        // Initialize Google Calendar if available
+        if (window.GoogleCalendar) {
+            // Listen for Google Calendar events updates
+            window.addEventListener('googleCalendarEventsUpdated', (event) => {
+                this.mergeGoogleCalendarEvents(event.detail.events);
+            });
+        }
     },
 
     // Initializes calendar UI and attach task listeners
@@ -269,6 +277,7 @@ const Calendar = {
                 taskElement.innerHTML = `
                     <div class="task-time">${timeStr}</div>
                     <div class="task-title">${task.title}</div>
+                    ${task.source === 'google' ? '<div class="task-source">Google Calendar</div>' : ''}
                 `;
                 
                 // Add click handler to show task details
@@ -379,6 +388,21 @@ const Calendar = {
                 taskDateInput.value = formattedDate;
             }
         }
+    },
+
+    mergeGoogleCalendarEvents: function(googleEvents) {
+        if (!googleEvents || !Array.isArray(googleEvents)) return;
+        
+        console.log("Merging Google Calendar events:", googleEvents.length);
+        
+        // Remove existing Google events from our tasks
+        this.tasks = this.tasks.filter(task => task.source !== 'google');
+        
+        // Add the Google events to our tasks
+        this.tasks = [...this.tasks, ...googleEvents];
+        
+        // Re-render the calendar
+        this.renderCalendar();
     }
 };
 
