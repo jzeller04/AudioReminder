@@ -38,7 +38,6 @@ h1 {
   margin-top: 20px;
   border-radius: 5px;
   display: flex;
-  justify-content: space-between;
   align-items: center;
 }
 
@@ -46,7 +45,7 @@ h1 {
   flex: 1;
 }
 
-.complete-btn {
+.complete-btn, .flag-btn {
   padding: 8px 10px;
   font-size: 18px;
   cursor: pointer;
@@ -58,7 +57,7 @@ h1 {
   margin: auto 30px;
   text-align: center;
   transition-duration: 0.1s;
-  width: 20%;
+  width: fit-content;
 }
 
 .complete-btn:hover, .complete-btn:focus {
@@ -82,11 +81,16 @@ hr {
 .reminder-content{
   font-size: 20px;
   font-weight: bold;
+  width: 60%;
 }
 
 .reminder-title {
   font-size: 28px;
   text-transform: uppercase;
+}
+
+.reminder-flagged{
+  display: none;
 }
 
 [data-theme="low-contrast"]{
@@ -148,6 +152,19 @@ hr {
   & .reminder-content{
     color: var(--heading-color);
   }
+
+  & .flag-btn{
+    background-color: var(--primary-btn);
+    border:6px solid var(--primary-btn);
+    color: var(--text-color);
+  }
+
+  & .flag-btn:hover{
+    background-color: var(--bg-color);
+    color: var(--primary-btn);
+  }
+
+  
 }
 
 [data-theme="high-contrast"]{
@@ -208,5 +225,16 @@ hr {
 
   & .reminder-content{
     color: var(--heading-color);
+  }
+
+  & .flag-btn{
+    background-color: var(--primary-btn);
+    border:6px solid var(--primary-btn);
+    color: var(--bg-color);
+  }
+
+  & .flag-btn:hover{
+    background-color: var(--bg-color);
+    color: var(--primary-btn);
   }
 }
