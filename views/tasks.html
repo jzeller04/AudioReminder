@@ -34,6 +34,7 @@
             let isSpeaking = false;
             let recognition;
             let isRecognitionActive = false;
+            let isMarkingImportant = false;
 
             // Function to stop TTS
             function stopTTS() {
@@ -204,7 +205,23 @@
 
             async function handleVoiceCommand(command) {
                 if (isSpeaking) return;
-
+                if (isMarkingImportant) {
+    if (command.includes("yes") || command.includes("confirm")) {
+        const currentElement = reminderElements[currentReminderIndex];
+        const reminderId = currentElement.querySelector('.complete-btn').getAttribute('data-id');
+        await markReminderImportant(reminderId);
+        await speak("Task marked as important.");
+        currentReminderIndex++;
+        await processNextImportantReminder();
+    } else if (command.includes("no") || command.includes("skip")) {
+        await speak("Skipping this task.");
+        currentReminderIndex++;
+        await processNextImportantReminder();
+    } else if (command.includes("cancel") || command.includes("stop")) {
+        isMarkingImportant = false;
+        await speak("Mark important process cancelled.");
+    }
+    return}
                 if (isMarkingComplete) {
                     if (command.includes("yes") || command.includes("confirm")) {
                         // Mark current reminder as complete
@@ -254,9 +271,14 @@
                 else if (command.includes("help")) {
                     speak("You can say 'New Task' to add a task, 'Open Home' to return to the homepage, 'Read all Reminders' to hear your upcoming tasks, 'Mark Complete' to go through your tasks, 'Stop' to stop speaking, or 'Help' to hear this list of commands again.");
                 } 
+                else if (command.includes("mark important") || command.includes("important tasks")) {
+    startMarkImportantProcess();
+}
+
                 else {
                     console.log("Unknown command:", command);
                 }
+                
             }
 
             async function startMarkCompleteProcess() {
@@ -424,6 +446,49 @@
                     });
                 });
             });
+            async function markReminderImportant(reminderId) {
+    try {
+        // You can adjust this URL and method to match your actual API/backend setup
+        await fetch(`/api/mark-important/${reminderId}`, { method: 'POST' });
+        const el = document.querySelector(`[data-id='${reminderId}']`);
+        if (el) el.closest('.reminder-item').classList.add('important');
+    } catch (err) {
+        console.error("Error marking reminder important:", err);
+        await speak("Failed to mark task as important.");
+    }
+}
+async function startMarkImportantProcess() {
+    if (isSpeaking) return;
+    reminderElements = Array.from(document.querySelectorAll('.reminder-item'));
+    
+    if (reminderElements.length === 0) {
+        await speak("You have no tasks to mark as important.");
+        return;
+    }
+
+    isMarkingImportant = true;
+    currentReminderIndex = 0;
+    await speak("Starting mark important process. I will read each task. Say 'yes' to mark it important, 'no' to skip it, or 'cancel' to stop.");
+    await processNextImportantReminder();
+}
+async function processNextImportantReminder() {
+    if (currentReminderIndex >= reminderElements.length) {
+        await speak("You've gone through all your tasks. Mark important process finished.");
+        isMarkingImportant = false;
+        return;
+    }
+
+    const currentElement = reminderElements[currentReminderIndex];
+    if (!currentElement) {
+        console.error("Reminder element missing at index", currentReminderIndex);
+        currentReminderIndex++;
+        return processNextImportantReminder(); // Skip to next
+    }
+
+    const taskText = currentElement.querySelector('.task-text')?.textContent || "Unnamed task";
+    await speak(`Task: ${taskText}. Mark as important?`);
+}
+
         </script>
     </body>
 </html>
