@@ -61,7 +61,7 @@ const GoogleAuthButton = {
       if (!signInButton || !signOutButton || !statusElement) return;
       
       // Check if user is authenticated
-      const isAuthenticated = window.GoogleAuth && window.GoogleAuth.isAuthenticated();
+      const isAuthenticated = window.GoogleAuth && window.GoogleAuth.isAuthenticated;
       
       if (isAuthenticated) {
         // User is signed in
@@ -72,14 +72,17 @@ const GoogleAuthButton = {
         const userData = window.GoogleAuth && window.GoogleAuth.getUserData();
         if (userData && userData.email) {
           statusElement.textContent = `Connected as: ${userData.email}`;
+          statusElement.className = 'google-auth-status connected';
         } else {
           statusElement.textContent = 'Connected to Google';
+          statusElement.className = 'google-auth-status connected';
         }
       } else {
         // User is signed out
         signInButton.style.display = 'block';
         signOutButton.style.display = 'none';
         statusElement.textContent = 'Not connected to Google';
+        statusElement.className = 'google-auth-status disconnected';
       }
     },
     
