@@ -50,8 +50,8 @@ const syncGoogleEvents = async (req, res) => {
           time: event.time || '00:00',
           flagged: false,
           googleId: event.id,
-          isLocallyCreated: true, // Marks if it was created in AudioReminder and not Google
-          syncStatus: 'needs_push' // Already synced with Google
+          isLocallyCreated: false, // Marks it is created by Google
+          syncStatus: 'synced' // Already synced with Google
         };
         
         // Add to user's reminders
