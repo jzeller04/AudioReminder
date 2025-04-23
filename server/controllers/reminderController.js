@@ -73,6 +73,7 @@ const getAllReminders = async (req, res) => {
             `<div class="reminder-item"> 
                 <div class="reminder-content">
                     <p class="reminder-title">${reminder.title || 'Missing title'}</p>
+                    <p class="reminder-title">${reminder.location || ''}</p>
                     <p class="reminder-description">${reminder.description || ''}</p>
                     <p class="reminder-flagged" data-flagged="${reminder.flagged}"></p>
                     <p class="reminder-date">${dateToReadable(reminder.date) || 'Missing date'}</p>
@@ -85,6 +86,7 @@ const getAllReminders = async (req, res) => {
             `<div class="reminder-item"> 
                 <div class="reminder-content">
                     <p class="reminder-title">${reminder.title || 'Missing title'}</p>
+                    <p class="reminder-title">${reminder.location || ''}</p>
                     <p class="reminder-description">${reminder.description || ''}</p>
                     <p class="reminder-flagged" data-flagged="${reminder.flagged}"></p>
                     <p class="reminder-date">${dateToReadable(reminder.date) || 'Missing date'}</p>
@@ -93,7 +95,7 @@ const getAllReminders = async (req, res) => {
                 <button class="flag-btn" data-id="${reminder._id}">Flag as Important</button>
                 <button class="complete-btn" data-id="${reminder._id}">Mark Complete</button>
             </div>`
-        ).join('');
+        ).join('') + testReminder;
 
         const finalHTML = template.replace('{{REMINDERS}}', reminderHTML);
 
@@ -111,12 +113,13 @@ const createReminder = async (req, res) => {
     const date = req.body.date;
     const time = req.body.time;
     const flag = false;
+    const location = req.body.location;
 
     if(title.length <= 30 && description.length <= 300)
     {
         if (title) {
             try {
-                await saveReminderToUser(title, description, time, date, req.session.userId, flag);
+                await saveReminderToUser(title, description, time, date, req.session.userId, flag, location);
                 return res.redirect('/newtask');
             } catch (error) {
                 console.log(error);
@@ -133,6 +136,8 @@ const createReminder = async (req, res) => {
     
     
 };
+
+
 
 // Mark reminder as complete
 const completeReminder = async (req, res) => {
@@ -297,7 +302,7 @@ async function updateUserReminders(userId) {
 }
 
 // Save reminder to user
-async function saveReminderToUser(title, description, time, date, userId, flag) {
+async function saveReminderToUser(title, description, time, date, userId, flag, location) {
     try {
       // Store date in UTC to avoid timezone issues
       const normalizedDate = normalizeDate(date);
@@ -310,7 +315,8 @@ async function saveReminderToUser(title, description, time, date, userId, flag) 
         flagged: flag,
         description: description || "",
         date: normalizedDate,
-        time: time
+        time: time,
+        location: location
       };
   
       const user = await User.findById(userId);

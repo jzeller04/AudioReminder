@@ -22,6 +22,10 @@ const reminderSchema = new Schema({
     date: {
         type: Date,
         required: true
+    },
+    location: {
+        type: String,
+        required: false
     }
 }, {timestamps: true}); // saves the time when reminder is created
 
