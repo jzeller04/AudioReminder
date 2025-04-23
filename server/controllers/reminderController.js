@@ -74,7 +74,7 @@ const getAllReminders = async (req, res) => {
                 <div class="reminder-content">
                     <p class="reminder-title">${reminder.title || 'Missing title'}</p>
                     <p class="reminder-description">${reminder.description || ''}</p>
-                    <p class="reminder-flagged">${reminder.flagged || ''}</p>
+                    <p class="reminder-flagged" data-flagged="${reminder.flagged}"></p>
                     <p class="reminder-date">${dateToReadable(reminder.date) || 'Missing date'}</p>
                     <p class="reminder-time">${timeToTwelveSystem(reminder.time) || 'Missing time'}</p>
                 </div>
@@ -86,7 +86,7 @@ const getAllReminders = async (req, res) => {
                 <div class="reminder-content">
                     <p class="reminder-title">${reminder.title || 'Missing title'}</p>
                     <p class="reminder-description">${reminder.description || ''}</p>
-                    <p class="reminder-flagged">${reminder.flagged || ''}</p>
+                    <p class="reminder-flagged" data-flagged="${reminder.flagged}"></p>
                     <p class="reminder-date">${dateToReadable(reminder.date) || 'Missing date'}</p>
                     <p class="reminder-time">${timeToTwelveSystem(reminder.time) || 'Missing time'}</p>
                 </div>
