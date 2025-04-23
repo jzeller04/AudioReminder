@@ -26,6 +26,15 @@ const reminderSchema = new Schema({
     googleId: {
         type: String,
         default: null
+    },
+    syncStatus: {
+        type: String,
+        enum: ['synced', 'needs_push', 'needs_pull', 'conflict'],
+        default: 'needs_push'
+    },
+    isLocallyCreated: {
+        type: Boolean,
+        default: true
     }
 }, {timestamps: true}); // saves the time when reminder is created
 
