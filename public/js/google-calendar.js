@@ -13,42 +13,39 @@ const GoogleCalendar = {
         return false;
       }
       
-      // Wait for Google Auth to be initialized
-      if (!GoogleAuth.isInitialized) {
-        console.log('Waiting for Google Auth to initialize...');
-        await new Promise(resolve => {
-          const checkInterval = setInterval(() => {
-            if (GoogleAuth.isInitialized) {
-              clearInterval(checkInterval);
-              resolve();
-            }
-          }, 100);
-        });
-      }
-      
-      // Initialize Calendar API
       try {
-        await this.initCalendarAPI();
+        // Ensure Google Auth is fully initialized
+        console.log('Waiting for Google Auth to initialize...');
+        await GoogleAuth.init();
+        console.log('Google Auth is now ready');
+        
+        // Initialize Calendar API
+        try {
+          await this.initCalendarAPI();
+        } catch (error) {
+          console.error('Error initializing Calendar API:', error);
+        }
+        
+        // Listen for auth events
+        window.addEventListener('userLoggedIn', () => {
+          console.log('User logged in, fetching calendar events...');
+          setTimeout(() => this.fetchEvents(), 1000); // Slight delay to ensure token is set
+        });
+        
+        this.isInitialized = true;
+        console.log('Google Calendar initialized');
+        
+        // Auto-fetch if user is already authenticated
+        if (GoogleAuth.isAuthenticated) {
+          console.log('User already authenticated, fetching events...');
+          setTimeout(() => this.fetchEvents(), 1000);
+        }
+        
+        return true;
       } catch (error) {
-        console.error('Error initializing Calendar API:', error);
+        console.error('Error during Google Calendar initialization:', error);
+        return false;
       }
-      
-      // Listen for auth events
-      window.addEventListener('userLoggedIn', () => {
-        console.log('User logged in, fetching calendar events...');
-        setTimeout(() => this.fetchEvents(), 1000); // Slight delay to ensure token is set
-      });
-      
-      this.isInitialized = true;
-      console.log('Google Calendar initialized');
-      
-      // Auto-fetch if user is already authenticated
-      if (GoogleAuth.isAuthenticated) {
-        console.log('User already authenticated, fetching events...');
-        setTimeout(() => this.fetchEvents(), 1000);
-      }
-      
-      return true;
     },
     
     // Initialize Calendar API
@@ -75,14 +72,49 @@ const GoogleCalendar = {
         return [];
       }
       
-      // Check if we have a token
+      // Get the current token
       const token = gapi.client.getToken();
-      if (!token) {
-        console.log('No authentication token available');
-        return [];
+      
+      // Log the token info (for debugging)
+      console.log('Using token:', JSON.stringify({
+        token_exists: !!token,
+        token_type: token?.token_type,
+        token_partial: token?.access_token ? token.access_token.substring(0, 10) + '...' : 'null'
+      }));
+      
+      // Verify token has the necessary scopes
+      if (!token || !GoogleAuth.verifyScopes(token)) {
+        console.log('Token missing or has insufficient scopes, requesting new consent');
+        try {
+          // Clear any existing tokens
+          gapi.client.setToken(null);
+          localStorage.removeItem('googleTokenData');
+          localStorage.removeItem('googleTokenExpiry');
+          
+          // Request new authentication with explicit consent
+          await GoogleAuth.signIn();
+          
+          // Verify the new token
+          const newToken = gapi.client.getToken();
+          if (!newToken || !GoogleAuth.verifyScopes(newToken)) {
+            console.error('Failed to obtain token with required scopes');
+            return [];
+          }
+        } catch (error) {
+          console.error('Error refreshing authentication:', error);
+          return [];
+        }
       }
       
       try {
+        // Print out the token being used (for debugging)
+        console.log('Using token:', JSON.stringify({
+          token_exists: !!gapi.client.getToken(),
+          token_type: gapi.client.getToken()?.token_type,
+          // Don't log the full token for security
+          token_partial: gapi.client.getToken()?.access_token?.substring(0, 10) + '...'
+        }));
+        
         // Make sure Calendar API is initialized
         if (!gapi.client.calendar) {
           await this.initCalendarAPI();
@@ -115,9 +147,6 @@ const GoogleCalendar = {
         console.log(`Fetched ${events.length} Google Calendar events`);
         this.events = events;
         
-        // Sync with backend
-        await this.syncEventsWithBackend(events);
-        
         // Notify that events have been updated
         window.dispatchEvent(new CustomEvent('googleCalendarEventsUpdated', {
           detail: { events }
@@ -126,6 +155,21 @@ const GoogleCalendar = {
         return events;
       } catch (error) {
         console.error('Error fetching Google Calendar events:', error);
+        
+        // Check if it's an authorization error
+        if (error.status === 401) {
+          console.log('Authorization error, clearing token and retrying authentication');
+          gapi.client.setToken(null);
+          localStorage.removeItem('googleTokenData');
+          localStorage.removeItem('googleTokenExpiry');
+          
+          // Suggest re-authentication to the user
+          const authButton = document.getElementById('google-signin-btn');
+          if (authButton) {
+            console.log('Please click "Connect Google Calendar" to re-authenticate');
+          }
+        }
+        
         return [];
       }
     },
