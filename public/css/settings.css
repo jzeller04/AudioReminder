@@ -186,16 +186,16 @@ input:checked + .slider .theme-text.on {
   margin-bottom: 100px;
 }
 
-#volume-button {
+#volume-button, #speed-button {
   font-size: 40px;
   font-weight: bold;
 }
 
-#volume {
+#volume, #speech-speed {
   width: 75%;
 }
 
-.volumeWrapper {
+.volumeWrapper, .speedWrapper {
   align-items: center;
   display: flex;
   flex-direction: row;
