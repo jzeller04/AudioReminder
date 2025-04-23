@@ -1,7 +1,7 @@
 // Google API Configuration
 const GoogleAPIConfig = {
     CLIENT_ID: '1009864072987-cmpm10gg8f73q21uteji2suo7eoklsml.apps.googleusercontent.com',
-    SCOPES: 'https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/calendar.readonly',
+    SCOPES: 'https://www.googleapis.com/auth/calendar.events.owned https://www.googleapis.com/auth/calendar.calendarlist.readonly',
     DISCOVERY_DOC: 'https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest'
   };
   
@@ -16,20 +16,32 @@ const GoogleAPIConfig = {
     init: async function() {
       console.log('Initializing Google Auth...');
       
-      try {
-        // Load GAPI and GIS scripts
-        await this.loadGapiAndGis();
-        this.isInitialized = true;
-        console.log('Google Auth initialization complete');
-        
-        // Check if user was previously logged in
-        this.checkLoginStatus();
-        
-        return true;
-      } catch (error) {
-        console.error('Error initializing Google Auth:', error);
-        return false;
+      // Set a flag to track initialization
+      if (this._initializing) {
+        console.log('Google Auth already initializing, waiting...');
+        return this._initPromise;
       }
+      
+      this._initializing = true;
+      this._initPromise = new Promise(async (resolve) => {
+        try {
+          // Load GAPI and GIS scripts
+          await this.loadGapiAndGis();
+          this.isInitialized = true;
+          console.log('Google Auth initialization complete');
+          
+          // Check if user was previously logged in
+          this.checkLoginStatus();
+          
+          resolve(true);
+        } catch (error) {
+          console.error('Error initializing Google Auth:', error);
+          this._initializing = false;
+          resolve(false);
+        }
+      });
+      
+      return this._initPromise;
     },
     
     // Load GAPI and GIS libraries
@@ -75,6 +87,29 @@ const GoogleAPIConfig = {
         document.head.appendChild(script);
       });
     },
+
+    verifyScopes: function(token) {
+      if (!token || !token.scope) {
+        return false;
+      }
+      
+      // Check if the token has any calendar-related scopes
+      const calendarScopes = [
+        'https://www.googleapis.com/auth/calendar', // Full access
+        'https://www.googleapis.com/auth/calendar.events', // Events access
+        'https://www.googleapis.com/auth/calendar.events.owned', // User's own events
+        'https://www.googleapis.com/auth/calendar.events.readonly', // Read-only events
+      ];
+
+      // Check if any of the required scopes are present
+      const hasCalendarScope = calendarScopes.some(scope => 
+        token.scope.includes(scope)
+      );
+      
+      console.log(`Token scope verification: Calendar access ${hasCalendarScope ? 'GRANTED' : 'DENIED'}`);
+      
+      return hasCalendarScope;
+    },
     
     // Check if user was previously logged in
     checkLoginStatus: function() {
@@ -116,6 +151,38 @@ const GoogleAPIConfig = {
         }
       }
     },
+
+    validateToken: function() {
+      const tokenData = localStorage.getItem('googleTokenData');
+      const tokenExpiry = localStorage.getItem('googleTokenExpiry');
+      
+      if (!tokenData || !tokenExpiry) {
+        console.log('No token data found');
+        return false;
+      }
+      
+      // Check if token is expired (with 5-minute buffer)
+      const currentTime = new Date().getTime();
+      const isExpired = currentTime > (parseInt(tokenExpiry) - (5 * 60 * 1000));
+      
+      if (isExpired) {
+        console.log('Token is expired, needs refresh');
+        return false;
+      }
+      
+      try {
+        const parsedToken = JSON.parse(tokenData);
+        if (parsedToken && parsedToken.access_token) {
+          // Set the token in gapi client
+          gapi.client.setToken(parsedToken);
+          return true;
+        }
+      } catch (error) {
+        console.error('Error parsing token data:', error);
+      }
+      
+      return false;
+    },
     
     // Sign in with Google
     signIn: function() {
@@ -123,7 +190,21 @@ const GoogleAPIConfig = {
       
       if (!this.isInitialized) {
         console.error('Google Auth not initialized yet');
+        // Try to initialize first
+        this.init().then(() => {
+          if (this.isInitialized) {
+            this.signIn(); // Recursively call signIn once initialized
+          }
+        });
         return;
+      }
+      
+      // Clear any existing tokens to force a fresh authorization
+      if (gapi.client.getToken() !== null) {
+        console.log('Clearing existing token to ensure fresh consent with required scopes');
+        gapi.client.setToken(null);
+        localStorage.removeItem('googleTokenData');
+        localStorage.removeItem('googleTokenExpiry');
       }
       
       const tokenClient = google.accounts.oauth2.initTokenClient({
@@ -132,28 +213,57 @@ const GoogleAPIConfig = {
         callback: this.handleAuthResponse.bind(this)
       });
       
-      // Request token
-      if (gapi.client.getToken() === null) {
-        // Prompt the user to select an account and consent
-        tokenClient.requestAccessToken({ prompt: 'consent' });
-      } else {
-        // Skip display of consent dialog for an existing session
-        tokenClient.requestAccessToken({ prompt: '' });
-      }
+      // Always prompt for consent to ensure all needed scopes are granted
+      tokenClient.requestAccessToken({ prompt: 'consent' });
     },
     
     // Handle the authentication response
+    // Modify the handleAuthResponse function to store more complete token info
     handleAuthResponse: async function(response) {
       if (response.error) {
         console.error('Error during authentication:', response.error);
         return;
       }
       
+      console.log('Authentication successful, saving token');
+      console.log('Granted scopes:', response.scope);
+      
+      // Verify calendar scope
+      const calendarScopes = [
+        'https://www.googleapis.com/auth/calendar',
+        'https://www.googleapis.com/auth/calendar.events',
+        'https://www.googleapis.com/auth/calendar.events.owned',
+        'https://www.googleapis.com/auth/calendar.events.readonly',
+      ];
+      
+      const hasCalendarScope = calendarScopes.some(scope => 
+        response.scope.includes(scope)
+      );
+      
+      console.log(`Calendar access ${hasCalendarScope ? 'GRANTED' : 'DENIED'}`);
+      
+      if (!hasCalendarScope) {
+        console.warn('Calendar scope is missing! Calendar integration will not work.');
+        // Optionally, you could prompt the user here
+      }
+      
       // Store token in gapi client
       gapi.client.setToken(response);
       
-      // Save token to localStorage
-      localStorage.setItem('googleTokenData', JSON.stringify(response));
+      // Calculate expiry time
+      const expiryTime = new Date().getTime() + (response.expires_in * 1000);
+      
+      // Save token data to localStorage
+      const tokenData = {
+        access_token: response.access_token,
+        expires_in: response.expires_in,
+        expires_at: expiryTime,
+        scope: response.scope,
+        token_type: response.token_type
+      };
+      
+      localStorage.setItem('googleTokenData', JSON.stringify(tokenData));
+      localStorage.setItem('googleTokenExpiry', expiryTime);
       
       // Set authentication state
       this.isAuthenticated = true;
