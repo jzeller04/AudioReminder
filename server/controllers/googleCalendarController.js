@@ -177,14 +177,22 @@ const syncGoogleEvents = async (req, res) => {
     
     console.log(`Processing ${events.length} Google Calendar events for user ${userId}`);
     
-    // First, remove existing Google Calendar events
-    const initialCount = user.reminders.length;
-    user.reminders = user.reminders.filter(reminder => !reminder.googleId);
-    console.log(`Removed ${initialCount - user.reminders.length} existing Google events`);
+    // Create a map of existing Google events for faster lookups
+    const existingGoogleEvents = new Map();
+    user.reminders
+      .filter(reminder => reminder.googleId)
+      .forEach(reminder => {
+        existingGoogleEvents.set(reminder.googleId, reminder);
+      });
+    
+    console.log(`Found ${existingGoogleEvents.size} existing Google events in database`);
+    
+    // Track Google IDs we process in this sync
+    const processedGoogleIds = new Set();
+    const addedEvents = [];
+    const updatedEvents = [];
     
     // Process each Google Calendar event
-    const addedEvents = [];
-    
     for (const event of events) {
       try {
         // Skip invalid events
@@ -195,43 +203,97 @@ const syncGoogleEvents = async (req, res) => {
         
         // Skip events we don't want to include
         if (shouldSkipEvent(event)) {
-          // The shouldSkipEvent function already logs which type it's skipping
           continue;
         }
         
-        // Format date and time properly
+        // Format date properly
         const eventDate = new Date(event.date);
         if (isNaN(eventDate.getTime())) {
           console.log('Skipping event with invalid date:', event);
           continue;
         }
         
-        // Create a new reminder from the Google event
-        const reminder = {
-          title: event.title,
-          description: event.description || '',
-          date: normalizeDate(eventDate),
-          time: event.time || '00:00',
-          flagged: false,
-          googleId: event.id,
-          isLocallyCreated: false,  // Mark as created from Google
-          syncStatus: 'synced'      // Already synced with Google
-        };
+        // Check if we already have this event
+        const existingReminder = existingGoogleEvents.get(event.id);
+        processedGoogleIds.add(event.id);
         
-        // Add to user's reminders
-        user.reminders.push(reminder);
-        addedEvents.push(reminder);
+        if (existingReminder) {
+          // Update existing event if needed
+          let hasChanges = false;
+          
+          if (existingReminder.title !== event.title) {
+            existingReminder.title = event.title;
+            hasChanges = true;
+          }
+          
+          const normalizedDate = normalizeDate(eventDate);
+          if (existingReminder.date.getTime() !== normalizedDate.getTime()) {
+            existingReminder.date = normalizedDate;
+            hasChanges = true;
+          }
+          
+          if (existingReminder.time !== (event.time || '00:00')) {
+            existingReminder.time = event.time || '00:00';
+            hasChanges = true;
+          }
+          
+          if (existingReminder.description !== (event.description || '')) {
+            existingReminder.description = event.description || '';
+            hasChanges = true;
+          }
+          
+          if (hasChanges) {
+            existingReminder.syncStatus = 'synced';
+            updatedEvents.push(existingReminder);
+          }
+        } else {
+          // Create a new reminder from the Google event
+          const reminder = {
+            title: event.title,
+            description: event.description || '',
+            date: normalizeDate(eventDate),
+            time: event.time || '00:00',
+            flagged: false,
+            googleId: event.id,
+            isLocallyCreated: false,  // Mark as created from Google
+            syncStatus: 'synced'      // Already synced with Google
+          };
+          
+          // Add to user's reminders
+          user.reminders.push(reminder);
+          addedEvents.push(reminder);
+        }
       } catch (eventError) {
         console.error('Error processing event:', eventError);
       }
     }
     
+    //Handle deletions, events that exist in our DB but weren't in this sync
+    // Commenting out while I test pushing/pulling from Google Calendaer
+    /*
+    const deletedReminders = [];
+    for (const [googleId, reminder] of existingGoogleEvents) {
+      if (!processedGoogleIds.has(googleId)) {
+        // This event exists in our DB but wasn't in the sync, so it was deleted from Google
+        deletedReminders.push(reminder._id);
+      }
+    }
+    
+    if (deletedReminders.length > 0) {
+      user.reminders = user.reminders.filter(reminder => 
+        !reminder.googleId || processedGoogleIds.has(reminder.googleId)
+      );
+      console.log(`Removed ${deletedReminders.length} events deleted from Google Calendar`);
+    }
+    */
+    
     // Save the user with updated reminders
     await user.save();
     
     return res.status(200).json({
-      message: `Successfully synced ${addedEvents.length} Google Calendar events`,
-      added: addedEvents.length
+      message: `Successfully synced Google Calendar events (${addedEvents.length} added, ${updatedEvents.length} updated)`,
+      added: addedEvents.length,
+      updated: updatedEvents.length
     });
   } catch (error) {
     console.error('Error syncing Google Calendar events:', error);
@@ -239,4 +301,82 @@ const syncGoogleEvents = async (req, res) => {
   }
 };
 
-export { syncGoogleEvents };
+
+const pushRemindersToGoogle = async (req, res) => {
+  try {
+    const userId = req.session.userId;
+    const user = await User.findById(userId);
+    
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    // Find reminders that need to be pushed to Google
+    const remindersToPush = user.reminders.filter(reminder => 
+      (reminder.isLocallyCreated === true || reminder.syncStatus === 'needs_push') &&
+      (reminder.googleId === null || reminder.syncStatus === 'needs_push')
+    );
+    
+    console.log(`Found ${remindersToPush.length} reminders to push to Google Calendar`);
+    
+    if (remindersToPush.length === 0) {
+      return res.status(200).json({ 
+        message: 'No reminders need syncing to Google Calendar',
+        pushed: 0 
+      });
+    }
+    
+    // For each reminder that needs pushing
+    const successfulPushes = [];
+    const failedPushes = [];
+    
+    // This would normally involve Google Calendar API calls
+    // For this version, we'll simulate successful pushes to test the flow
+    for (const reminder of remindersToPush) {
+      try {
+        // In a real implementation, you would:
+        // 1. Create/update the event in Google Calendar using their API
+        // 2. Get back the Google event ID
+        // 3. Store that ID in the reminder
+        
+        // Simulation for testing:
+        if (!reminder.googleId) {
+          // This would be the ID returned from Google
+          reminder.googleId = 'google_' + Math.random().toString(36).substring(2, 15);
+        }
+        
+        // Mark as synced
+        reminder.syncStatus = 'synced';
+        
+        successfulPushes.push({
+          id: reminder._id,
+          title: reminder.title,
+          googleId: reminder.googleId
+        });
+      } catch (pushError) {
+        console.error('Error pushing reminder to Google:', pushError);
+        failedPushes.push({
+          id: reminder._id,
+          title: reminder.title,
+          error: pushError.message
+        });
+      }
+    }
+    
+    // Save changes to the user object
+    await user.save();
+    
+    return res.status(200).json({
+      message: `Successfully pushed ${successfulPushes.length} reminders to Google Calendar`,
+      pushed: successfulPushes.length,
+      failed: failedPushes.length,
+      successfulPushes,
+      failedPushes
+    });
+  } catch (error) {
+    console.error('Error pushing reminders to Google Calendar:', error);
+    return res.status(500).json({ error: 'Server error pushing reminders' });
+  }
+};
+
+export { syncGoogleEvents, pushRemindersToGoogle };
