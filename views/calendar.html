@@ -25,6 +25,7 @@
         <div id="google-calendar-controls" class="google-calendar-controls" style="display: none;">
             <button id="sync-calendar-btn" class="sync-calendar-btn">Sync Google Calendar</button>
         </div>
+        <div id="sync-status" class="sync-status"></div>
                 
         <script src="../js/calendar.js"></script>
         
@@ -310,7 +311,7 @@
                     
                     const userData = GoogleAuth.getUserData();
                     if (userData && userData.email) {
-                        statusDisplay.textContent = `Connected as: ${userData.email}`;
+                        statusDisplay.textContent = 'Connected as: ' + userData.email;
                     } else {
                         statusDisplay.textContent = 'Connected to Google';
                     }
@@ -338,12 +339,45 @@
         // Set up Google Calendar sync button
         const syncButton = document.getElementById('sync-calendar-btn');
         if (syncButton) {
-            syncButton.addEventListener('click', function() {
-                if (window.GoogleCalendar) {
-                    GoogleCalendar.fetchEvents();
-                    speak("Syncing Google Calendar");
-                } else {
-                    console.error('Google Calendar not initialized');
+            syncButton.addEventListener('click', async function() {
+                // Update button text to show syncing status
+                const originalButtonText = syncButton.textContent;
+                syncButton.textContent = 'Syncing...';
+                syncButton.disabled = true;
+                
+                try {
+                    // Step 1: Push local reminders to Google
+                    const pushResponse = await fetch('/api/push-to-google', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    const pushResult = await pushResponse.json();
+                    console.log('Push result:', pushResult);
+                    
+                    // Step 2: Pull events from Google (existing functionality)
+                    if (window.GoogleCalendar) {
+                        await GoogleCalendar.fetchEvents();
+                        
+                        // Update feedback for user
+                        speak('Calendar synchronized. ' + pushResult.message);
+                        
+                        // Reset button
+                        syncButton.textContent = originalButtonText;
+                        syncButton.disabled = false;
+                    } else {
+                        console.error('Google Calendar not initialized');
+                        speak('Error syncing calendar');
+                        syncButton.textContent = originalButtonText;
+                        syncButton.disabled = false;
+                    }
+                } catch (error) {
+                    console.error('Error during two-way sync:', error);
+                    speak('Error syncing calendar');
+                    syncButton.textContent = originalButtonText;
+                    syncButton.disabled = false;
                 }
             });
         }
@@ -354,23 +388,46 @@
             if (command.includes('sync google') || command.includes('sync calendar') || 
                 command.includes('google calendar')) {
                 if (window.GoogleAuth && GoogleAuth.isAuthenticated) {
-                    speak("Syncing Google Calendar").then(() => {
-                        if (window.GoogleCalendar) {
-                            GoogleCalendar.fetchEvents();
+                    speak('Syncing Google Calendar').then(async () => {
+                        try {
+                            // Step 1: Push local reminders to Google
+                            const pushResponse = await fetch('/api/push-to-google', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                }
+                            });
+                            
+                            const pushResult = await pushResponse.json();
+                            console.log('Push result:', pushResult);
+                            
+                            // Step 2: Pull events from Google (existing functionality)
+                            if (window.GoogleCalendar) {
+                                await GoogleCalendar.fetchEvents();
+                                speak('Calendar synchronized. ' + pushResult.message);
+                            }
+                        } catch (error) {
+                            console.error('Error during two-way sync:', error);
+                            speak('Error syncing calendar');
                         }
                     });
                 } else {
-                    speak("Please connect to Google Calendar first").then(() => {
+                    speak('Please connect to Google Calendar first').then(() => {
                         const signInBtn = document.getElementById('google-signin-btn');
                         if (signInBtn) signInBtn.click();
                     });
                 }
+            } else if (command.includes('connect google')) {
+                speak('Connecting to Google Calendar').then(() => {
+                    const signInBtn = document.getElementById('google-signin-btn');
+                    if (signInBtn) signInBtn.click();
+                });
             } else {
-                // Call original handler
+                // Call original handler for non-Google commands
                 originalHandleVoiceCommand(command);
             }
         };
     });
-</script> 
+</script>
     </body>
 </html>
