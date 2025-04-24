@@ -1,5 +1,3 @@
-/* public/css/google.css */
-
 /* Google Auth Container */
 .google-auth-container {
   margin: 15px 0;
@@ -86,4 +84,101 @@
 
 [data-theme="high-contrast"] .task-source {
   color: #fff;
+}
+
+.sync-status {
+  margin-top: 10px;
+  font-size: 14px;
+  font-style: italic;
+  text-align: center;
+}
+
+/* Google Calendar Event Styles */
+
+/* Base style for Google Calendar events */
+.google-calendar-event {
+  border-left: 3px solid #4285F4; /* Google blue */
+  position: relative;
+  padding-left: 10px;
+}
+
+/* Google indicator label */
+.google-indicator {
+  font-size: 0.8em;
+  color: #4285F4;
+  display: flex;
+  align-items: center;
+  margin-top: 4px;
+}
+
+/* Google icon */
+.google-icon {
+  background-color: #4285F4;
+  color: white;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 4px;
+  font-weight: bold;
+  font-size: 10px;
+}
+
+/* Styling for high contrast mode */
+[data-theme="high-contrast"] .google-calendar-event {
+  border-left: 3px solid #FFFFFF;
+}
+
+[data-theme="high-contrast"] .google-indicator {
+  color: #FFFFFF;
+  background-color: #000000;
+  padding: 2px 5px;
+  border: 1px solid #FFFFFF;
+}
+
+[data-theme="high-contrast"] .google-icon {
+  background-color: #FFFFFF;
+  color: #000000;
+}
+
+/* Sync status indicators */
+.sync-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 10px 0;
+  font-size: 0.9em;
+}
+
+.sync-status.success {
+  color: green;
+}
+
+.sync-status.error {
+  color: red;
+}
+
+.sync-status.syncing {
+  color: #4285F4;
+}
+
+/* High contrast sync status */
+[data-theme="high-contrast"] .sync-status.success {
+  color: #FFFFFF;
+  background-color: #006400;
+  padding: 5px;
+}
+
+[data-theme="high-contrast"] .sync-status.error {
+  color: #FFFFFF;
+  background-color: #8B0000;
+  padding: 5px;
+}
+
+[data-theme="high-contrast"] .sync-status.syncing {
+  color: #FFFFFF;
+  background-color: #00008B;
+  padding: 5px;
 }

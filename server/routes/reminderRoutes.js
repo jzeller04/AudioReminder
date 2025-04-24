@@ -3,7 +3,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import {getUpcomingReminder,getAllReminders,createReminder,completeReminder, flagReminder} from '../controllers/reminderController.js';
-import { syncGoogleEvents } from '../controllers/googleCalendarController.js';
+import { syncGoogleEvents, pushRemindersToGoogle } from '../controllers/googleCalendarController.js';
 import authMiddleware from '../middleware/auth.js';
 import reminderMiddleware from '../middleware/reminderMiddleware.js'; // Import new middleware
 
@@ -34,5 +34,8 @@ router.post('/markflagged', authMiddleware.isAuthenticated, reminderMiddleware.u
 
 // Google Calendar sync endpoint
 router.post('/api/sync-google-events', authMiddleware.isAuthenticated, syncGoogleEvents);
+
+// Google Calendar sync endpoit
+router.post('/api/push-to-google', authMiddleware.isAuthenticated, pushRemindersToGoogle);
 
 export default router;
