@@ -1,15 +1,15 @@
 // Convert date string to Date object with consistent handling
 function normalizeDate(dateString) {
-    // Parse the input date
-    const inputDate = new Date(dateString);
-    
-    // Create a date using local components to avoid timezone issues
-    const year = inputDate.getUTCFullYear();
-    const month = inputDate.getUTCMonth();
-    const day = inputDate.getUTCDate();
-    
-    // Create a new date with the same local date components
-    return new Date(Date.UTC(year, month, day, 12, 0, 0));
+  // If dateString is already a Date object, use it directly
+  const inputDate = dateString instanceof Date ? dateString : new Date(dateString);
+  
+  // Create a date using local components to preserve the exact day
+  const year = inputDate.getFullYear();
+  const month = inputDate.getMonth();
+  const day = inputDate.getDate();
+  
+  // Create a new date at noon (to avoid any potential day shift around midnight)
+  return new Date(year, month, day, 12, 0, 0);
 }
   
 function dateToReadable(date) {

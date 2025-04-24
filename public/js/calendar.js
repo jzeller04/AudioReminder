@@ -1,4 +1,3 @@
-// Google Calendar
 const Calendar = {
     // Stores calendar state and tasks 
     tasks: [],
@@ -57,6 +56,7 @@ const Calendar = {
                         <!-- Days will be generated here -->
                     </div>
                 </div>
+                <div id="sync-status" class="sync-status"></div>
                 <div id="tasks-container" class="tasks-container">
                     <h3>Tasks for <span id="selected-date">today</span></h3>
                     <div id="tasks-list" class="tasks-list">
@@ -81,41 +81,44 @@ const Calendar = {
         console.log("Loading calendar events from server data");
         
         if (window.calendarReminders && Array.isArray(window.calendarReminders)) {
-          console.log("Found reminders:", window.calendarReminders.length);
-          
-          // Process the reminders with proper timezone handling
-          this.tasks = window.calendarReminders.map(reminder => {
-            // Debug logging
-            console.log("Processing reminder:", reminder);
-            
-            if (reminder._debug) {
-              console.log("Debug info:", reminder._debug);
-            }
-            
-            // Parse the ISO date string
-            const reminderDate = new Date(reminder.date);
-            
-            // Create a local date using the date components
-            const localDate = new Date(
-              reminderDate.getFullYear(),
-              reminderDate.getMonth(),
-              reminderDate.getDate()
-            );
-            
-            console.log("Parsed date:", reminderDate);
-            console.log("Local date for display:", localDate);
-            
-            return {
-              id: reminder._id,
-              title: reminder.title || '',
-              description: reminder.description || '',
-              date: localDate,
-              time: reminder.time || ''
-            };
-          });
+            console.log("Found reminders:", window.calendarReminders.length);
+
+            // Process the reminders with proper timezone handling
+            this.tasks = window.calendarReminders.map(reminder => {
+                // Debug logging
+                console.log("Processing reminder:", reminder);
+                
+                if (reminder._debug) {
+                    console.log("Debug info:", reminder._debug);
+                }
+                
+                // Parse the ISO date string
+                const reminderDate = new Date(reminder.date);
+                
+                // Create a local date using the date components
+                const localDate = new Date(
+                    reminderDate.getFullYear(),
+                    reminderDate.getMonth(),
+                    reminderDate.getDate()
+                );
+                
+                console.log("Parsed date:", reminderDate);
+                console.log("Local date for display:", localDate);
+                
+                return {
+                    id: reminder._id,
+                    title: reminder.title || '',
+                    description: reminder.description || '',
+                    date: localDate,
+                    time: reminder.time || '',
+                    googleId: reminder.googleId || null,
+                    isGoogleEvent: !!reminder.googleId, // Mark as Google event if it has a googleId
+                    syncStatus: reminder.syncStatus || 'synced'
+                };
+            });
         } else {
-          console.log("No reminders found or invalid data format");
-          this.tasks = [];
+            console.log("No reminders found or invalid data format");
+            this.tasks = [];
         }
         
         // Render the calendar with the loaded tasks
@@ -192,8 +195,8 @@ const Calendar = {
                 if (!isNaN(taskDate.getTime())) {
                     // Compare just the date portions (year, month, day), ignoring time
                     return taskDate.getFullYear() === year && 
-                           taskDate.getMonth() === month && 
-                           taskDate.getDate() === i;
+                            taskDate.getMonth() === month && 
+                            taskDate.getDate() === i;
                 }
                 return false;
             });
@@ -229,7 +232,7 @@ const Calendar = {
         const tasksList = document.getElementById('tasks-list');
         const selectedDateSpan = document.getElementById('selected-date');
         
-         // Exit if elements don't exist yet
+        // Exit if elements don't exist yet
         if (!tasksList || !selectedDateSpan) return;
 
         // Format the selected date
@@ -254,8 +257,8 @@ const Calendar = {
             if (!isNaN(taskDate.getTime())) {
                 // Compare just the date portions (year, month, day), ignoring time
                 return taskDate.getFullYear() === this.selectedDate.getFullYear() && 
-                       taskDate.getMonth() === this.selectedDate.getMonth() && 
-                       taskDate.getDate() === this.selectedDate.getDate();
+                    taskDate.getMonth() === this.selectedDate.getMonth() && 
+                    taskDate.getDate() === this.selectedDate.getDate();
             }
             return false;
         });
@@ -268,17 +271,33 @@ const Calendar = {
                 const taskElement = document.createElement('div');
                 taskElement.className = 'task-item';
                 
+                // Add Google Calendar class if it's a Google event
+                if (task.isGoogleEvent || task.googleId) {
+                    taskElement.classList.add('google-calendar-event');
+                }
+                
                 // Format time
                 let timeStr = 'All day';
                 if (task.time && task.time !== 'No reminder found') {
                     timeStr = this.formatTime(task.time);
                 }
                 
-                taskElement.innerHTML = `
+                // Build the task HTML
+                let taskHtml = `
                     <div class="task-time">${timeStr}</div>
                     <div class="task-title">${task.title}</div>
-                    ${task.source === 'google' ? '<div class="task-source">Google Calendar</div>' : ''}
                 `;
+                
+                // Add Google indicator if it's a Google event
+                if (task.isGoogleEvent || task.googleId) {
+                    taskHtml += `
+                        <div class="google-indicator">
+                            <span class="google-icon">G</span> Google Calendar
+                        </div>
+                    `;
+                }
+                
+                taskElement.innerHTML = taskHtml;
                 
                 // Add click handler to show task details
                 taskElement.addEventListener('click', () => {
@@ -353,7 +372,12 @@ const Calendar = {
         
         // Add description if available
         if (task.description) {
-            details += `Description: ${task.description}`;
+            details += `Description: ${task.description}\n`;
+        }
+        
+        // Add Google Calendar information if applicable
+        if (task.isGoogleEvent || task.googleId) {
+            details += `Source: Google Calendar\n`;
         }
         
         console.log('Showing alert with details:', details);
@@ -396,10 +420,20 @@ const Calendar = {
         console.log("Merging Google Calendar events:", googleEvents.length);
         
         // Remove existing Google events from our tasks
-        this.tasks = this.tasks.filter(task => task.source !== 'google');
+        this.tasks = this.tasks.filter(task => !task.isGoogleEvent && !task.googleId);
+        
+        // Process Google events to add proper markers
+        const processedGoogleEvents = googleEvents.map(event => {
+            return {
+                ...event,
+                isGoogleEvent: true,
+                googleId: event.id || event.googleId,
+                source: 'google'
+            };
+        });
         
         // Add the Google events to our tasks
-        this.tasks = [...this.tasks, ...googleEvents];
+        this.tasks = [...this.tasks, ...processedGoogleEvents];
         
         // Re-render the calendar
         this.renderCalendar();
