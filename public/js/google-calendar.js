@@ -181,8 +181,51 @@ const GoogleCalendar = {
     const minutes = date.getMinutes().toString().padStart(2, '0');
 
     return `${hours}:${minutes}`;
+  },
+  
+  pushRemindersToGoogle: async function() {
+    if (!GoogleAuth.isAuthenticated) {
+      console.error('User not authenticated');
+      return { error: 'Not authenticated' };
+    }
+    
+    try {
+      const token = gapi.client.getToken();
+      if (!token || !token.access_token) {
+        throw new Error('No valid token available');
+      }
+      
+      const response = await fetch('/api/push-to-google', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          googleAuthToken: token.access_token
+        })
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to push reminders: ${response.status} - ${errorText}`);
+      }
+      
+      const result = await response.json();
+      console.log('Push complete:', result);
+      
+      // Refresh calendar display after successful push
+      if (window.Calendar) {
+        window.Calendar.renderCalendar();
+      }
+      
+      return result;
+    } catch (error) {
+      console.error('Error pushing reminders to Google:', error);
+      return { error: error.message };
+    }
   }
 };
+
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {

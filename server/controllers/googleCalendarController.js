@@ -206,8 +206,15 @@ const syncGoogleEvents = async (req, res) => {
           continue;
         }
         
-        // Format date properly
+        // Format date properly - add detailed logging
+        console.log('Processing Google event:', event.title);
+        console.log('Original event date string:', event.date);
+        
+        // Parse date string to a Date object
         const eventDate = new Date(event.date);
+        console.log('Parsed event date object:', eventDate);
+        console.log('Event date in local timezone:', eventDate.toLocaleString());
+        
         if (isNaN(eventDate.getTime())) {
           console.log('Skipping event with invalid date:', event);
           continue;
@@ -226,8 +233,31 @@ const syncGoogleEvents = async (req, res) => {
             hasChanges = true;
           }
           
+          // Use the improved normalizeDate function
           const normalizedDate = normalizeDate(eventDate);
-          if (existingReminder.date.getTime() !== normalizedDate.getTime()) {
+          
+          // Log detailed date information for debugging
+          console.log('Existing reminder date:', existingReminder.date.toISOString());
+          console.log('Normalized date for comparison:', normalizedDate.toISOString());
+          
+          // Compare dates by checking if they refer to the same day
+          const existingDay = existingReminder.date.getDate();
+          const existingMonth = existingReminder.date.getMonth();
+          const existingYear = existingReminder.date.getFullYear();
+          
+          const normalizedDay = normalizedDate.getDate();
+          const normalizedMonth = normalizedDate.getMonth();
+          const normalizedYear = normalizedDate.getFullYear();
+          
+          const datesRepresentSameDay = 
+            existingDay === normalizedDay &&
+            existingMonth === normalizedMonth &&
+            existingYear === normalizedYear;
+          
+          console.log('Dates represent same day?', datesRepresentSameDay);
+          
+          if (!datesRepresentSameDay) {
+            console.log('Updating date for event:', event.title);
             existingReminder.date = normalizedDate;
             hasChanges = true;
           }
@@ -248,15 +278,18 @@ const syncGoogleEvents = async (req, res) => {
           }
         } else {
           // Create a new reminder from the Google event
+          const normalizedDate = normalizeDate(eventDate);
+          console.log('Creating new event with normalized date:', normalizedDate.toISOString());
+          
           const reminder = {
             title: event.title,
             description: event.description || '',
-            date: normalizeDate(eventDate),
+            date: normalizedDate,
             time: event.time || '00:00',
             flagged: false,
             googleId: event.id,
-            isLocallyCreated: false,  // Mark as created from Google
-            syncStatus: 'synced'      // Already synced with Google
+            isLocallyCreated: false,
+            syncStatus: 'synced'
           };
           
           // Add to user's reminders
@@ -274,15 +307,37 @@ const syncGoogleEvents = async (req, res) => {
     const deletedReminders = [];
     for (const [googleId, reminder] of existingGoogleEvents) {
       if (!processedGoogleIds.has(googleId)) {
-        // This event exists in our DB but wasn't in the sync, so it was deleted from Google
-        deletedReminders.push(reminder._id);
+        // This event exists in our DB but wasn't in the sync
+        // We need to check if it was actually deleted from Google
+        try {
+          // We would normally verify with Google Calendar API
+          // But for this implementation, we'll consider it deleted if:
+          // 1. It has a googleId (meaning it came from Google originally)
+          // 2. It's not in the current sync batch
+
+          // Mark the reminder for deletion
+          deletedReminders.push(reminder._id);
+        } catch (error) {
+          console.error(`Error checking if event ${googleId} was deleted:`, error);
+          // Skip this reminder if there's an error
+          continue;
+        }
       }
     }
-    
+
+    // Now actually remove the deleted reminders
     if (deletedReminders.length > 0) {
-      user.reminders = user.reminders.filter(reminder => 
-        !reminder.googleId || processedGoogleIds.has(reminder.googleId)
-      );
+      // Remove reminders by ID rather than by googleId to be more precise
+      for (let reminderId of deletedReminders) {
+        const reminderIndex = user.reminders.findIndex(r => 
+          r._id.toString() === reminderId.toString()
+        );
+        
+        if (reminderIndex !== -1) {
+          user.reminders.splice(reminderIndex, 1);
+        }
+      }
+      
       console.log(`Removed ${deletedReminders.length} events deleted from Google Calendar`);
     }
     */
@@ -326,26 +381,64 @@ const pushRemindersToGoogle = async (req, res) => {
       });
     }
     
+    // Get Google auth token from client
+    const authToken = req.body.googleAuthToken;
+    if (!authToken) {
+      return res.status(400).json({ error: 'Google auth token not provided' });
+    }
+    
     // For each reminder that needs pushing
     const successfulPushes = [];
     const failedPushes = [];
     
-    // This would normally involve Google Calendar API calls
-    // For this version, we'll simulate successful pushes to test the flow
     for (const reminder of remindersToPush) {
       try {
-        // In a real implementation, you would:
-        // 1. Create/update the event in Google Calendar using their API
-        // 2. Get back the Google event ID
-        // 3. Store that ID in the reminder
+        // Format event for Google Calendar
+        const event = {
+          summary: reminder.title,
+          description: reminder.description || '',
+          start: {
+            dateTime: formatDateTimeForGoogle(reminder.date, reminder.time),
+            timeZone: 'UTC'
+          },
+          end: {
+            dateTime: formatDateTimeForGoogle(reminder.date, reminder.time, 60), // Add 60 minutes by default
+            timeZone: 'UTC'
+          }
+        };
         
-        // Simulation for testing:
-        if (!reminder.googleId) {
-          // This would be the ID returned from Google
-          reminder.googleId = 'google_' + Math.random().toString(36).substring(2, 15);
+        let response;
+        
+        if (reminder.googleId) {
+          // Update existing event
+          response = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${reminder.googleId}`, {
+            method: 'PUT',
+            headers: {
+              'Authorization': `Bearer ${authToken}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(event)
+          });
+        } else {
+          // Create new event
+          response = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${authToken}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(event)
+          });
         }
         
-        // Mark as synced
+        if (!response.ok) {
+          throw new Error(`API request failed with status ${response.status}`);
+        }
+        
+        const responseData = await response.json();
+        
+        // Update reminder with Google ID and sync status
+        reminder.googleId = responseData.id;
         reminder.syncStatus = 'synced';
         
         successfulPushes.push({
@@ -378,5 +471,44 @@ const pushRemindersToGoogle = async (req, res) => {
     return res.status(500).json({ error: 'Server error pushing reminders' });
   }
 };
+
+function resolveConflict(localReminder, googleEvent) {
+  // Compare last modified timestamps
+  const localModified = new Date(localReminder.updatedAt);
+  const googleModified = new Date(googleEvent.updated);
+  
+  // If Google event is newer, use it as source of truth
+  if (googleModified > localModified) {
+    return {
+      title: googleEvent.summary,
+      description: googleEvent.description || '',
+      date: new Date(googleEvent.start.dateTime || googleEvent.start.date),
+      time: extractTimeFromDateTime(googleEvent.start.dateTime),
+      googleId: googleEvent.id,
+      syncStatus: 'synced',
+      isLocallyCreated: false
+    };
+  } 
+  
+  // If local reminder is newer or same time, use it
+  return {
+    ...localReminder,
+    syncStatus: 'needs_push' // Mark for push back to Google
+  };
+}
+
+// Helper function to format date and time for Google Calendar
+function formatDateTimeForGoogle(date, time, addMinutes = 0) {
+  const dateObj = new Date(date);
+  const [hours, minutes] = time.split(':').map(Number);
+  
+  dateObj.setHours(hours, minutes, 0, 0);
+  
+  if (addMinutes) {
+    dateObj.setMinutes(dateObj.getMinutes() + addMinutes);
+  }
+  
+  return dateObj.toISOString();
+}
 
 export { syncGoogleEvents, pushRemindersToGoogle };

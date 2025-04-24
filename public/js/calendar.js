@@ -81,44 +81,53 @@ const Calendar = {
         console.log("Loading calendar events from server data");
         
         if (window.calendarReminders && Array.isArray(window.calendarReminders)) {
-            console.log("Found reminders:", window.calendarReminders.length);
-
-            // Process the reminders with proper timezone handling
-            this.tasks = window.calendarReminders.map(reminder => {
-                // Debug logging
-                console.log("Processing reminder:", reminder);
-                
-                if (reminder._debug) {
-                    console.log("Debug info:", reminder._debug);
-                }
-                
-                // Parse the ISO date string
-                const reminderDate = new Date(reminder.date);
-                
-                // Create a local date using the date components
-                const localDate = new Date(
-                    reminderDate.getFullYear(),
-                    reminderDate.getMonth(),
-                    reminderDate.getDate()
-                );
-                
-                console.log("Parsed date:", reminderDate);
-                console.log("Local date for display:", localDate);
-                
-                return {
-                    id: reminder._id,
-                    title: reminder.title || '',
-                    description: reminder.description || '',
-                    date: localDate,
-                    time: reminder.time || '',
-                    googleId: reminder.googleId || null,
-                    isGoogleEvent: !!reminder.googleId, // Mark as Google event if it has a googleId
-                    syncStatus: reminder.syncStatus || 'synced'
-                };
-            });
+          console.log("Found reminders:", window.calendarReminders.length);
+      
+          // Process the reminders with consistent date handling
+          this.tasks = window.calendarReminders.map(reminder => {
+            console.log(`Processing reminder "${reminder.title || 'Untitled'}":`, reminder);
+            
+            let localDate;
+            
+            if (reminder.date) {
+              // Parse the ISO date string
+              const reminderDate = new Date(reminder.date);
+              
+              // Log date debugging information
+              console.log(`- Original date:`, reminderDate);
+              console.log(`- ISO string:`, reminderDate.toISOString());
+              console.log(`- Local string:`, reminderDate.toLocaleDateString());
+              
+              // Create a local date using only the date components to avoid timezone issues
+              localDate = new Date(
+                reminderDate.getFullYear(),
+                reminderDate.getMonth(),
+                reminderDate.getDate(),
+                12, 0, 0 // Set to noon to avoid day boundary issues
+              );
+              
+              console.log(`- Processed local date:`, localDate);
+              console.log(`- Local date ISO:`, localDate.toISOString());
+              console.log(`- Local date string:`, localDate.toLocaleDateString());
+            } else {
+              console.warn(`Reminder "${reminder.title || 'Untitled'}" has no date!`);
+              localDate = new Date(); // Fallback to today if no date
+            }
+            
+            return {
+                id: reminder._id,
+                title: reminder.title || '',
+                description: reminder.description || '',
+                date: localDate,
+                time: reminder.time || '',
+                googleId: reminder.googleId || null,
+                isGoogleEvent: !!reminder.googleId,
+                syncStatus: reminder.syncStatus || 'synced'
+            };
+        });
         } else {
-            console.log("No reminders found or invalid data format");
-            this.tasks = [];
+        console.log("No reminders found or invalid data format");
+        this.tasks = [];
         }
         
         // Render the calendar with the loaded tasks
@@ -248,15 +257,15 @@ const Calendar = {
             return;
         }
 
-        // Filter tasks for the selected date
+        // Filter tasks for the selected date - using a more reliable date comparison
         const tasksForDay = this.tasks.filter(task => {
             // Make sure task.date is a Date object
             const taskDate = task.date instanceof Date ? task.date : new Date(task.date);
-        
+            
             // Only compare if taskDate is valid
             if (!isNaN(taskDate.getTime())) {
-                // Compare just the date portions (year, month, day), ignoring time
-                return taskDate.getFullYear() === this.selectedDate.getFullYear() && 
+            // Compare just the date portions (year, month, day), ignoring time
+            return taskDate.getFullYear() === this.selectedDate.getFullYear() && 
                     taskDate.getMonth() === this.selectedDate.getMonth() && 
                     taskDate.getDate() === this.selectedDate.getDate();
             }
