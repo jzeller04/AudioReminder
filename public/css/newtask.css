@@ -215,6 +215,15 @@ button:hover {
     box-shadow: 0px 2px 5px var(--shadow-color);
   }
   
+  & #locationLabel {
+    color: var(--heading-color);
+  }
+
+  & #location {
+    border: 3px solid var(--heading-color);
+    box-shadow: 0px 2px 5px var(--shadow-color);
+  }
+
   & #memoLabel {
     color: var(--heading-color);
   }
@@ -222,6 +231,11 @@ button:hover {
   & #memo {
     border: 3px solid var(--heading-color);
     box-shadow: 0px 2px 5px var(--shadow-color);
+  }
+
+  #title:focus, #date:focus, #time:focus, #memo:focus, #location:focus {
+    border-width: 6px;
+    outline: none;
   }
   
   & .formWrapper {
@@ -304,6 +318,15 @@ button:hover {
     border: 3px solid var(--heading-color);
     box-shadow: 0px 2px 5px var(--shadow-color);
   }
+
+  & #locationLabel {
+    color: var(--heading-color);
+  }
+
+  & #location {
+    border: 3px solid var(--heading-color);
+    box-shadow: 0px 2px 5px var(--shadow-color);
+  }
   
   & #memoLabel {
     color: var(--heading-color);
@@ -312,6 +335,11 @@ button:hover {
   & #memo {
     border: 3px solid var(--heading-color);
     box-shadow: 0px 2px 5px var(--shadow-color);
+  }
+
+  #title:focus, #date:focus, #time:focus, #memo:focus, #location:focus {
+    border-width: 6px;
+    outline: none;
   }
   
   & .formWrapper {
