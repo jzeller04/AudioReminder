@@ -1,3 +1,4 @@
+/* global GoogleAuth, gapi, setTimeout, clearTimeout */
 const GoogleCalendar = {
   // State
   isInitialized: false,

@@ -95,7 +95,7 @@ const getAllReminders = async (req, res) => {
                 <button class="flag-btn" data-id="${reminder._id}">Flag as Important</button>
                 <button class="complete-btn" data-id="${reminder._id}">Mark Complete</button>
             </div>`
-        ).join('') + testReminder;
+        ).join('');
 
         const finalHTML = template.replace('{{REMINDERS}}', reminderHTML);
 
