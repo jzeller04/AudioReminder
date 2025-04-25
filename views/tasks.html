@@ -132,6 +132,7 @@
 
             // Global variables for mark complete process
             let isMarkingComplete = false;
+            let isMarkingImportant = false;
             let currentReminderIndex = 0;
             let reminderElements = [];
 
@@ -238,6 +239,32 @@
                     return;
                 }
 
+                if (isMarkingImportant) {
+                    if (command.includes("yes") || command.includes("important")) {
+                        // Mark current reminder as important
+                        const currentElement = reminderElements[currentReminderIndex];
+                        const reminderId = currentElement.querySelector('.flag-btn').getAttribute('data-id');
+                        await markReminderImportant(reminderId);
+                        await speak("Task marked as important.");
+                        
+                        // Move to next reminder
+                        currentReminderIndex++;
+                        await processNextImportantReminder();
+                    } 
+                    else if (command.includes("no") || command.includes("skip")) {
+                        // Skip this reminder
+                        await speak("Skipping this task.");
+                        currentReminderIndex++;
+                        await processNextImportantReminder();
+                    }
+                    else if (command.includes("cancel") || command.includes("stop")) {
+                        // Cancel the mark important process
+                        isMarkingImportant = false;
+                        await speak("Mark important process cancelled.");
+                    }
+                    return;
+                }
+
                 // Normal command processing
                 if (command.includes("new task") || command.includes("task")) {
                     speak("Creating new task").then(() => location.href = "newtask");            
@@ -255,11 +282,14 @@
                 else if (command.includes("mark complete") || command.includes("complete tasks")) {
                     startMarkCompleteProcess();
                 }
+                else if (command.includes("mark important") || command.includes("important tasks")) {
+                    startMarkImportantProcess();
+                }
                 else if (command.includes("stop") || command.includes("quiet") || command.includes("shut up")) {
                     stopTTS();
                 }
                 else if (command.includes("help")) {
-                    speak("You can say 'New Task' to add a task, 'Open Home' to return to the homepage, 'Read all Reminders' to hear your upcoming tasks, 'Mark Complete' to go through your tasks, 'Stop' to stop speaking, or 'Help' to hear this list of commands again.");
+                    speak("You can say 'New Task' to add a task, 'Open Home' to return to the homepage, 'Read all Reminders' to hear your upcoming tasks, 'Mark Complete' to go through your tasks, 'Mark Important' to flag important tasks, 'Stop' to stop speaking, or 'Help' to hear this list of commands again.");
                 } 
                 else {
                     console.log("Unknown command:", command);
@@ -280,6 +310,22 @@
                 if (isSpeaking) return;
                 await speak("Starting mark complete process. I will read each task. Say 'yes' to mark it complete, 'no' to skip it, or 'cancel' to stop.");
                 await processNextReminder();
+            }
+
+            async function startMarkImportantProcess() {
+                if (isSpeaking) return;
+                reminderElements = Array.from(document.querySelectorAll('.reminder-item'));
+                
+                if (reminderElements.length === 0) {
+                    await speak("You have no tasks to mark as important.");
+                    return;
+                }
+                
+                isMarkingImportant = true;
+                currentReminderIndex = 0;
+                if (isSpeaking) return;
+                await speak("Starting mark important process. I will read each task. Say 'yes' to mark it important, 'no' to skip it, or 'cancel' to stop.");
+                await processNextImportantReminder();
             }
 
             async function processNextReminder() {
@@ -312,11 +358,62 @@
                 }
             }
 
+            async function processNextImportantReminder() {
+                if (currentReminderIndex >= reminderElements.length) {
+                    await speak("You've gone through all your tasks. Mark important process finished.");
+                    isMarkingImportant = false;
+                    return;
+                }
+
+                const currentElement = reminderElements[currentReminderIndex];
+                if (!currentElement) {
+                    console.error("Reminder element missing at index", currentReminderIndex);
+                    currentReminderIndex++;
+                    return processNextImportantReminder(); // Skip to next task
+                }
+
+                // Clone the element to avoid modifying the original
+                const clone = currentElement.cloneNode(true);
+
+                // Remove buttons (we don't want to read "Mark Important" aloud)
+                clone.querySelectorAll('button').forEach(btn => btn.remove());
+
+                // Get all text content (without buttons)
+                const reminderText = clone.textContent.trim();
+
+                if (reminderText) {
+                    await speak(`Task ${currentReminderIndex + 1} of ${reminderElements.length}: ${reminderText}. Say "yes" to mark important, "no" to skip.`);
+                } else {
+                    await speak("Could not read task details. Moving to next task.");
+                }
+            }
+
             async function markReminderComplete(reminderId) {
                 // Create a form to submit
                 const form = document.createElement('form');
                 form.method = 'POST';
                 form.action = '/complete-reminder';
+                
+                // Create hidden input for reminder ID
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'reminderId';
+                input.value = reminderId;
+                
+                // Add input to form and submit
+                form.appendChild(input);
+                document.body.appendChild(form);
+                form.submit();
+                
+                // Wait a moment for the form submission to process
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+
+            async function markReminderImportant(reminderId) {
+                // Create a form to submit
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '/markflagged';
                 
                 // Create hidden input for reminder ID
                 const input = document.createElement('input');
@@ -401,7 +498,7 @@
                     });
                 });
 
-                // Find all "Mark Complete" buttons
+                // Find all "Mark Important" buttons
                 const flagButtons = document.querySelectorAll('.flag-btn');
                 
                 // Add click event listener to each button
