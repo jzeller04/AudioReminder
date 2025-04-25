@@ -163,6 +163,13 @@ button:hover {
     border: 6px solid var(--primary-btn);
     color: var(--primary-btn);
   }
+
+  & button:focus {
+    background-color: var(--bg-color);
+    border: 10px solid var(--primary-btn);
+    color: var(--primary-btn);
+    outline: none;
+  }
   
   & .readReminderBtn {
     background-color: var(--primary-btn);
@@ -186,6 +193,13 @@ button:hover {
     background-color: var(--bg-color);
     border: 6px solid var(--primary-btn);
     color: var(--primary-btn);
+  }
+
+  & .readReminderBtn:focus, #clearReminderBtn.focus {
+    background-color: var(--bg-color);
+    border: 10px solid var(--primary-btn);
+    color: var(--primary-btn);
+    outline: none;
   }
   
   & #titleLabel {
@@ -223,6 +237,11 @@ button:hover {
     border: 3px solid var(--heading-color);
     box-shadow: 0px 2px 5px var(--shadow-color);
   }
+
+  #title:focus, #date:focus, #time:focus, #memo:focus {
+    border-width: 6px;
+    outline: none;
+}
   
   & .formWrapper {
     border:10px solid var(--heading-color);
@@ -253,6 +272,13 @@ button:hover {
     border: 6px solid var(--primary-btn);
     color: var(--primary-btn);
   }
+
+  & button:focus {
+    background-color: var(--bg-color);
+    border: 10px solid var(--primary-btn);
+    color: var(--primary-btn);
+    outline: none;
+  }
   
   & .readReminderBtn {
     background-color: var(--primary-btn);
@@ -278,6 +304,13 @@ button:hover {
     color: var(--primary-btn);
   }
   
+  & .readReminderBtn:focus, #clearReminderBtn.focus {
+    background-color: var(--bg-color);
+    border: 10px solid var(--primary-btn);
+    color: var(--primary-btn);
+    outline: none;
+  }
+
   & #titleLabel {
     color: var(--heading-color);
   }
@@ -313,6 +346,11 @@ button:hover {
     border: 3px solid var(--heading-color);
     box-shadow: 0px 2px 5px var(--shadow-color);
   }
+
+  #title:focus, #date:focus, #time:focus, #memo:focus {
+    border-width: 6px;
+    outline: none;
+}
   
   & .formWrapper {
     border:10px solid var(--heading-color);
