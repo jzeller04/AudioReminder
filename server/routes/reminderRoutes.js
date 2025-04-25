@@ -3,7 +3,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import {getUpcomingReminder,getAllReminders,createReminder,completeReminder, flagReminder} from '../controllers/reminderController.js';
-import { syncGoogleEvents, pushRemindersToGoogle } from '../controllers/googleCalendarController.js';
+import { syncGoogleEvents, pushRemindersToGoogle, removeGoogleReminders } from '../controllers/googleCalendarController.js';
 import authMiddleware from '../middleware/auth.js';
 import reminderMiddleware from '../middleware/reminderMiddleware.js'; // Import new middleware
 
@@ -27,7 +27,8 @@ router.get('/newtask', authMiddleware.isAuthenticated, (req, res) => {
 router.post('/submit', authMiddleware.isAuthenticated, createReminder);
 
 // Mark reminder as complete
-router.post('/complete-reminder', authMiddleware.isAuthenticated, reminderMiddleware.checkGoogleReminder, reminderMiddleware.updateSyncStatus, completeReminder);
+router.post('/complete-reminder', express.json(), authMiddleware.isAuthenticated, reminderMiddleware.updateSyncStatus, completeReminder);
+//reminderMiddleware.checkGoogleReminder^^^^
 
 // Flag reminder - apply sync status middleware
 router.post('/markflagged', authMiddleware.isAuthenticated, reminderMiddleware.updateSyncStatus, flagReminder);
@@ -38,4 +39,6 @@ router.post('/api/sync-google-events', authMiddleware.isAuthenticated, syncGoogl
 // Google Calendar sync endpoit
 router.post('/api/push-to-google', authMiddleware.isAuthenticated, pushRemindersToGoogle);
 
+// Remove all Google Calendar reminders when disconnecting
+router.post('/api/remove-google-reminders', authMiddleware.isAuthenticated, removeGoogleReminders);
 export default router;

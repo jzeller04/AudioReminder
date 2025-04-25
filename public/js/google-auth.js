@@ -347,15 +347,41 @@ const GoogleAuth = {
   },
   
   // Sign out
-  signOut: function() {
-    console.log('Signing out...');
+  signOut: async function() {
+    console.log('Signing out and cleaning up Google reminders...');
     
+    try {
+      // First, remove all Google Calendar reminders from the database
+      const response = await fetch('/api/remove-google-reminders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+  
+      const result = await response.json();
+      console.log('Removed Google reminders:', result);
+      
+      // Only show a notification if reminders were removed
+      if (result.removed > 0) {
+        // You could show a notification here if you want
+        console.log(`${result.removed} Google Calendar reminders removed`);
+      }
+    } catch (error) {
+      console.error('Error removing Google reminders:', error);
+      // Continue with signout even if this fails
+    }
+    
+    // Proceed with normal sign out process
     const token = gapi.client.getToken();
     if (token !== null) {
-      google.accounts.oauth2.revoke(token.access_token, () => {
-        console.log('Token revoked');
+      await new Promise((resolve) => {
+        google.accounts.oauth2.revoke(token.access_token, () => {
+          console.log('Token revoked');
+          resolve();
+        });
+        gapi.client.setToken(null);
       });
-      gapi.client.setToken(null);
     }
     
     // Clear auth data
@@ -363,6 +389,9 @@ const GoogleAuth = {
     
     // Dispatch logout event
     window.dispatchEvent(new CustomEvent('userLoggedOut'));
+    
+    // Return a resolved promise to allow proper chaining
+    return Promise.resolve();
   },
   
   // Clear authentication data

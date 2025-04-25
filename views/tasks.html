@@ -12,6 +12,8 @@
         </script>
         
         <script src="../js/settings.bundle.js"></script>
+        <script src="../js/google-calendar.js"></script>
+        <script src="../js/google-auth.js"></script>
     </head>
     <body>
         <header>
@@ -70,8 +72,8 @@
                             document.getElementById('stopTTSButton').style.display = 'none';
                             
                              // Only restart recognition if NOT in push-to-talk mode
-                             function isPushToTalkEnabled() {
-                                return window.PushToTalk?.enabled || localStorage.getItem('pushToTalk') === 'true';
+                            function isPushToTalkEnabled() {
+                            return window.PushToTalk?.enabled || localStorage.getItem('pushToTalk') === 'true';
                             }
                             
                             if (recognition && isRecognitionActive && !isPushToTalkEnabled()) {
@@ -366,16 +368,21 @@
 
                 // Find all "Mark Complete" buttons
                 const completeButtons = document.querySelectorAll('.complete-btn');
-                
+
                 // Add click event listener to each button
                 completeButtons.forEach(button => {
                     button.addEventListener('click', function() {
                         // Get the reminder ID from the data attribute
                         const reminderId = this.getAttribute('data-id');
                         
+                        // Check if this is a Google Calendar reminder
+                        const reminderItem = this.closest('.reminder-item');
+                        const isGoogleEvent = reminderItem?.classList.contains('google-calendar-event');
+                        const googleId = this.getAttribute('data-google-id');
+                        
                         // Simple confirmation
                         if (confirm("Mark this reminder as complete?")) {
-                            // Create a form to submit
+                            // Create a form to submit (traditional approach)
                             const form = document.createElement('form');
                             form.method = 'POST';
                             form.action = '/complete-reminder';
@@ -386,10 +393,64 @@
                             input.name = 'reminderId';
                             input.value = reminderId;
                             
+                            // Add this inside your click handler for debugging
+                            console.log('Button clicked with Google ID:', googleId);
+                            console.log('Is Google event:', isGoogleEvent);
+                            console.log('Is Google Auth available:', window.GoogleAuth?.isAuthenticated);
+                            console.log('Is Google Calendar available:', !!window.GoogleCalendar?.deleteEvent);
+
                             // Add input to form and submit
                             form.appendChild(input);
                             document.body.appendChild(form);
-                            form.submit();
+                            
+                            // For Google Calendar reminders, try to delete from Google Calendar first
+                            if (isGoogleEvent && googleId && window.GoogleAuth?.isAuthenticated && window.GoogleCalendar?.deleteEvent) {
+                                // Provide audio feedback
+                                if (typeof speak === 'function') {
+                                    speak("Marking reminder complete and removing from Google Calendar...");
+                                }
+                                
+                                // Try to delete from Google Calendar
+                                window.GoogleCalendar.deleteEvent(googleId)
+                                    .then(result => {
+                                        if (result.success) {
+                                            console.log('Successfully deleted event from Google Calendar');
+                                            
+                                            // Provide audio feedback if speak function exists
+                                            if (typeof speak === 'function') {
+                                                speak("Successfully removed from Google Calendar.");
+                                            }
+                                        } else {
+                                            console.warn('Event could not be deleted from Google Calendar:', result.error);
+                                            
+                                            // Provide audio feedback if speak function exists
+                                            if (typeof speak === 'function') {
+                                                speak("There was an issue removing the reminder from Google Calendar.");
+                                            }
+                                        }
+                                        
+                                        // Submit the form to complete the reminder locally
+                                        setTimeout(() => {
+                                            form.submit();
+                                        }, 1500); // Short delay to allow speech to be heard
+                                    })
+                                    .catch(error => {
+                                        console.error('Error deleting from Google Calendar:', error);
+                                        
+                                        // Provide audio feedback if speak function exists
+                                        if (typeof speak === 'function') {
+                                            speak("Error removing from Google Calendar. The reminder will only be completed locally.");
+                                        }
+                                        
+                                        // Submit the form to complete the reminder locally
+                                        setTimeout(() => {
+                                            form.submit();
+                                        }, 1500); // Short delay to allow speech to be heard
+                                    });
+                            } else {
+                                // Regular reminder, just submit the form
+                                form.submit();
+                            }
                         }
                     });
                 });

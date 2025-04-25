@@ -138,6 +138,39 @@ const GoogleCalendar = {
     }
   },
 
+  // Delete a Google Calendar event
+  deleteEvent: async function(eventId) {
+    console.log(`Attempting to delete Google Calendar event: ${eventId}`);
+    
+    // Check if user is authenticated
+    if (!window.GoogleAuth || !window.GoogleAuth.isAuthenticated) {
+      console.error('User not authenticated with Google');
+      return { success: false, error: 'Not authenticated with Google' };
+    }
+    
+    try {
+      // Make sure Calendar API is initialized
+      if (!gapi.client.calendar) {
+        await this.initCalendarAPI();
+      }
+      
+      // Call Google Calendar API to delete the event
+      const response = await gapi.client.calendar.events.delete({
+        calendarId: 'primary',
+        eventId: eventId
+      });
+      
+      console.log('Successfully deleted event from Google Calendar', response);
+      return { success: true };
+    } catch (error) {
+      console.error('Error deleting event from Google Calendar:', error);
+      return { 
+        success: false, 
+        error: error.result?.error?.message || 'Failed to delete event from Google Calendar'
+      };
+    }
+  },
+
   // Sync events with backend
   syncEventsWithBackend: async function(events) {
     if (!events || events.length === 0) {
@@ -237,8 +270,7 @@ const GoogleCalendar = {
       return { error: error.message };
     }
   }
-};
-
+}
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
