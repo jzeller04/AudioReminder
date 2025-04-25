@@ -82,6 +82,13 @@
     </form>
 
     <script>
+        document.addEventListener('focusin', (event) => {
+    const text = event.target.innerText || event.target.getAttribute('aria-label');
+    if (text && !isSpeaking) {
+        speak(text);
+    }
+});
+
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         let recognition;
         let isSpeaking = false;

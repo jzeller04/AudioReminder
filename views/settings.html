@@ -92,6 +92,13 @@
             </div>
         </section>
         <script>
+            document.addEventListener('focusin', (event) => {
+    const text = event.target.innerText || event.target.getAttribute('aria-label');
+    if (text && !isSpeaking) {
+        speak(text);
+    }
+});
+
             let isSpeaking = false;
             let recognition;
             let isRecognitionActive = false;
