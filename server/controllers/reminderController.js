@@ -95,7 +95,7 @@ const getAllReminders = async (req, res) => {
                 <button class="flag-btn" data-id="${reminder._id}">Flag as Important</button>
                 <button class="complete-btn" data-id="${reminder._id}">Mark Complete</button>
             </div>`
-        ).join('') + testReminder;
+        ).join('');
 
         const finalHTML = template.replace('{{REMINDERS}}', reminderHTML);
 
@@ -144,17 +144,55 @@ const completeReminder = async (req, res) => {
     const reminderId = req.body.reminderId;
     
     try {
-        await User.findOneAndUpdate(
-            { _id: req.session.userId },
-            { $pull: { reminders: { _id: reminderId } } }
-        );
+      // First, get the user and find the reminder
+      const user = await User.findById(req.session.userId);
+      
+      if (!user) {
+        console.log('User not found');
+        return res.redirect('/tasks');
+      }
+      
+      // Find the reminder
+      const reminderIndex = user.reminders.findIndex(r => 
+        r._id.toString() === reminderId
+      );
+      
+      if (reminderIndex === -1) {
+        console.log('Reminder not found');
+        return res.redirect('/tasks');
+      }
+      
+      const reminder = user.reminders[reminderIndex];
+      
+      // Check if the reminder came from Google
+      if (reminder.googleId) {
+        console.log(`Processing Google Calendar reminder completion: ${reminder.googleId}`);
         
-        return res.redirect('/tasks');
+        // Get Google auth token from client (in a real implementation)
+        // For now, we'll just remove it locally
+        
+        // Remove the reminder
+        user.reminders.splice(reminderIndex, 1);
+        await user.save();
+        
+        console.log(`Removed Google Calendar reminder: ${reminder.title}`);
+        
+        // Note: In a full implementation, you would also delete it from Google
+        // using the Google Calendar API
+      } else {
+        // For non-Google reminders, just remove them as before
+        await User.findOneAndUpdate(
+          { _id: req.session.userId },
+          { $pull: { reminders: { _id: reminderId } } }
+        );
+      }
+      
+      return res.redirect('/tasks');
     } catch (error) {
-        console.log('Error removing reminder:', error);
-        return res.redirect('/tasks');
+      console.log('Error removing reminder:', error);
+      return res.redirect('/tasks');
     }
-};
+  };
 
 const flagReminder = async (req, res) => {
     console.log('reminderID:', req.body.reminderId);
@@ -273,7 +311,6 @@ async function fetchImportant(userId) {
         
         return minutesA - minutesB;
       });
-      
       console.log("Fetched and sorted reminders:", reminders.length);
       return reminders;
     } catch (error) {
@@ -304,11 +341,14 @@ async function updateUserReminders(userId) {
 // Save reminder to user
 async function saveReminderToUser(title, description, time, date, userId, flag, location) {
     try {
+      console.log('Saving reminder with date input:', date);
+
       // Store date in UTC to avoid timezone issues
       const normalizedDate = normalizeDate(date);
-      
+
       console.log("Saving reminder with normalized date:", normalizedDate.toISOString());
-      
+      console.log("Local date representation:", normalizedDate.toLocaleString());
+
       // Create reminder
       const reminder = {
         title: title,
@@ -316,22 +356,24 @@ async function saveReminderToUser(title, description, time, date, userId, flag, 
         description: description || "",
         date: normalizedDate,
         time: time,
+        isLocallyCreated: true, // Marks if it was created in AudioReminder and not Google
+        syncStatus: 'needs_push', // Shows it needs to be pushed to Google
         location: location
       };
-  
+
       const user = await User.findById(userId);
       if (!user) {
         throw new Error("User not found");
       }
-  
+
       user.reminders.push(reminder);
       await user.save();
-      
+
       console.log("Successfully saved reminder:", reminder);
       return true;
     } catch (error) {
-      console.error("Failed to save reminder:", error);
-      throw error;
+        console.error("Failed to save reminder:", error);
+        throw error;
     }
 }
 

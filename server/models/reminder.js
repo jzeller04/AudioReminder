@@ -23,6 +23,19 @@ const reminderSchema = new Schema({
         type: Date,
         required: true
     },
+    googleId: {
+        type: String,
+        default: null
+    },
+    syncStatus: {
+        type: String,
+        enum: ['synced', 'needs_push', 'needs_pull', 'conflict'],
+        default: 'needs_push'
+    },
+    isLocallyCreated: {
+        type: Boolean,
+        default: true
+    },
     location: {
         type: String,
         required: false

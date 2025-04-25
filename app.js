@@ -6,6 +6,7 @@ import session from 'express-session';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import cors from 'cors';
 
 import authRoutes from './server/routes/authRoutes.js';
 import reminderRoutes from './server/routes/reminderRoutes.js';
@@ -19,10 +20,12 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const app = express();
+app.use(express.json({ limit: '1mb' }));
 
 // Middleware
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(bodyParser.urlencoded({extended: true}));
+app.use(cors());
 app.use(session({
     secret: process.env.SESSION_SECRET || 'fallback-secret',
     resave: false,
