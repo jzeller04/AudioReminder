@@ -60,6 +60,7 @@ body {
 
 #email:focus, #password:focus {
     border-width: 5px;
+    outline: none;
 }
 
 #login {
@@ -81,6 +82,12 @@ body {
     cursor: pointer;
 }
 
+#login:focus {
+    background-color: #f2ede9;
+    color: #632f0a;
+    outline: none;
+}
+
 #signup {
     background-color: white;
     border: 6px solid white;
@@ -98,6 +105,13 @@ body {
     background-color: #a54907;
     color: white;
     cursor: pointer;
+}
+
+#signup:focus {
+    background-color: #a54907;
+    color: white;
+    outline: 7px solid #632f0a;
+    outline-offset: 3px;
 }
 
 #emailLabel, #passwordLabel {
