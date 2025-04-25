@@ -35,6 +35,10 @@ const reminderSchema = new Schema({
     isLocallyCreated: {
         type: Boolean,
         default: true
+    },
+    location: {
+        type: String,
+        required: false
     }
 }, {timestamps: true}); // saves the time when reminder is created
 

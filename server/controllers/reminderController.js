@@ -352,7 +352,8 @@ async function saveReminderToUser(title, description, time, date, userId, flag) 
         date: normalizedDate,
         time: time,
         isLocallyCreated: true, // Marks if it was created in AudioReminder and not Google
-        syncStatus: 'needs_push' // Shows it needs to be pushed to Google
+        syncStatus: 'needs_push', // Shows it needs to be pushed to Google
+        location: location
       };
 
       const user = await User.findById(userId);
