@@ -532,9 +532,10 @@ const removeGoogleReminders = async (req, res) => {
     const totalReminders = user.reminders.length;
     
     // Filter out any reminders that were created by Google (not locally created)
-    // or have a googleId
+    // Keep reminders that are locally created even if they have a googleId
+    // (these would be reminders created in AudioReminder but later synced to Google)
     user.reminders = user.reminders.filter(reminder => 
-      reminder.isLocallyCreated !== false && !reminder.googleId
+      reminder.isLocallyCreated === true || (reminder.isLocallyCreated !== false && !reminder.googleId)
     );
     
     // Count how many were removed
@@ -554,5 +555,6 @@ const removeGoogleReminders = async (req, res) => {
     return res.status(500).json({ error: 'Server error removing reminders' });
   }
 }
+
 
 export { syncGoogleEvents, pushRemindersToGoogle, removeGoogleReminders };

@@ -295,14 +295,85 @@
                 }
             });
             
-            signOutButton.addEventListener('click', function() {
+            signOutButton.addEventListener('click', async function() {
                 if (window.GoogleAuth) {
-                    GoogleAuth.signOut();
+                    try {
+                        // Show disconnecting status
+                        const statusDisplay = document.getElementById('google-auth-status');
+                        if (statusDisplay) {
+                            statusDisplay.textContent = 'Disconnecting from Google...';
+                        }
+                        
+                        // Create sync status message
+                        const syncStatus = document.getElementById('sync-status');
+                        if (syncStatus) {
+                            syncStatus.textContent = 'Removing Google Calendar reminders...';
+                            syncStatus.className = 'sync-status syncing';
+                        }
+                        
+                        // Provide audio feedback (using the speak function defined earlier in the file)
+                        if (typeof speak === 'function') {
+                            speak("Disconnecting from Google and removing calendar reminders...");
+                        }
+                        
+                        // Disable the sign out button while processing
+                        signOutButton.disabled = true;
+                        
+                        // Call sign out function
+                        await GoogleAuth.signOut();
+                        
+                        // Update sync status
+                        if (syncStatus) {
+                            syncStatus.textContent = 'Google Calendar disconnected and reminders removed.';
+                            syncStatus.className = 'sync-status success';
+                            
+                            // Clear status after 5 seconds
+                            setTimeout(() => {
+                                syncStatus.textContent = '';
+                                syncStatus.className = 'sync-status';
+                            }, 5000);
+                        }
+                        
+                        // Provide audio feedback of success
+                        if (typeof speak === 'function') {
+                            speak("Google Calendar disconnected. Any events from Google Calendar have been removed from your reminders.");
+                        }
+                        
+                        // Refresh the calendar display to remove Google events
+                        if (window.Calendar) {
+                            // Filter out any Google events from the current tasks list
+                            Calendar.tasks = Calendar.tasks.filter(task => !task.isGoogleEvent && !task.googleId);
+                            // Re-render the calendar
+                            Calendar.renderCalendar();
+                        }
+                    } catch (error) {
+                        console.error('Error during sign-out:', error);
+                        
+                        // Update sync status with error
+                        const syncStatus = document.getElementById('sync-status');
+                        if (syncStatus) {
+                            syncStatus.textContent = 'Error disconnecting from Google.';
+                            syncStatus.className = 'sync-status error';
+                        }
+                        
+                        // Provide audio feedback of error
+                        if (typeof speak === 'function') {
+                            speak("Error disconnecting from Google. Please try again later.");
+                        }
+                    } finally {
+                        // Re-enable the button
+                        signOutButton.disabled = false;
+                    }
                 } else {
                     console.error('Google Auth not initialized');
+                    
+                    // Provide audio feedback of error
+                    if (typeof speak === 'function') {
+                        speak("Google authentication is not available. Please try refreshing the page.");
+                    }
                 }
             });
-            
+
             // Update UI based on auth state
             function updateAuthUI() {
                 if (window.GoogleAuth && GoogleAuth.isAuthenticated) {
