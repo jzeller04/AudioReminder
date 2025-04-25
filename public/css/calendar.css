@@ -10,7 +10,7 @@ h1 {
 }
 
 button {
-  border-radius: 50px;
+  border-radius: 55px;
   display: block;
   font-family: Helvetica, Arial, sans-serif;
   font-size: 40px;
@@ -204,7 +204,7 @@ button:hover {
 
 /* Add task button */
 .add-task-btn {
-  border-radius: 6px;
+  border-radius: 15px;
   display: block;
   font-family: Helvetica, Arial, sans-serif;
   font-size: 1.5rem;
@@ -356,6 +356,13 @@ button:hover {
     color: var(--primary-btn);
   }
 
+  & button:focus {
+    background-color: var(--bg-color);
+    border: 10px solid var(--primary-btn);
+    color: var(--primary-btn);
+    outline: none;
+  }
+
   /* Calendar container */
   & .calendar-container {
     border: 4px solid var(--heading-color);
@@ -459,6 +466,13 @@ button:hover {
     background-color: var(--calendar-header);
     border: 6px solid var(--heading-color);
     color: var(--heading-color);
+  }
+
+  & .add-task-btn:focus {
+    background-color: var(--calendar-header);
+    border: 9px solid var(--heading-color);
+    color: var(--heading-color);
+    outline: none;
   }
 
   /* Task form styling */
@@ -513,6 +527,13 @@ button:hover {
     color: var(--primary-btn);
   }
 
+  & button:focus {
+    background-color: var(--bg-color);
+    border: 10px solid var(--primary-btn);
+    color: var(--primary-btn);
+    outline: none;
+  }
+
   /* Calendar container */
   & .calendar-container {
     border: 4px solid var(--heading-color);
@@ -616,6 +637,13 @@ button:hover {
     background-color: var(--calendar-header);
     border: 6px solid var(--heading-color);
     color: var(--heading-color);
+  }
+
+  & .add-task-btn:focus {
+    background-color: var(--calendar-header);
+    border: 9px solid var(--heading-color);
+    color: var(--heading-color);
+    outline: none;
   }
 
   /* Task form styling */
