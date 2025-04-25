@@ -1,4 +1,6 @@
-// Google API Configuration
+// Declare globals for ESLint
+/* global gapi, google */
+
 const GoogleAPIConfig = {
   CLIENT_ID: '1009864072987-cmpm10gg8f73q21uteji2suo7eoklsml.apps.googleusercontent.com',
   SCOPES: 'https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/calendar.events.owned https://www.googleapis.com/auth/calendar.calendarlist.readonly',
@@ -23,24 +25,29 @@ const GoogleAuth = {
     }
     
     this._initializing = true;
-    this._initPromise = new Promise(async (resolve) => {
-      try {
-        // Load GAPI and GIS scripts
-        await this.loadGapiAndGis();
-        this.isInitialized = true;
-        console.log('Google Auth initialization complete');
-        
-        // Check if user was previously logged in
-        this.checkLoginStatus();
-        
-        resolve(true);
-      } catch (error) {
-        console.error('Error initializing Google Auth:', error);
-        this._initializing = false;
-        resolve(false);
-      }
-    });
     
+    this._initPromise = new Promise((resolve) => {
+      const doInit = async () => {
+        try {
+          // Load GAPI and GIS scripts
+          await this.loadGapiAndGis();
+          this.isInitialized = true;
+          console.log('Google Auth initialization complete');
+  
+          // Check if user was previously logged in
+          this.checkLoginStatus();
+  
+          resolve(true);
+        } catch (error) {
+          console.error('Error initializing Google Auth:', error);
+          this._initializing = false;
+          resolve(false);
+        }
+      };
+  
+      doInit(); // Call the async function inside the executor
+    });
+  
     return this._initPromise;
   },
   

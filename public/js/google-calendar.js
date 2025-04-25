@@ -50,18 +50,30 @@ const GoogleCalendar = {
 
   // Initialize Calendar API
   initCalendarAPI: async function() {
-    // Load the Calendar API if it's not already loaded
     if (!gapi.client.calendar) {
       return new Promise((resolve, reject) => {
+        let isResolved = false;
+  
+        // Set a timeout to reject if loading takes too long
+        const timeout = setTimeout(() => {
+          if (!isResolved) {
+            console.error('Calendar API load timed out');
+            reject(new Error('Calendar API load timed out'));
+          }
+        }, 5000); // 5 seconds timeout
+  
         gapi.client.load('calendar', 'v3', () => {
+          clearTimeout(timeout);
+          isResolved = true;
           console.log('Calendar API loaded');
           resolve();
         });
       });
     }
+  
     return Promise.resolve();
   },
-
+  
   // Fetch events from Google Calendar
   fetchEvents: async function() {
     console.log('Fetching events from Google Calendar...');

@@ -1,3 +1,4 @@
+/* global fetch */
 import User from '../models/user.js';
 import { normalizeDate } from '../utils/util.js';
 
@@ -472,6 +473,8 @@ const pushRemindersToGoogle = async (req, res) => {
   }
 };
 
+//  ######################## Will be used soon ########################
+// eslint-disable-next-line no-unused-vars
 function resolveConflict(localReminder, googleEvent) {
   // Compare last modified timestamps
   const localModified = new Date(localReminder.updatedAt);
@@ -483,7 +486,7 @@ function resolveConflict(localReminder, googleEvent) {
       title: googleEvent.summary,
       description: googleEvent.description || '',
       date: new Date(googleEvent.start.dateTime || googleEvent.start.date),
-      time: extractTimeFromDateTime(googleEvent.start.dateTime),
+      time: googleEvent.start.dateTime ?? '00:00',
       googleId: googleEvent.id,
       syncStatus: 'synced',
       isLocallyCreated: false
