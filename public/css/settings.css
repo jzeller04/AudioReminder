@@ -35,10 +35,6 @@ button:hover {
   cursor: pointer;
 }
 
-/* Toggle Switch Styles */
-.theme-switch-container {
-}
-
 .theme-switch-label, .toggle-switch-label {
   font-family: Helvetica, Arial, sans-serif;
   font-size: 40px;
@@ -232,6 +228,13 @@ input:checked + .slider .theme-text.on {
     color: var(--primary-btn);
   }
 
+  & button:focus {
+    background-color: var(--bg-color);
+    border: 10px solid var(--primary-btn);
+    color: var(--primary-btn);
+    outline: none;
+  }
+
   & #homeButton {
     background-color: var(--primary-btn);
     border: 6px solid var(--primary-btn);
@@ -242,6 +245,12 @@ input:checked + .slider .theme-text.on {
   & #homeButton:hover {
     background-color: var(--bg-color);
     border: 6px solid var(--primary-btn);
+    color: var(--primary-btn);
+  }
+
+  & #homeButton:focus {
+    background-color: var(--bg-color);
+    border: 10px solid var(--primary-btn);
     color: var(--primary-btn);
   }
   
@@ -264,6 +273,18 @@ input:checked + .slider .theme-text.on {
   
   & input:focus + .slider {
     box-shadow: 0 0 1px var(--primary-btn);
+    outline: 5px solid var(--heading-color);
+    outline-offset: 5px;
+  }
+
+  & input#speech-speed, & input#volume {
+    accent-color: var(--secondary-btn);
+  }
+
+  & input#speech-speed:focus, & input#volume:focus {
+    border-radius: 10px;
+    outline: 5px solid var(--heading-color);
+    outline-offset: 5px;
   }
   
   /* Theme indicator text */
@@ -322,6 +343,13 @@ input:checked + .slider .theme-text.on {
     color: var(--primary-btn);
   }
 
+  & button:focus {
+    background-color: var(--bg-color);
+    border: 10px solid var(--primary-btn);
+    color: var(--primary-btn);
+    outline: none;
+  }
+
   & #homeButton {
     background-color: var(--secondary-btn);
     border: 6px solid var(--secondary-btn);
@@ -333,6 +361,12 @@ input:checked + .slider .theme-text.on {
     background-color: var(--bg-color);
     border: 6px solid var(--secondary-btn);
     color: var(--secondary-btn);
+  }
+
+  & #homeButton:focus {
+    background-color: var(--bg-color);
+    border: 10px solid var(--primary-btn);
+    color: var(--primary-btn);
   }
   
   & .theme-switch-label {
@@ -354,6 +388,18 @@ input:checked + .slider .theme-text.on {
   
   & input:focus + .slider {
     box-shadow: 0 0 1px var(--primary-btn);
+    outline: 5px solid var(--heading-color);
+    outline-offset: 5px;
+  }
+
+  & input#speech-speed, & input#volume {
+    accent-color: var(--secondary-btn);
+  }
+
+  & input#speech-speed:focus, & input#volume:focus {
+    border-radius: 10px;
+    outline: 5px solid var(--heading-color);
+    outline-offset: 5px;
   }
   
   /* Theme indicator text */
