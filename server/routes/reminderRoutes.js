@@ -27,7 +27,8 @@ router.get('/newtask', authMiddleware.isAuthenticated, (req, res) => {
 router.post('/submit', authMiddleware.isAuthenticated, createReminder);
 
 // Mark reminder as complete
-router.post('/complete-reminder', authMiddleware.isAuthenticated, reminderMiddleware.checkGoogleReminder, reminderMiddleware.updateSyncStatus, completeReminder);
+router.post('/complete-reminder', express.json(), authMiddleware.isAuthenticated, reminderMiddleware.updateSyncStatus, completeReminder);
+//reminderMiddleware.checkGoogleReminder^^^^
 
 // Flag reminder - apply sync status middleware
 router.post('/markflagged', authMiddleware.isAuthenticated, reminderMiddleware.updateSyncStatus, flagReminder);

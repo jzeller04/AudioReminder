@@ -182,3 +182,24 @@
   background-color: #00008B;
   padding: 5px;
 }
+
+.google-calendar-event {
+  border-left: 4px solid #4285F4; /* Google blue */
+}
+
+.reminder-source {
+  font-size: 0.8em;
+  color: #4285F4;
+  font-style: italic;
+  margin-top: 4px;
+}
+
+/* High-contrast theme version */
+[data-theme="high-contrast"] .google-calendar-event {
+  border-left: 4px solid #000000;
+}
+
+[data-theme="high-contrast"] .reminder-source {
+  color: #000000;
+  font-weight: bold;
+}

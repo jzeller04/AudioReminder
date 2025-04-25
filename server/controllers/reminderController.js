@@ -69,8 +69,12 @@ const getAllReminders = async (req, res) => {
         const importantReminders = await fetchImportant(req.session.userId);
         const reminders = await fetch(req.session.userId);
 
-        let reminderHTML = importantReminders.map(reminder =>
-            `<div class="reminder-item"> 
+        let reminderHTML = importantReminders.map(reminder => {
+          // Add Google Calendar specific class and data attribute if applicable
+            const googleClass = reminder.googleId ? ' google-calendar-event' : '';
+            const googleIdAttr = reminder.googleId ? ` data-google-id="${reminder.googleId}"` : '';
+            
+            return `<div class="reminder-item${googleClass}"> 
                 <div class="reminder-content">
                     <p class="reminder-title">${reminder.title || 'Missing title'}</p>
                     <p class="reminder-title">${reminder.location || ''}</p>
@@ -78,12 +82,17 @@ const getAllReminders = async (req, res) => {
                     <p class="reminder-flagged" data-flagged="${reminder.flagged}"></p>
                     <p class="reminder-date">${dateToReadable(reminder.date) || 'Missing date'}</p>
                     <p class="reminder-time">${timeToTwelveSystem(reminder.time) || 'Missing time'}</p>
+                    ${reminder.googleId ? '<p class="reminder-source">From Google Calendar</p>' : ''}
                 </div>
-                <button class="flag-btn" data-id="${reminder._id}">Flag as Important</button>
-                <button class="complete-btn" data-id="${reminder._id}">Mark Complete</button>
-            </div>`
-        ).join('') + reminders.map(reminder =>
-            `<div class="reminder-item"> 
+                <button class="flag-btn" data-id="${reminder._id}"${googleIdAttr}>Flag as Important</button>
+                <button class="complete-btn" data-id="${reminder._id}"${googleIdAttr}>Mark Complete</button>
+            </div>`;
+        }).join('') + reminders.map(reminder => {
+            // Add Google Calendar specific class and data attribute if applicable
+            const googleClass = reminder.googleId ? ' google-calendar-event' : '';
+            const googleIdAttr = reminder.googleId ? ` data-google-id="${reminder.googleId}"` : '';
+            
+            return `<div class="reminder-item${googleClass}"> 
                 <div class="reminder-content">
                     <p class="reminder-title">${reminder.title || 'Missing title'}</p>
                     <p class="reminder-title">${reminder.location || ''}</p>
@@ -91,11 +100,12 @@ const getAllReminders = async (req, res) => {
                     <p class="reminder-flagged" data-flagged="${reminder.flagged}"></p>
                     <p class="reminder-date">${dateToReadable(reminder.date) || 'Missing date'}</p>
                     <p class="reminder-time">${timeToTwelveSystem(reminder.time) || 'Missing time'}</p>
+                    ${reminder.googleId ? '<p class="reminder-source">From Google Calendar</p>' : ''}
                 </div>
-                <button class="flag-btn" data-id="${reminder._id}">Flag as Important</button>
-                <button class="complete-btn" data-id="${reminder._id}">Mark Complete</button>
-            </div>`
-        ).join('');
+                <button class="flag-btn" data-id="${reminder._id}"${googleIdAttr}>Flag as Important</button>
+                <button class="complete-btn" data-id="${reminder._id}"${googleIdAttr}>Mark Complete</button>
+            </div>`;
+            }).join('');
 
         const finalHTML = template.replace('{{REMINDERS}}', reminderHTML);
 
@@ -137,62 +147,58 @@ const createReminder = async (req, res) => {
     
 };
 
-
-
+// Mark reminder as complete
 // Mark reminder as complete
 const completeReminder = async (req, res) => {
     const reminderId = req.body.reminderId;
+    const deleteFromGoogle = req.body.deleteFromGoogle === 'true'; // Flag to indicate if we should try to delete from Google
+    const isAjaxRequest = req.xhr || req.headers.accept?.includes('application/json');
     
     try {
-      // First, get the user and find the reminder
-      const user = await User.findById(req.session.userId);
-      
-      if (!user) {
-        console.log('User not found');
-        return res.redirect('/tasks');
-      }
-      
-      // Find the reminder
-      const reminderIndex = user.reminders.findIndex(r => 
-        r._id.toString() === reminderId
-      );
-      
-      if (reminderIndex === -1) {
-        console.log('Reminder not found');
-        return res.redirect('/tasks');
-      }
-      
-      const reminder = user.reminders[reminderIndex];
-      
-      // Check if the reminder came from Google
-      if (reminder.googleId) {
-        console.log(`Processing Google Calendar reminder completion: ${reminder.googleId}`);
+        // First, check if the reminder has a Google ID (if we need to delete it from Google later)
+        let googleId = null;
+        if (deleteFromGoogle) {
+            const user = await User.findById(req.session.userId);
+            if (user) {
+                const reminder = user.reminders.id(reminderId);
+                if (reminder && reminder.googleId) {
+                    googleId = reminder.googleId;
+                }
+            }
+        }
         
-        // Get Google auth token from client (in a real implementation)
-        // For now, we'll just remove it locally
-        
-        // Remove the reminder
-        user.reminders.splice(reminderIndex, 1);
-        await user.save();
-        
-        console.log(`Removed Google Calendar reminder: ${reminder.title}`);
-        
-        // Note: In a full implementation, you would also delete it from Google
-        // using the Google Calendar API
-      } else {
-        // For non-Google reminders, just remove them as before
+        // Now remove the reminder from our database
         await User.findOneAndUpdate(
-          { _id: req.session.userId },
-          { $pull: { reminders: { _id: reminderId } } }
+            { _id: req.session.userId },
+            { $pull: { reminders: { _id: reminderId } } }
         );
-      }
-      
-      return res.redirect('/tasks');
+        
+        // If it's an AJAX request, return JSON
+        if (isAjaxRequest) {
+            return res.json({
+                success: true, 
+                message: 'Reminder marked as complete',
+                googleId: googleId
+            });
+        } else {
+            // For regular form submits, redirect back to tasks page
+            return res.redirect('/tasks');
+        }
     } catch (error) {
-      console.log('Error removing reminder:', error);
-      return res.redirect('/tasks');
+        console.log('Error removing reminder:', error);
+        
+        // Handle error based on request type
+        if (isAjaxRequest) {
+            return res.status(500).json({ 
+                success: false, 
+                message: 'Error removing reminder' 
+            });
+        } else {
+            // For regular form submits, redirect back to tasks page with error
+            return res.redirect('/tasks?error=failed-to-complete');
+        }
     }
-  };
+};
 
 const flagReminder = async (req, res) => {
     console.log('reminderID:', req.body.reminderId);
@@ -222,33 +228,33 @@ const flagReminder = async (req, res) => {
 // Fetch user reminders
 async function fetch(userId) {
     try {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      
-      const nextWeek = new Date(today);
-      nextWeek.setDate(today.getDate() + 6);
-      nextWeek.setHours(23, 59, 59, 999);
-      
-      const user = await User.findById(userId, {reminders: 1});
-      
-      if (!user || !user.reminders) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        const nextWeek = new Date(today);
+        nextWeek.setDate(today.getDate() + 6);
+        nextWeek.setHours(23, 59, 59, 999);
+
+        const user = await User.findById(userId, {reminders: 1});
+
+        if (!user || !user.reminders) {
         return [];
-      }
-      
-      // Filter relevant reminders
-      const reminders = user.reminders.filter(reminder => {
+        }
+
+        // Filter relevant reminders
+        const reminders = user.reminders.filter(reminder => {
         const reminderDate = new Date(reminder.date);
         return reminderDate >= today && reminderDate <= nextWeek && reminder.flagged == false;
-      });
-      
-      // Sort reminders by date and time
-      reminders.sort((a, b) => {
+        });
+
+        // Sort reminders by date and time
+        reminders.sort((a, b) => {
         // First compare by date
         const dateA = new Date(a.date);
         const dateB = new Date(b.date);
         
         if (dateA.getTime() !== dateB.getTime()) {
-          return dateA - dateB;
+            return dateA - dateB;
         }
         
         // If same date, compare by time
@@ -256,49 +262,49 @@ async function fetch(userId) {
         const [hoursB, minutesB] = b.time.split(':').map(Number);
         
         if (hoursA !== hoursB) {
-          return hoursA - hoursB;
+            return hoursA - hoursB;
         }
         
         return minutesA - minutesB;
-      });
-      
-      console.log("Fetched and sorted reminders:", reminders.length);
-      return reminders;
+        });
+        
+        console.log("Fetched and sorted reminders:", reminders.length);
+        return reminders;
     } catch (error) {
-      console.error('Error fetching reminders:', error);
-      return [];
+        console.error('Error fetching reminders:', error);
+        return [];
     }
 }
 
 async function fetchImportant(userId) {
     try {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      
-      const nextWeek = new Date(today);
-      nextWeek.setDate(today.getDate() + 6);
-      nextWeek.setHours(23, 59, 59, 999);
-      
-      const user = await User.findById(userId, {reminders: 1});
-      
-      if (!user || !user.reminders) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        const nextWeek = new Date(today);
+        nextWeek.setDate(today.getDate() + 6);
+        nextWeek.setHours(23, 59, 59, 999);
+        
+        const user = await User.findById(userId, {reminders: 1});
+        
+        if (!user || !user.reminders) {
         return [];
-      }
-      
-      // Filter relevant reminders
-      const reminders = user.reminders.filter(reminder => {
+        }
+        
+        // Filter relevant reminders
+        const reminders = user.reminders.filter(reminder => {
         const reminderDate = new Date(reminder.date);
         return reminderDate >= today && reminderDate <= nextWeek && reminder.flagged == true;
-      });
-      
-      // Sort reminders by date and time
-      reminders.sort((a, b) => {
+        });
+        
+        // Sort reminders by date and time
+        reminders.sort((a, b) => {
         // First compare by date
         const dateA = new Date(a.date);
         const dateB = new Date(b.date);
         
         if (dateA.getTime() !== dateB.getTime()) {
-          return dateA - dateB;
+            return dateA - dateB;
         }
         
         // If same date, compare by time
@@ -306,16 +312,16 @@ async function fetchImportant(userId) {
         const [hoursB, minutesB] = b.time.split(':').map(Number);
         
         if (hoursA !== hoursB) {
-          return hoursA - hoursB;
+            return hoursA - hoursB;
         }
         
         return minutesA - minutesB;
-      });
-      console.log("Fetched and sorted reminders:", reminders.length);
-      return reminders;
+        });
+        console.log("Fetched and sorted reminders:", reminders.length);
+        return reminders;
     } catch (error) {
-      console.error('Error fetching reminders:', error);
-      return [];
+        console.error('Error fetching reminders:', error);
+        return [];
     }
 }
 
@@ -341,36 +347,36 @@ async function updateUserReminders(userId) {
 // Save reminder to user
 async function saveReminderToUser(title, description, time, date, userId, flag, location) {
     try {
-      console.log('Saving reminder with date input:', date);
+        console.log('Saving reminder with date input:', date);
 
-      // Store date in UTC to avoid timezone issues
-      const normalizedDate = normalizeDate(date);
+        // Store date in UTC to avoid timezone issues
+        const normalizedDate = normalizeDate(date);
 
-      console.log("Saving reminder with normalized date:", normalizedDate.toISOString());
-      console.log("Local date representation:", normalizedDate.toLocaleString());
+        console.log("Saving reminder with normalized date:", normalizedDate.toISOString());
+        console.log("Local date representation:", normalizedDate.toLocaleString());
 
-      // Create reminder
-      const reminder = {
-        title: title,
-        flagged: flag,
-        description: description || "",
-        date: normalizedDate,
-        time: time,
-        isLocallyCreated: true, // Marks if it was created in AudioReminder and not Google
-        syncStatus: 'needs_push', // Shows it needs to be pushed to Google
-        location: location
-      };
+        // Create reminder
+        const reminder = {
+            title: title,
+            flagged: flag,
+            description: description || "",
+            date: normalizedDate,
+            time: time,
+            isLocallyCreated: true, // Marks if it was created in AudioReminder and not Google
+            syncStatus: 'needs_push', // Shows it needs to be pushed to Google
+            location: location
+        };
 
-      const user = await User.findById(userId);
-      if (!user) {
-        throw new Error("User not found");
-      }
+        const user = await User.findById(userId);
+        if (!user) {
+            throw new Error("User not found");
+        }
 
-      user.reminders.push(reminder);
-      await user.save();
+        user.reminders.push(reminder);
+        await user.save();
 
-      console.log("Successfully saved reminder:", reminder);
-      return true;
+        console.log("Successfully saved reminder:", reminder);
+        return true;
     } catch (error) {
         console.error("Failed to save reminder:", error);
         throw error;
