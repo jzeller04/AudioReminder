@@ -30,6 +30,13 @@
             {{REMINDERS}}
         </div>
         <script>
+            document.addEventListener('focusin', (event) => {
+    const text = event.target.innerText || event.target.getAttribute('aria-label');
+    if (text && !isSpeaking) {
+        speak(text);
+    }
+});
+
             // Global variable for speech recognition
             let isSpeaking = false;
             let recognition;

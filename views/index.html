@@ -45,7 +45,13 @@
             let isSpeaking = false;
             let recognition;
             let isRecognitionActive = false;
-        
+            document.addEventListener('focusin', (event) => {
+    const text = event.target.innerText || event.target.getAttribute('aria-label');
+    if (text && !isSpeaking) {
+        speak(text);
+    }
+});
+
             function speak(text) {
                 return new Promise((resolve) => {
                     const speechSpeed = parseFloat(sessionStorage.getItem('speechSpeed')) || 1;
