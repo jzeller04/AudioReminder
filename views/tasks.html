@@ -12,6 +12,8 @@
         </script>
         
         <script src="../js/settings.bundle.js"></script>
+        <script src="../js/google-calendar.js"></script>
+        <script src="../js/google-auth.js"></script>
     </head>
     <body>
         <header>
@@ -391,6 +393,12 @@
                             input.name = 'reminderId';
                             input.value = reminderId;
                             
+                            // Add this inside your click handler for debugging
+                            console.log('Button clicked with Google ID:', googleId);
+                            console.log('Is Google event:', isGoogleEvent);
+                            console.log('Is Google Auth available:', window.GoogleAuth?.isAuthenticated);
+                            console.log('Is Google Calendar available:', !!window.GoogleCalendar?.deleteEvent);
+
                             // Add input to form and submit
                             form.appendChild(input);
                             document.body.appendChild(form);
