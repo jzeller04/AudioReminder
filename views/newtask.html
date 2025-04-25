@@ -12,6 +12,8 @@
     </script>
     
     <script src="../js/settings.bundle.js"></script>
+    <script src="../js/google-auth.js"></script>
+    <script src="../js/google-calendar.js"></script>
 </head>
 <body>
     <header>
@@ -24,7 +26,6 @@
             <input type="text" id="title" name="title" placeholder="Title">
             <small id="charCount"> 0 / 30</small>
 
-       
             <div class="datetimeDiv">
                 <div class="dateDiv">
                     <label for="date" id="dateLabel">Date:</label>
@@ -68,6 +69,7 @@
                 });
             </script>
         </div>
+    </form>
 
         <div class="buttonDiv">
             <nav>
@@ -79,7 +81,6 @@
             <button type="button" class="readReminderBtn" onclick="readReminder()">Read Reminder</button>
             <button type="button" class="clearReminderBtn" onclick="clearReminder()">Clear Reminder</button>
         </div>
-    </form>
 
     <script>
         document.addEventListener('focusin', (event) => {
@@ -545,6 +546,115 @@
             
             // Start the prompt when the page loads
             enableTTS();
+        });
+
+        // Form submission handler for Google Calendar integration
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get the form element
+            const reminderForm = document.querySelector('form[action="/submit"]');
+
+            if (reminderForm) {
+                // Override the form submission
+                reminderForm.addEventListener('submit', async function(event) {
+                    // Prevent default form submission
+                    event.preventDefault();
+                    
+                    try {
+                        // First check if Google is connected
+                        const isGoogleConnected = window.GoogleAuth?.isAuthenticated && window.GoogleCalendar?.createEvent;
+                        
+                        // Get form data
+                        const formData = new FormData(this);
+                        const reminderData = {
+                            title: formData.get('title'),
+                            description: formData.get('memo') || "",
+                            date: formData.get('date'),
+                            time: formData.get('time'),
+                            location: formData.get('location') || ""
+                        };
+                        
+                        // Provide audio feedback
+                        if (typeof speak === 'function') {
+                            if (isGoogleConnected) {
+                                speak("Creating reminder and adding to Google Calendar...");
+                            } else {
+                                speak("Creating reminder...");
+                            }
+                        }
+                        
+                        // Submit the form data via fetch
+                        const response = await fetch('/submit', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(reminderData)
+                        });
+                        
+                        if (!response.ok) {
+                            throw new Error(`Server responded with status: ${response.status}`);
+                        }
+                        
+                        const result = await response.json();
+                        console.log('Reminder created:', result);
+                        
+                        // If connected to Google, also create in Google Calendar
+                        if (isGoogleConnected && result.reminderId) {
+                            try {
+                                console.log('Creating event in Google Calendar', reminderData);
+                                const createResult = await window.GoogleCalendar.createEvent(reminderData);
+                                
+                                if (createResult.success) {
+                                    console.log('Added to Google Calendar:', createResult);
+                                    
+                                    // Update the reminder with Google ID
+                                    await fetch('/api/update-reminder-google-id', {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json'
+                                        },
+                                        body: JSON.stringify({
+                                            reminderId: result.reminderId,
+                                            googleId: createResult.eventId,
+                                            syncStatus: 'synced'
+                                        })
+                                    });
+                                    
+                                    if (typeof speak === 'function') {
+                                        speak("Reminder created and added to Google Calendar.");
+                                    }
+                                } else {
+                                    console.warn('Failed to add to Google Calendar:', createResult.error);
+                                    if (typeof speak === 'function') {
+                                        speak("Reminder created, but could not add to Google Calendar.");
+                                    }
+                                }
+                            } catch (googleError) {
+                                console.error('Google Calendar error:', googleError);
+                                if (typeof speak === 'function') {
+                                    speak("Reminder created, but there was an error with Google Calendar.");
+                                }
+                            }
+                        } else {
+                            // Just local reminder created
+                            if (typeof speak === 'function') {
+                                speak("Reminder created successfully.");
+                            }
+                        }
+                        
+                        // Redirect after a short delay
+                        setTimeout(() => {
+                            window.location.href = '/tasks';
+                        }, 2000);
+                        
+                    } catch (error) {
+                        console.error('Error creating reminder:', error);
+                        if (typeof speak === 'function') {
+                            speak("Error creating reminder. Please try again.");
+                        }
+                    }
+                });
+            }
         });
     </script>
 </body>
