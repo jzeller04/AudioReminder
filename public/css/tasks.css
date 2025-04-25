@@ -60,8 +60,9 @@ h1 {
   width: fit-content;
 }
 
-.complete-btn:hover, .complete-btn:focus {
+.complete-btn:hover, .complete-btn:focus, .flag-btn:hover, .flag-btn:focus {
   cursor: pointer;
+  font-weight: bold;
 }
 
 .complete-btn:active {
@@ -123,6 +124,13 @@ hr {
     color: var(--primary-btn);
   }
 
+  & #newtaskButton:focus, & #homeButton:focus, & #readRemindersButton:focus, & #stopTTSButton:focus {
+    background-color: var(--bg-color);
+    border: 10px solid var(--primary-btn);
+    color: var(--primary-btn);
+    outline: none;
+  }
+
   & .reminder-item {
     border:3px solid var(--heading-color);
     background-color: var(--text-color);
@@ -136,9 +144,10 @@ hr {
   }
 
   & .complete-btn:hover, & .complete-btn:focus {
-    background-color: var(--bg-color);
-    border: 6px solid var(--heading-color);
+    background-color: var(--text-color);
+    border: 10px solid var(--heading-color);
     color: var(--heading-color);
+    outline: none;
   }
 
   & .complete-btn:active {
@@ -161,10 +170,16 @@ hr {
 
   & .flag-btn:hover{
     background-color: var(--bg-color);
+    border: 6px solid var(--primary-btn);
     color: var(--primary-btn);
   }
 
-  
+  & .flag-btn:focus{
+    background-color: var(--bg-color);
+    border: 10px solid var(--primary-btn);
+    color: var(--primary-btn);
+    outline: none;
+  }
 }
 
 [data-theme="high-contrast"]{
@@ -197,6 +212,13 @@ hr {
     color: var(--primary-btn);
   }
 
+  & #newtaskButton:focus, & #homeButton:focus, & #readRemindersButton:focus, & #stopTTSButton:focus {
+    background-color: var(--bg-color);
+    border: 10px solid var(--primary-btn);
+    color: var(--primary-btn);
+    outline: none;
+  }
+
   & .reminder-item {
     border:3px solid var(--heading-color);
     background-color: var(--text-color);
@@ -210,9 +232,10 @@ hr {
   }
 
   & .complete-btn:hover, & .complete-btn:focus {
-    background-color: var(--bg-color);
-    border: 6px solid var(--heading-color);
+    background-color: var(--text-color);
+    border: 10px solid var(--heading-color);
     color: var(--heading-color);
+    outline: none;
   }
 
   & .complete-btn:active {
@@ -235,6 +258,14 @@ hr {
 
   & .flag-btn:hover{
     background-color: var(--bg-color);
+    border: 6px solid var(--primary-btn);
     color: var(--primary-btn);
+  }
+
+  & .flag-btn:focus{
+    background-color: var(--bg-color);
+    border: 10px solid var(--primary-btn);
+    color: var(--primary-btn);
+    outline: none;
   }
 }
