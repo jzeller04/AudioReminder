@@ -355,7 +355,7 @@ const syncGoogleEvents = async (req, res) => {
     console.error('Error syncing Google Calendar events:', error);
     return res.status(500).json({ error: 'Server error syncing events' });
   }
-};
+}
 
 
 const pushRemindersToGoogle = async (req, res) => {
@@ -471,7 +471,7 @@ const pushRemindersToGoogle = async (req, res) => {
     console.error('Error pushing reminders to Google Calendar:', error);
     return res.status(500).json({ error: 'Server error pushing reminders' });
   }
-};
+}
 
 //  ######################## Will be used soon ########################
 // eslint-disable-next-line no-unused-vars
@@ -514,4 +514,45 @@ function formatDateTimeForGoogle(date, time, addMinutes = 0) {
   return dateObj.toISOString();
 }
 
-export { syncGoogleEvents, pushRemindersToGoogle };
+const removeGoogleReminders = async (req, res) => {
+  try {
+    const userId = req.session.userId;
+    
+    if (!userId) {
+      return res.status(401).json({ error: 'Not authenticated' });
+    }
+    
+    const user = await User.findById(userId);
+    
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    // Count reminders before filtering
+    const totalReminders = user.reminders.length;
+    
+    // Filter out any reminders that were created by Google (not locally created)
+    // or have a googleId
+    user.reminders = user.reminders.filter(reminder => 
+      reminder.isLocallyCreated !== false && !reminder.googleId
+    );
+    
+    // Count how many were removed
+    const removedCount = totalReminders - user.reminders.length;
+    
+    // Save the updated user with filtered reminders
+    await user.save();
+    
+    console.log(`Removed ${removedCount} Google Calendar reminders for user ${userId}`);
+    
+    return res.status(200).json({
+      message: `Successfully removed ${removedCount} Google Calendar reminders`,
+      removed: removedCount
+    });
+  } catch (error) {
+    console.error('Error removing Google Calendar reminders:', error);
+    return res.status(500).json({ error: 'Server error removing reminders' });
+  }
+}
+
+export { syncGoogleEvents, pushRemindersToGoogle, removeGoogleReminders };
