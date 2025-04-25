@@ -16,19 +16,31 @@ To build this program you,
 ![Downloading Zip](/public/images/zip.png "Downloading Zip file")
 
 2. In a linux terminal, navigate to the location of the project using the 'cd' command
-![cd AudioReminder](/public/images/cdCommand.png "cd")
 
 3. Type 'npm install' into the terminal
-![npm install](/public/images/npmInstall.png "npm")
 
 4. Type 'node app' into the terminal
-![node app](/public/images/nodeApp.png "node app")
 
 5. On a browser, navigate to http://localhost:3000
-![localhost](/public/images/localhost.png "localhost")
 
 6. Log in / sign up using an email address
-![login](/public/images/login.png "login")
+
+# Features
+## Navigate using voice commands
+- Voice commands can be used to change pages and use all features, including reading out reminders for the week
+- Push-to-talk mode allows for control of using voice commands by using the space bar to indicate when speaking
+- Voice commands can be turned off entirely for use in quiet settings, such as lectures or meetings
+- Control speed and volume of voice instructions
+## Connect with Google Calendar
+- Add and delete events to/from Google Calendar
+- Handle conflicts and duplicate events
+- Disconnect Google to delete all events imported from Google Calendar
+## Creating & deleting events and priority
+- Create events with a title, date & time, location, and description
+- Events are able to be created directly from the calendar page, choose a day to schedule an event on that day
+- Flag events as important to show them first in your tasks list
+- The nearest important event is shown on home page
+- Easily delete or complete events from tasks list
 
 # Credits
 
@@ -46,22 +58,18 @@ Cristian Hernandez
 - Frontend
 - TTS/STT
 - Voice Command UX
-<br>
 
 Grace Wilson
 - Frontend
 - HTML Elements
-<br>
 
 Macie Maranto
 - Frontend
 - CSS/Stylizing
-<br>
 
 Mario Onofrio
 - CI/CD
 - Database
-<br>
 
 
 # Troubleshooting:
