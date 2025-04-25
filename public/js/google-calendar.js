@@ -171,6 +171,83 @@ const GoogleCalendar = {
     }
   },
 
+  createEvent: async function(reminder) {
+    console.log(`Attempting to create Google Calendar event for reminder:`, reminder);
+    
+    // Check if user is authenticated
+    if (!window.GoogleAuth || !window.GoogleAuth.isAuthenticated) {
+      console.error('User not authenticated with Google');
+      return { success: false, error: 'Not authenticated with Google' };
+    }
+    
+    try {
+      // Make sure Calendar API is initialized
+      if (!gapi.client.calendar) {
+        await this.initCalendarAPI();
+      }
+      
+      // Format date and time for Google Calendar
+      const reminderDate = new Date(reminder.date);
+      let startDateTime, endDateTime;
+      
+      if (reminder.time) {
+        // If time is provided, create a specific time event
+        const [hours, minutes] = reminder.time.split(':').map(Number);
+        reminderDate.setHours(hours, minutes, 0, 0);
+        
+        // End time is start time + 1 hour by default
+        const endDate = new Date(reminderDate.getTime());
+        endDate.setHours(endDate.getHours() + 1);
+        
+        startDateTime = reminderDate.toISOString();
+        endDateTime = endDate.toISOString();
+      } else {
+        // If no time is provided, create an all-day event
+        startDateTime = reminderDate.toISOString().split('T')[0]; // Just the date part
+        
+        // End date is the next day for all-day events in Google Calendar
+        const endDate = new Date(reminderDate.getTime());
+        endDate.setDate(endDate.getDate() + 1);
+        endDateTime = endDate.toISOString().split('T')[0]; // Just the date part
+      }
+      
+      // Create event resource
+      const event = {
+        summary: reminder.title,
+        description: reminder.description || '',
+        start: reminder.time ? { dateTime: startDateTime } : { date: startDateTime },
+        end: reminder.time ? { dateTime: endDateTime } : { date: endDateTime },
+        reminders: {
+          useDefault: true
+        }
+      };
+      
+      // Add location if available
+      if (reminder.location) {
+        event.location = reminder.location;
+      }
+      
+      // Call Google Calendar API to create the event
+      const response = await gapi.client.calendar.events.insert({
+        calendarId: 'primary',
+        resource: event
+      });
+      
+      console.log('Successfully created event in Google Calendar', response);
+      return { 
+        success: true, 
+        eventId: response.result.id,
+        event: response.result
+      };
+    } catch (error) {
+      console.error('Error creating event in Google Calendar:', error);
+      return { 
+        success: false, 
+        error: error.result?.error?.message || 'Failed to create event in Google Calendar'
+      };
+    }
+  },
+
   // Sync events with backend
   syncEventsWithBackend: async function(events) {
     if (!events || events.length === 0) {
@@ -214,6 +291,86 @@ const GoogleCalendar = {
       console.error('Error syncing events with backend:', error);
       // Don't throw the error further, just report it
       return { error: error.message };
+    }
+  },
+
+  pushExistingReminders: async function() {
+    console.log('Pushing existing reminders to Google Calendar');
+    
+    if (!window.GoogleAuth?.isAuthenticated) {
+      console.error('User not authenticated with Google');
+      return { success: false, error: 'Not authenticated with Google' };
+    }
+    
+    try {
+      // Fetch all reminders that need to be pushed to Google
+      const response = await fetch('/api/get-reminders-to-push');
+      if (!response.ok) {
+        throw new Error(`Failed to fetch reminders: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      const reminders = data.reminders || [];
+      
+      console.log(`Found ${reminders.length} reminders to push to Google`);
+      
+      if (reminders.length === 0) {
+        return { success: true, pushed: 0, failed: 0 };
+      }
+      
+      // Push each reminder to Google Calendar
+      const results = { pushed: 0, failed: 0, details: [] };
+      
+      for (const reminder of reminders) {
+        try {
+          const createResult = await this.createEvent(reminder);
+          
+          if (createResult.success) {
+            // Update the reminder with the new Google ID
+            await fetch('/api/update-reminder-google-id', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                reminderId: reminder._id,
+                googleId: createResult.eventId,
+                syncStatus: 'synced'
+              })
+            });
+            
+            results.pushed++;
+            results.details.push({
+              reminder: reminder.title,
+              status: 'success',
+              googleId: createResult.eventId
+            });
+          } else {
+            results.failed++;
+            results.details.push({
+              reminder: reminder.title,
+              status: 'failed',
+              error: createResult.error
+            });
+          }
+        } catch (error) {
+          results.failed++;
+          results.details.push({
+            reminder: reminder.title,
+            status: 'error',
+            error: error.message
+          });
+        }
+      }
+      
+      results.success = true;
+      return results;
+    } catch (error) {
+      console.error('Error pushing reminders to Google Calendar:', error);
+      return { 
+        success: false, 
+        error: error.message || 'Failed to push reminders to Google Calendar'
+      };
     }
   },
 
@@ -271,6 +428,7 @@ const GoogleCalendar = {
     }
   }
 }
+
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {

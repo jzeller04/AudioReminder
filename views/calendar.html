@@ -409,49 +409,79 @@
         
         // Set up Google Calendar sync button
         const syncButton = document.getElementById('sync-calendar-btn');
-        if (syncButton) {
-            syncButton.addEventListener('click', async function() {
-                // Update button text to show syncing status
-                const originalButtonText = syncButton.textContent;
-                syncButton.textContent = 'Syncing...';
-                syncButton.disabled = true;
-                
-                try {
-                    // Step 1: Push local reminders to Google
-                    const pushResponse = await fetch('/api/push-to-google', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        }
-                    });
-                    
-                    const pushResult = await pushResponse.json();
+        syncButton.addEventListener('click', async function() {
+            // Update button text to show syncing status
+            const originalButtonText = syncButton.textContent;
+            syncButton.textContent = 'Syncing...';
+            syncButton.disabled = true;
+            
+            // Update sync status
+            const syncStatus = document.getElementById('sync-status');
+            if (syncStatus) {
+                syncStatus.textContent = 'Syncing reminders with Google Calendar...';
+                syncStatus.className = 'sync-status syncing';
+            }
+            
+            // Provide audio feedback
+            if (typeof speak === 'function') {
+                speak("Syncing with Google Calendar...");
+            }
+            
+            try {
+                // Step 1: Push existing reminders to Google Calendar
+                if (window.GoogleCalendar && window.GoogleCalendar.pushExistingReminders) {
+                    const pushResult = await window.GoogleCalendar.pushExistingReminders();
                     console.log('Push result:', pushResult);
                     
-                    // Step 2: Pull events from Google (existing functionality)
-                    if (window.GoogleCalendar) {
-                        await GoogleCalendar.fetchEvents();
-                        
-                        // Update feedback for user
-                        speak('Calendar synchronized. ' + pushResult.message);
-                        
-                        // Reset button
-                        syncButton.textContent = originalButtonText;
-                        syncButton.disabled = false;
-                    } else {
-                        console.error('Google Calendar not initialized');
-                        speak('Error syncing calendar');
-                        syncButton.textContent = originalButtonText;
-                        syncButton.disabled = false;
+                    // Provide audio feedback
+                    if (typeof speak === 'function') {
+                        if (pushResult.success) {
+                            const message = `Pushed ${pushResult.pushed} reminders to Google Calendar` + 
+                                            (pushResult.failed > 0 ? `, ${pushResult.failed} failed` : '');
+                            speak(message);
+                        } else {
+                            speak("There was an issue syncing reminders to Google Calendar.");
+                        }
                     }
-                } catch (error) {
-                    console.error('Error during two-way sync:', error);
-                    speak('Error syncing calendar');
-                    syncButton.textContent = originalButtonText;
-                    syncButton.disabled = false;
                 }
-            });
-        }
+                
+                // Step 2: Pull events from Google Calendar
+                if (window.GoogleCalendar) {
+                    await GoogleCalendar.fetchEvents();
+                }
+                
+                // Reset button and show success
+                syncButton.textContent = originalButtonText;
+                syncButton.disabled = false;
+                
+                if (syncStatus) {
+                    syncStatus.textContent = 'Calendar synchronized successfully!';
+                    syncStatus.className = 'sync-status success';
+                    
+                    // Clear status after 5 seconds
+                    setTimeout(() => {
+                        syncStatus.textContent = '';
+                        syncStatus.className = 'sync-status';
+                    }, 5000);
+                }
+            } catch (error) {
+                console.error('Error during sync:', error);
+                
+                // Reset button and show error
+                syncButton.textContent = originalButtonText;
+                syncButton.disabled = false;
+                
+                if (syncStatus) {
+                    syncStatus.textContent = 'Error syncing calendar. Please try again.';
+                    syncStatus.className = 'sync-status error';
+                }
+                
+                // Provide audio feedback
+                if (typeof speak === 'function') {
+                    speak("Error syncing calendar. Please try again.");
+                }
+            }
+        });
         
         // Add Google Calendar commands to voice recognition
         const originalHandleVoiceCommand = window.handleVoiceCommand;
