@@ -238,3 +238,27 @@ hr {
     color: var(--primary-btn);
   }
 }
+
+/* Flagged reminder styling */
+.flagged-reminder {
+  border-left: 6px solid red !important;
+  background-color: rgba(255, 193, 7, 0.1);
+}
+
+.flag-indicator {
+  color: red;
+  font-weight: bold;
+  margin-top: 5px;
+  display: flex;
+  align-items: center;
+}
+
+/* For high contrast theme */
+[data-theme="high-contrast"] .flagged-reminder {
+  border-left: 6px solid #ffffff !important;
+  background-color: #333333;
+}
+
+[data-theme="high-contrast"] .flag-indicator {
+  color: #ffffff;
+}

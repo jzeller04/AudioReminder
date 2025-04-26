@@ -21,14 +21,17 @@ const getUpcomingReminder = async (req, res) => {
         let reminderHTML;
         if (userReminders.length > 0) {
             const reminder = userReminders[0];
+            const flaggedClass = reminder.flagged ? ' flagged-reminder' : '';
+            
             reminderHTML =
-                `<div class="reminder-item"> 
+                `<div class="reminder-item${flaggedClass}"> 
                     <div class="reminder-content">
                         <p class="reminder-title">${reminder.title || 'Missing title'}</p>
                         <p class="reminder-description">${reminder.description || ''}</p>
                         <p class="reminder-flagged">${reminder.flagged || ''}</p>
                         <p class="reminder-date">${dateToReadable(reminder.date) || 'Missing date'}</p>
                         <p class="reminder-time">${timeToTwelveSystem(reminder.time) || 'Missing time'}</p>
+                        ${reminder.flagged ? '<p class="flag-indicator">🚩 Important</p>' : ''}
                     </div>
                 </div>`;
         } else {
@@ -74,8 +77,10 @@ const getAllReminders = async (req, res) => {
             const googleClass = reminder.googleId && reminder.isLocallyCreated !== true ? ' google-calendar-event' : '';
             const googleIdAttr = reminder.googleId ? ` data-google-id="${reminder.googleId}"` : '';
             const isLocallyCreatedAttr = ` data-is-locally-created="${reminder.isLocallyCreated === true}"`;
+            // Add flagged class for styling
+            const flaggedClass = reminder.flagged ? ' flagged-reminder' : '';
             
-            return `<div class="reminder-item${googleClass}"> 
+            return `<div class="reminder-item${googleClass}${flaggedClass}"> 
                 <div class="reminder-content">
                     <p class="reminder-title">${reminder.title || 'Missing title'}</p>
                     <p class="reminder-title">${reminder.location || ''}</p>
@@ -84,17 +89,20 @@ const getAllReminders = async (req, res) => {
                     <p class="reminder-date">${dateToReadable(reminder.date) || 'Missing date'}</p>
                     <p class="reminder-time">${timeToTwelveSystem(reminder.time) || 'Missing time'}</p>
                     ${reminder.googleId && reminder.isLocallyCreated !== true ? '<p class="reminder-source">From Google Calendar</p>' : ''}
+                    ${reminder.flagged ? '<p class="flag-indicator">🚩 Important</p>' : ''}
                 </div>
-                <button class="flag-btn" data-id="${reminder._id}"${googleIdAttr}${isLocallyCreatedAttr}>Flag as Important</button>
+                <button class="flag-btn" data-id="${reminder._id}"${googleIdAttr}${isLocallyCreatedAttr}>${reminder.flagged ? 'Remove Flag' : 'Flag as Important'}</button>
                 <button class="complete-btn" data-id="${reminder._id}"${googleIdAttr}${isLocallyCreatedAttr}>Mark Complete</button>
             </div>`;
         }).join('') + reminders.map(reminder => {
-            // Only show the "From Google Calendar" label for reminders not created locally
+            // Same modifications for regular reminders
             const googleClass = reminder.googleId && reminder.isLocallyCreated !== true ? ' google-calendar-event' : '';
             const googleIdAttr = reminder.googleId ? ` data-google-id="${reminder.googleId}"` : '';
             const isLocallyCreatedAttr = ` data-is-locally-created="${reminder.isLocallyCreated === true}"`;
+            // Add flagged class for styling
+            const flaggedClass = reminder.flagged ? ' flagged-reminder' : '';
             
-            return `<div class="reminder-item${googleClass}"> 
+            return `<div class="reminder-item${googleClass}${flaggedClass}"> 
                 <div class="reminder-content">
                     <p class="reminder-title">${reminder.title || 'Missing title'}</p>
                     <p class="reminder-title">${reminder.location || ''}</p>
@@ -103,8 +111,9 @@ const getAllReminders = async (req, res) => {
                     <p class="reminder-date">${dateToReadable(reminder.date) || 'Missing date'}</p>
                     <p class="reminder-time">${timeToTwelveSystem(reminder.time) || 'Missing time'}</p>
                     ${reminder.googleId && reminder.isLocallyCreated !== true ? '<p class="reminder-source">From Google Calendar</p>' : ''}
+                    ${reminder.flagged ? '<p class="flag-indicator">⭐ Important</p>' : ''}
                 </div>
-                <button class="flag-btn" data-id="${reminder._id}"${googleIdAttr}${isLocallyCreatedAttr}>Flag as Important</button>
+                <button class="flag-btn" data-id="${reminder._id}"${googleIdAttr}${isLocallyCreatedAttr}>${reminder.flagged ? 'Remove Flag' : 'Flag as Important'}</button>
                 <button class="complete-btn" data-id="${reminder._id}"${googleIdAttr}${isLocallyCreatedAttr}>Mark Complete</button>
             </div>`;
         }).join('');
@@ -137,12 +146,33 @@ const createReminder = async (req, res) => {
             // Save the reminder
             const reminder = await saveReminderToUser(title, description || "", time, date, req.session.userId, flag, location);
             
+            // Check if we're connected to Google - this is the missing part!
+            const isGoogleConnected = req.body.googleConnected === true;
+            
+            // If connected to Google, trigger synchronization
+            if (isGoogleConnected && req.body.googleAuthToken) {
+                try {
+                    // Create the event in Google
+                    await pushReminderToGoogle(reminder, req.body.googleAuthToken);
+                    
+                    // Update the reminder with successful sync status
+                    reminder.syncStatus = 'synced';
+                    await reminder.save();
+                } catch (googleError) {
+                    console.error('Error pushing to Google:', googleError);
+                    // If Google push fails, mark as needs_push for future sync
+                    reminder.syncStatus = 'needs_push';
+                    await reminder.save();
+                }
+            }
+            
             // For JSON requests, return JSON response with reminder ID
             if (isJson) {
                 return res.json({
                     success: true,
                     message: 'Reminder created successfully',
-                    reminderId: reminder._id
+                    reminderId: reminder._id,
+                    googleSynced: reminder.syncStatus === 'synced'
                 });
             } else {
                 // For traditional form submissions
@@ -175,6 +205,58 @@ const createReminder = async (req, res) => {
         }
     }
 };
+
+// Helper function to push a reminder to Google
+async function pushReminderToGoogle(reminder, authToken) {
+    // Format event for Google Calendar
+    const event = {
+        summary: reminder.title,
+        description: reminder.description || '',
+        start: {
+            dateTime: formatDateTimeForGoogle(reminder.date, reminder.time),
+            timeZone: 'UTC'
+        },
+        end: {
+            dateTime: formatDateTimeForGoogle(reminder.date, reminder.time, 60), // Add 60 minutes by default
+            timeZone: 'UTC'
+        },
+        // Add extended properties to track origin
+        extendedProperties: {
+            private: {
+                audioReminderOrigin: "true",
+                audioReminderVersion: new Date().toISOString(),
+                audioReminderId: reminder._id.toString()
+            }
+        }
+    };
+    
+    // Add location if available
+    if (reminder.location) {
+        event.location = reminder.location;
+    }
+    
+    // Create new event in Google Calendar
+    const response = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${authToken}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(event)
+    });
+    
+    if (!response.ok) {
+        throw new Error(`API request failed with status ${response.status}`);
+    }
+    
+    const responseData = await response.json();
+    
+    // Update reminder with Google ID
+    reminder.googleId = responseData.id;
+    
+    return responseData;
+}
+
 // Get reminders that need to be pushed to Google
 const getRemindersForGoogleSync = async (req, res) => {
     try {

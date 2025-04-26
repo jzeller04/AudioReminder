@@ -8,6 +8,17 @@ const Calendar = {
     init: function() {
         console.log('Calendar module initialized');
     
+        // Check if we need to refresh the calendar after Google disconnection
+        const needsRefresh = localStorage.getItem('refreshCalendarOnNextLoad') === 'true';
+        if (needsRefresh) {
+            // Clear the flag
+            localStorage.removeItem('refreshCalendarOnNextLoad');
+            
+            // Reload the page to get fresh data from the server
+            window.location.reload();
+            return;
+        }
+        
         // Load from server
         this.loadCalendarEvents();
     
@@ -22,6 +33,7 @@ const Calendar = {
             });
         }
     },
+    
 
     // Initializes calendar UI and attach task listeners
     initCalendarUI: function() {
