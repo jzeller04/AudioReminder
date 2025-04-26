@@ -349,7 +349,7 @@ const GoogleCalendar = {
       
       // Refresh the calendar display
       if (window.Calendar) {
-        Calendar.renderCalendar();
+        window.Calendar.renderCalendar();
       }
       
       return {

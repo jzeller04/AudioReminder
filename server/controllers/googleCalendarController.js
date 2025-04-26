@@ -648,4 +648,10 @@ const removeGoogleReminders = async (req, res) => {
 }
 
 
-export { syncGoogleEvents, pushRemindersToGoogle, removeGoogleReminders };
+export { 
+  syncGoogleEvents, 
+  pushRemindersToGoogle, 
+  removeGoogleReminders,
+  createExtendedProperties,
+  extractExtendedProperties
+};

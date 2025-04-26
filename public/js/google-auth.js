@@ -287,10 +287,9 @@ const GoogleAuth = {
     // Get user info
     await this.fetchUserInfo();
     
-    // NEW CODE: Perform an immediate two-way sync if on the calendar page
     if (window.location.pathname.includes('/calendar') && 
-        window.GoogleCalendar && 
-        typeof GoogleCalendar.syncCalendar === 'function') {
+        window.GoogleCalendar && // Check if GoogleCalendar exists in window
+        typeof window.GoogleCalendar.syncCalendar === 'function') {
       try {
         // Show syncing message
         const syncStatus = document.getElementById('sync-status');
@@ -299,21 +298,21 @@ const GoogleAuth = {
           syncStatus.className = 'sync-status syncing';
         }
         
-        // Provide audio feedback
-        if (typeof speak === 'function') {
-          speak("Connected to Google Calendar. Starting initial synchronization...");
-        }
-        
         // Call the sync function
-        await GoogleCalendar.syncCalendar();
+        await window.GoogleCalendar.syncCalendar(); // Use window.GoogleCalendar instead
         
         // Show success message
         if (syncStatus) {
           syncStatus.textContent = 'Initial sync completed successfully!';
           syncStatus.className = 'sync-status success';
+  
+          // Only call speak if it exists in window
+          if (typeof window.speak === 'function') {
+            window.speak('Google Calendar synchronized successfully');
+          }
           
           // Clear status after 5 seconds
-          setTimeout(() => {
+          window.setTimeout(() => {
             syncStatus.textContent = '';
             syncStatus.className = 'sync-status';
           }, 5000);
