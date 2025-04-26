@@ -85,8 +85,8 @@ const getAllReminders = async (req, res) => {
                     <p class="reminder-time">${timeToTwelveSystem(reminder.time) || 'Missing time'}</p>
                     ${reminder.googleId && reminder.isLocallyCreated !== true ? '<p class="reminder-source">From Google Calendar</p>' : ''}
                 </div>
-                <button class="flag-btn" data-id="${reminder._id}"${googleIdAttr}${isLocallyCreatedAttr}>Flag as Important</button>
-                <button class="complete-btn" data-id="${reminder._id}"${googleIdAttr}${isLocallyCreatedAttr}>Mark Complete</button>
+                <button class="flag-btn" data-id="${reminder._id}"${googleIdAttr}${isLocallyCreatedAttr}>Flag</button>
+                <button class="complete-btn" data-id="${reminder._id}"${googleIdAttr}${isLocallyCreatedAttr}>Mark</button>
             </div>`;
         }).join('') + reminders.map(reminder => {
             // Only show the "From Google Calendar" label for reminders not created locally
@@ -104,8 +104,8 @@ const getAllReminders = async (req, res) => {
                     <p class="reminder-time">${timeToTwelveSystem(reminder.time) || 'Missing time'}</p>
                     ${reminder.googleId && reminder.isLocallyCreated !== true ? '<p class="reminder-source">From Google Calendar</p>' : ''}
                 </div>
-                <button class="flag-btn" data-id="${reminder._id}"${googleIdAttr}${isLocallyCreatedAttr}>Flag as Important</button>
-                <button class="complete-btn" data-id="${reminder._id}"${googleIdAttr}${isLocallyCreatedAttr}>Mark Complete</button>
+                <button class="flag-btn" data-id="${reminder._id}"${googleIdAttr}${isLocallyCreatedAttr}>Flag</button>
+                <button class="complete-btn" data-id="${reminder._id}"${googleIdAttr}${isLocallyCreatedAttr}>Mark</button>
             </div>`;
         }).join('');
 
