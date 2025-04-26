@@ -22,7 +22,9 @@ h1 {
   font-weight: bold;
   height: 120px;
   margin: 0px 30px;
+  margin-bottom: 6rem;
   min-width: fit-content;
+  padding: 8px 10px;
   text-align: center;
   transition-duration: 0.1s;
   width: 20%;
@@ -34,9 +36,9 @@ h1 {
 
 .reminder-item {
   padding: 15px;
-  margin: 0px 20px;
-  margin-top: 20px;
-  border-radius: 5px;
+  margin: 0px 40px;
+  margin-top: 30px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
 }
@@ -47,12 +49,10 @@ h1 {
 
 .complete-btn, .flag-btn {
   padding: 8px 10px;
-  font-size: 18px;
+  font-weight: bold;
   cursor: pointer;
-  margin-left: 15px;
-  align-self: flex-start;
   border-radius: 50px;
-  font-size: 2.5rem;
+  font-size: 2rem;
   height: 120px;
   margin: auto 30px;
   text-align: center;
@@ -75,13 +75,13 @@ hr {
 #text1 {
   font-size: 2.5rem;
   font-weight: bold;
-  margin: 20px;
+  margin: 20px 40px;
 }
 
 .reminder-content{
   font-size: 20px;
   font-weight: bold;
-  width: 60%;
+  width: 70%;
 }
 
 .reminder-title {
@@ -136,7 +136,7 @@ hr {
   }
 
   & .complete-btn:hover, & .complete-btn:focus {
-    background-color: var(--bg-color);
+    background-color: var(--text-color);
     border: 6px solid var(--heading-color);
     color: var(--heading-color);
   }
@@ -160,7 +160,7 @@ hr {
   }
 
   & .flag-btn:hover{
-    background-color: var(--bg-color);
+    background-color: var(--text-color);
     color: var(--primary-btn);
   }
 

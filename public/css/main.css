@@ -57,7 +57,9 @@ h1 {
 }
 
 #reminder_container {
+  align-items: center;
   border-radius: 50px;
+  display: flex;
   flex-grow: 3;
   height: 12rem;
   margin: 0px 2rem;
