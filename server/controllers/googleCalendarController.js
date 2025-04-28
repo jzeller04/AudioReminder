@@ -653,5 +653,6 @@ export {
   pushRemindersToGoogle, 
   removeGoogleReminders,
   createExtendedProperties,
-  extractExtendedProperties
+  extractExtendedProperties,
+  formatDateTimeForGoogle
 };
