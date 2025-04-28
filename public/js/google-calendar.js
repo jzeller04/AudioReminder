@@ -116,15 +116,24 @@ const GoogleCalendar = {
           creator: event.creator || null,
           organizer: event.organizer || null,
           eventType: event.eventType || null,
-          self: event.organizer?.self || false
+          self: event.organizer?.self || false,
+          // Include the extended properties
+          extendedProperties: event.extendedProperties || null
         };
       });
       
       console.log(`Fetched ${events.length} Google Calendar events`);
       this.events = events;
       
+      // Get the current auth token
+      const token = gapi.client.getToken();
+      
       // Sync with backend
-      await this.syncEventsWithBackend(events);
+      if (token && token.access_token) {
+        await this.syncEventsWithBackend(events, token.access_token);
+      } else {
+        console.warn('No auth token available for backend sync');
+      }
       
       // Notify that events have been synced
       window.dispatchEvent(new CustomEvent('googleCalendarEventsUpdated', {
@@ -211,7 +220,7 @@ const GoogleCalendar = {
         endDateTime = endDate.toISOString().split('T')[0]; // Just the date part
       }
       
-      // Create event resource
+      // Create event resource with extended properties to track origin
       const event = {
         summary: reminder.title,
         description: reminder.description || '',
@@ -219,6 +228,14 @@ const GoogleCalendar = {
         end: reminder.time ? { dateTime: endDateTime } : { date: endDateTime },
         reminders: {
           useDefault: true
+        },
+        // Add extended properties to track that this came from AudioReminder
+        extendedProperties: {
+          private: {
+            audioReminderOrigin: "true",
+            audioReminderVersion: new Date().toISOString(),
+            audioReminderId: reminder._id || ""
+          }
         }
       };
       
@@ -249,7 +266,7 @@ const GoogleCalendar = {
   },
 
   // Sync events with backend
-  syncEventsWithBackend: async function(events) {
+  syncEventsWithBackend: async function(events, authToken) {
     if (!events || events.length === 0) {
       console.log('No events to sync with backend');
       return;
@@ -265,7 +282,9 @@ const GoogleCalendar = {
         description: event.description || '',
         // Convert Date objects to ISO strings
         date: event.date instanceof Date ? event.date.toISOString() : event.date,
-        time: event.time || '00:00'
+        time: event.time || '00:00',
+        // Pass extended properties too
+        extendedProperties: event.extendedProperties
       }));
       
       console.log('Sample event being sent:', formattedEvents[0]);
@@ -275,7 +294,10 @@ const GoogleCalendar = {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ events: formattedEvents })  // Make sure events is wrapped in an object
+        body: JSON.stringify({ 
+          events: formattedEvents,
+          googleAuthToken: authToken
+        })
       });
       
       if (!response.ok) {
@@ -291,6 +313,53 @@ const GoogleCalendar = {
       console.error('Error syncing events with backend:', error);
       // Don't throw the error further, just report it
       return { error: error.message };
+    }
+  },
+
+  syncCalendar: async function() {
+    console.log('Performing two-way sync with Google Calendar...');
+    
+    try {
+      // Step 1: Get the Google auth token
+      const token = gapi.client.getToken();
+      if (!token || !token.access_token) {
+        throw new Error('No valid Google auth token available');
+      }
+      
+      // Step 2: Pull events from Google Calendar first
+      await this.fetchEvents();
+      
+      // Step 3: Push local reminders to Google
+      const pushResponse = await fetch('/api/push-to-google', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          googleAuthToken: token.access_token
+        })
+      });
+      
+      if (!pushResponse.ok) {
+        throw new Error(`Push request failed: ${pushResponse.status}`);
+      }
+      
+      const pushResult = await pushResponse.json();
+      console.log('Push result:', pushResult);
+      
+      // Refresh the calendar display
+      if (window.Calendar) {
+        window.Calendar.renderCalendar();
+      }
+      
+      return {
+        success: true,
+        pulled: this.events.length,
+        pushed: pushResult.pushed
+      };
+    } catch (error) {
+      console.error('Error during two-way sync:', error);
+      throw error;
     }
   },
 

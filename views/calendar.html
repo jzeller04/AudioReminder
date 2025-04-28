@@ -301,85 +301,91 @@
                     console.error('Google Auth not initialized');
                 }
             });
-            
+
             signOutButton.addEventListener('click', async function() {
                 if (window.GoogleAuth) {
                     try {
-                        // Show disconnecting status
-                        const statusDisplay = document.getElementById('google-auth-status');
-                        if (statusDisplay) {
-                            statusDisplay.textContent = 'Disconnecting from Google...';
-                        }
+                    // Show disconnecting status
+                    const statusDisplay = document.getElementById('google-auth-status');
+                    if (statusDisplay) {
+                        statusDisplay.textContent = 'Disconnecting from Google...';
+                    }
+                    
+                    // Create sync status message
+                    const syncStatus = document.getElementById('sync-status');
+                    if (syncStatus) {
+                        syncStatus.textContent = 'Removing Google Calendar reminders...';
+                        syncStatus.className = 'sync-status syncing';
+                    }
+                    
+                    // Provide audio feedback
+                    if (typeof speak === 'function') {
+                        speak("Disconnecting from Google and removing calendar reminders...");
+                    }
+                    
+                    // Disable the sign out button while processing
+                    signOutButton.disabled = true;
+                    
+                    // Get the auth token before signing out
+                    const token = gapi.client.getToken();
+                    
+                    if (token && token.access_token) {
+                        // Call API to remove Google reminders and delete AudioReminder events from Google
+                        const response = await fetch('/api/remove-google-reminders', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            googleAuthToken: token.access_token
+                        })
+                        });
                         
-                        // Create sync status message
-                        const syncStatus = document.getElementById('sync-status');
-                        if (syncStatus) {
-                            syncStatus.textContent = 'Removing Google Calendar reminders...';
-                            syncStatus.className = 'sync-status syncing';
-                        }
-                        
-                        // Provide audio feedback (using the speak function defined earlier in the file)
-                        if (typeof speak === 'function') {
-                            speak("Disconnecting from Google and removing calendar reminders...");
-                        }
-                        
-                        // Disable the sign out button while processing
-                        signOutButton.disabled = true;
-                        
-                        // Call sign out function
-                        await GoogleAuth.signOut();
-                        
-                        // Update sync status
-                        if (syncStatus) {
-                            syncStatus.textContent = 'Google Calendar disconnected and reminders removed.';
-                            syncStatus.className = 'sync-status success';
-                            
-                            // Clear status after 5 seconds
-                            setTimeout(() => {
-                                syncStatus.textContent = '';
-                                syncStatus.className = 'sync-status';
-                            }, 5000);
-                        }
-                        
-                        // Provide audio feedback of success
-                        if (typeof speak === 'function') {
-                            speak("Google Calendar disconnected. Any events from Google Calendar have been removed from your reminders.");
-                        }
-                        
-                        // Refresh the calendar display to remove Google events
-                        if (window.Calendar) {
-                            // Filter out any Google events from the current tasks list
-                            Calendar.tasks = Calendar.tasks.filter(task => !task.isGoogleEvent && !task.googleId);
-                            // Re-render the calendar
-                            Calendar.renderCalendar();
-                        }
+                        const result = await response.json();
+                        console.log('Removal result:', result);
+                    }
+                    
+                    // Call sign out function
+                    await GoogleAuth.signOut();
+                    
+                    // Update sync status
+                    if (syncStatus) {
+                        syncStatus.textContent = 'Google Calendar disconnected. Refreshing calendar...';
+                        syncStatus.className = 'sync-status success';
+                    }
+                    
+                    // Force a full page reload to get fresh data
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
+                    
                     } catch (error) {
-                        console.error('Error during sign-out:', error);
-                        
-                        // Update sync status with error
-                        const syncStatus = document.getElementById('sync-status');
-                        if (syncStatus) {
-                            syncStatus.textContent = 'Error disconnecting from Google.';
-                            syncStatus.className = 'sync-status error';
-                        }
-                        
-                        // Provide audio feedback of error
-                        if (typeof speak === 'function') {
-                            speak("Error disconnecting from Google. Please try again later.");
-                        }
+                    console.error('Error during sign-out:', error);
+                    
+                    // Update sync status with error
+                    const syncStatus = document.getElementById('sync-status');
+                    if (syncStatus) {
+                        syncStatus.textContent = 'Error disconnecting from Google.';
+                        syncStatus.className = 'sync-status error';
+                    }
+                    
+                    // Provide audio feedback of error
+                    if (typeof speak === 'function') {
+                        speak("Error disconnecting from Google. Please try again later.");
+                    }
                     } finally {
-                        // Re-enable the button
-                        signOutButton.disabled = false;
+                    // Re-enable the button
+                    signOutButton.disabled = false;
                     }
                 } else {
                     console.error('Google Auth not initialized');
                     
                     // Provide audio feedback of error
                     if (typeof speak === 'function') {
-                        speak("Google authentication is not available. Please try refreshing the page.");
+                    speak("Google authentication is not available. Please try refreshing the page.");
                     }
                 }
-            });
+                });
 
             // Update UI based on auth state
             function updateAuthUI() {
@@ -411,11 +417,33 @@
             
             // Listen for auth changes
             window.addEventListener('userLoggedIn', updateAuthUI);
-            window.addEventListener('userLoggedOut', updateAuthUI);
+            window.addEventListener('userLoggedOut', function() {
+                updateAuthUI();
+                
+                // Filter out any Google events from the current tasks list
+                if (window.Calendar) {
+                    Calendar.tasks = Calendar.tasks.filter(task => !task.isGoogleEvent && !task.googleId);
+                    Calendar.renderCalendar();
+                    
+                    // Show a message about successfully disconnecting
+                    const syncStatus = document.getElementById('sync-status');
+                    if (syncStatus) {
+                        syncStatus.textContent = 'Google Calendar disconnected.';
+                        syncStatus.className = 'sync-status success';
+                        
+                        // Clear status after 5 seconds
+                        setTimeout(() => {
+                            syncStatus.textContent = '';
+                            syncStatus.className = 'sync-status';
+                        }, 5000);
+                    }
+                }
+            });
         }
         
         // Set up Google Calendar sync button
         const syncButton = document.getElementById('sync-calendar-btn');
+        // Update the sync button in calendar.html
         syncButton.addEventListener('click', async function() {
             // Update button text to show syncing status
             const originalButtonText = syncButton.textContent;
@@ -425,7 +453,7 @@
             // Update sync status
             const syncStatus = document.getElementById('sync-status');
             if (syncStatus) {
-                syncStatus.textContent = 'Syncing reminders with Google Calendar...';
+                syncStatus.textContent = 'Syncing with Google Calendar...';
                 syncStatus.className = 'sync-status syncing';
             }
             
@@ -435,41 +463,27 @@
             }
             
             try {
-                // Step 1: Push existing reminders to Google Calendar
-                if (window.GoogleCalendar && window.GoogleCalendar.pushExistingReminders) {
-                    const pushResult = await window.GoogleCalendar.pushExistingReminders();
-                    console.log('Push result:', pushResult);
-                    
-                    // Provide audio feedback
-                    if (typeof speak === 'function') {
-                        if (pushResult.success) {
-                            const message = `Pushed ${pushResult.pushed} reminders to Google Calendar` + 
-                                            (pushResult.failed > 0 ? `, ${pushResult.failed} failed` : '');
-                            speak(message);
-                        } else {
-                            speak("There was an issue syncing reminders to Google Calendar.");
-                        }
-                    }
-                }
-                
-                // Step 2: Pull events from Google Calendar
-                if (window.GoogleCalendar) {
-                    await GoogleCalendar.fetchEvents();
-                }
+                // Use the new syncCalendar function
+                const result = await GoogleCalendar.syncCalendar();
                 
                 // Reset button and show success
                 syncButton.textContent = originalButtonText;
                 syncButton.disabled = false;
                 
                 if (syncStatus) {
-                    syncStatus.textContent = 'Calendar synchronized successfully!';
-                    syncStatus.className = 'sync-status success';
-                    
-                    // Clear status after 5 seconds
-                    setTimeout(() => {
-                        syncStatus.textContent = '';
-                        syncStatus.className = 'sync-status';
-                    }, 5000);
+                syncStatus.textContent = `Calendar synchronized! Added ${result.pushed} reminders to Google Calendar.`;
+                syncStatus.className = 'sync-status success';
+                
+                // Clear status after 5 seconds
+                setTimeout(() => {
+                    syncStatus.textContent = '';
+                    syncStatus.className = 'sync-status';
+                }, 5000);
+                }
+                
+                // Provide audio feedback of success
+                if (typeof speak === 'function') {
+                speak(`Calendar synchronized. Added ${result.pushed} reminders to Google Calendar.`);
                 }
             } catch (error) {
                 console.error('Error during sync:', error);
@@ -479,7 +493,7 @@
                 syncButton.disabled = false;
                 
                 if (syncStatus) {
-                    syncStatus.textContent = 'Error syncing calendar. Please try again.';
+                    syncStatus.textContent = 'Error syncing calendar: ' + error.message;
                     syncStatus.className = 'sync-status error';
                 }
                 
@@ -489,7 +503,7 @@
                 }
             }
         });
-        
+
         // Add Google Calendar commands to voice recognition
         const originalHandleVoiceCommand = window.handleVoiceCommand;
         window.handleVoiceCommand = function(command) {

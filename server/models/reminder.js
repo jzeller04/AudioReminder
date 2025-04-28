@@ -39,7 +39,11 @@ const reminderSchema = new Schema({
     location: {
         type: String,
         required: false
-    }
+    },
+    lastSyncedVersion: {
+        type: String,
+        default: null
+    },
 }, {timestamps: true}); // saves the time when reminder is created
 
 const Reminder = mongoose.model('Reminder', reminderSchema); // has to be the same name as the collection in the DB

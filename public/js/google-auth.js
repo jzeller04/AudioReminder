@@ -262,7 +262,6 @@ const GoogleAuth = {
     
     if (!hasCalendarScope) {
       console.warn('Calendar scope is missing! Calendar integration will not work.');
-      // Optionally, you could show a message to the user here
     }
     
     // Store token in gapi client
@@ -287,6 +286,48 @@ const GoogleAuth = {
     
     // Get user info
     await this.fetchUserInfo();
+    
+    if (window.location.pathname.includes('/calendar') && 
+        window.GoogleCalendar && // Check if GoogleCalendar exists in window
+        typeof window.GoogleCalendar.syncCalendar === 'function') {
+      try {
+        // Show syncing message
+        const syncStatus = document.getElementById('sync-status');
+        if (syncStatus) {
+          syncStatus.textContent = 'Syncing with Google Calendar...';
+          syncStatus.className = 'sync-status syncing';
+        }
+        
+        // Call the sync function
+        await window.GoogleCalendar.syncCalendar(); // Use window.GoogleCalendar instead
+        
+        // Show success message
+        if (syncStatus) {
+          syncStatus.textContent = 'Initial sync completed successfully!';
+          syncStatus.className = 'sync-status success';
+  
+          // Only call speak if it exists in window
+          if (typeof window.speak === 'function') {
+            window.speak('Google Calendar synchronized successfully');
+          }
+          
+          // Clear status after 5 seconds
+          window.setTimeout(() => {
+            syncStatus.textContent = '';
+            syncStatus.className = 'sync-status';
+          }, 5000);
+        }
+      } catch (error) {
+        console.error('Error during initial sync:', error);
+        
+        // Show error message
+        const syncStatus = document.getElementById('sync-status');
+        if (syncStatus) {
+          syncStatus.textContent = 'Error during initial sync. Please try manual sync.';
+          syncStatus.className = 'sync-status error';
+        }
+      }
+    }
   },
   
   // Fetch user info
@@ -351,47 +392,30 @@ const GoogleAuth = {
     console.log('Signing out and cleaning up Google reminders...');
     
     try {
-      // First, remove all Google Calendar reminders from the database
-      const response = await fetch('/api/remove-google-reminders', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
-  
-      const result = await response.json();
-      console.log('Removed Google reminders:', result);
-      
-      // Only show a notification if reminders were removed
-      if (result.removed > 0) {
-        // You could show a notification here if you want
-        console.log(`${result.removed} Google Calendar reminders removed`);
-      }
-    } catch (error) {
-      console.error('Error removing Google reminders:', error);
-      // Continue with signout even if this fails
-    }
-    
-    // Proceed with normal sign out process
-    const token = gapi.client.getToken();
-    if (token !== null) {
-      await new Promise((resolve) => {
-        google.accounts.oauth2.revoke(token.access_token, () => {
-          console.log('Token revoked');
-          resolve();
+      // Call sign out function
+      const token = gapi.client.getToken();
+      if (token !== null) {
+        await new Promise((resolve) => {
+          google.accounts.oauth2.revoke(token.access_token, () => {
+            console.log('Token revoked');
+            resolve();
+          });
+          gapi.client.setToken(null);
         });
-        gapi.client.setToken(null);
-      });
+      }
+      
+      // Clear auth data
+      this.clearAuthData();
+      
+      // Dispatch logout event
+      window.dispatchEvent(new CustomEvent('userLoggedOut'));
+      
+      // Return a resolved promise to allow proper chaining
+      return Promise.resolve();
+    } catch (error) {
+      console.error('Error during sign-out:', error);
+      return Promise.reject(error);
     }
-    
-    // Clear auth data
-    this.clearAuthData();
-    
-    // Dispatch logout event
-    window.dispatchEvent(new CustomEvent('userLoggedOut'));
-    
-    // Return a resolved promise to allow proper chaining
-    return Promise.resolve();
   },
   
   // Clear authentication data
