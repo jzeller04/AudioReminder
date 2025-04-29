@@ -69,6 +69,11 @@
             </script>
         </div>
 
+        <div class="flagDiv">
+            <input type="checkbox" id="flagged" name="flagged">
+            <label for="flagged" id="flaggedLabel">Mark as Important</label>
+        </div>
+
         <div class="buttonDiv">
             <nav>
                 <button type="button" onclick="location.href='tasks';">Cancel</button>
@@ -590,6 +595,37 @@
                         const result = await response.json();
                         console.log('Reminder created:', result);
                         
+                        if (isGoogleConnected && googleAuthToken) {
+                            try {
+                                const reminderDateTime = new Date(`${reminderData.date}T${reminderData.time || "00:00"}:00`);
+                                const createResult = await GoogleCalendar.createEvent({
+                                    title: reminderData.title,
+                                    description: reminderData.description,
+                                    date: reminderData.date,
+                                    time: reminderData.time,
+                                    location: reminderData.location,
+                                    _id: result.id  // Assuming server responds with created reminder ID
+                                });
+
+                                if (createResult.success) {
+                                    console.log('Reminder also created in Google Calendar:', createResult.eventId);
+                                    if (typeof speak === 'function') {
+                                        speak("Reminder added to Google Calendar.");
+                                    }
+                                } else {
+                                    console.error('Failed to create Google Calendar event:', createResult.error);
+                                    if (typeof speak === 'function') {
+                                        speak("Reminder created, but could not add to Google Calendar.");
+                                    }
+                                }
+                            } catch (error) {
+                                console.error('Error creating Google Calendar event:', error);
+                                if (typeof speak === 'function') {
+                                    speak("Reminder created, but an error occurred while adding to Google Calendar.");
+                                }
+                            }
+                        }
+
                         // Provide feedback about creation
                         if (typeof speak === 'function') {
                             if (result.googleSynced) {
@@ -634,5 +670,7 @@
             enableTTS();
         });
     </script>
+    <script src="../js/google-auth.js"></script>
+    <script src="../js/google-calendar.js"></script>
 </body>
 </html>

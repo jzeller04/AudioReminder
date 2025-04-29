@@ -64,7 +64,7 @@ const getUpcomingReminder = async (req, res) => {
         console.log(error);
         return res.sendFile('404.html', { root: path.join(__dirname, '../../views') });
     }
-};
+}
 
 // Get all reminders for tasks page
 const getAllReminders = async (req, res) => {
@@ -126,86 +126,93 @@ const getAllReminders = async (req, res) => {
         console.log(error);
         return res.sendFile('404.html', { root: path.join(__dirname, '../../views') });
     }
-};
+}
+
+async function syncReminderToGoogle(reminder, authToken) {
+    try {
+        const googleEvent = await pushReminderToGoogle(reminder, authToken);
+
+        // Update reminder object fields
+        if (googleEvent && googleEvent.id) {
+            reminder.googleId = googleEvent.id;
+            reminder.syncStatus = 'synced';
+            reminder.lastSyncedVersion = googleEvent.extendedProperties?.private?.audioReminderVersion || new Date().toISOString();
+        } else {
+            console.warn('Google event did not return ID.');
+            reminder.syncStatus = 'needs_push'; // fallback safety
+        }
+
+        await reminder.save(); // Save updated reminder
+
+        return { success: true, googleId: reminder.googleId };
+    } catch (error) {
+        console.error('Failed to sync reminder to Google Calendar:', error);
+
+        reminder.syncStatus = 'needs_push';
+        await reminder.save();
+
+        return { success: false, error };
+    }
+}
+
 
 // Create new reminder
 const createReminder = async (req, res) => {
-    // Check if this is a JSON request
     const isJson = req.is('application/json');
     
-    // Get data from either JSON body or form submission
+    // Grab data from request
     const title = isJson ? req.body.title : req.body.title;
     const description = isJson ? req.body.description : req.body.memo;
     const date = isJson ? req.body.date : req.body.date;
     const time = isJson ? req.body.time : req.body.time;
-    const flag = false;
     const location = isJson ? req.body.location : req.body.location;
+    const isGoogleConnected = req.body.googleConnected === true;
+    const googleAuthToken = req.body.googleAuthToken;
 
-    // Add null checks to prevent errors
-    if (title && title.length <= 30 && (!description || description.length <= 300)) {
-        try {
-            // Save the reminder
-            const reminder = await saveReminderToUser(title, description || "", time, date, req.session.userId, flag, location);
-            
-            // Check if we're connected to Google - this is the missing part!
-            const isGoogleConnected = req.body.googleConnected === true;
-            
-            // If connected to Google, trigger synchronization
-            if (isGoogleConnected && req.body.googleAuthToken) {
-                try {
-                    // Create the event in Google
-                    await pushReminderToGoogle(reminder, req.body.googleAuthToken);
-                    
-                    // Update the reminder with successful sync status
-                    reminder.syncStatus = 'synced';
-                    await reminder.save();
-                } catch (googleError) {
-                    console.error('Error pushing to Google:', googleError);
-                    // If Google push fails, mark as needs_push for future sync
-                    reminder.syncStatus = 'needs_push';
-                    await reminder.save();
-                }
-            }
-            
-            // For JSON requests, return JSON response with reminder ID
-            if (isJson) {
-                return res.json({
-                    success: true,
-                    message: 'Reminder created successfully',
-                    reminderId: reminder._id,
-                    googleSynced: reminder.syncStatus === 'synced'
-                });
-            } else {
-                // For traditional form submissions
-                return res.redirect('/newtask');
-            }
-        } catch (error) {
-            console.error('Error saving reminder:', error);
-            
-            if (isJson) {
-                return res.status(500).json({
-                    success: false,
-                    message: 'Error creating reminder'
-                });
-            } else {
-                return res.status(500).send("Error saving reminder");
-            }
+    const flag = false; // Default flagged state
+
+    // Validate input
+    if (!title || title.length > 30) {
+        const message = !title ? 'Title is required' : 'Title too long (max 30 characters)';
+        return respondError(res, isJson, 400, message);
+    }
+    if (description && description.length > 300) {
+        return respondError(res, isJson, 400, 'Description too long (max 300 characters)');
+    }
+
+    try {
+        // Save reminder locally
+        const reminder = await saveReminderToUser(
+            title, 
+            description || "", 
+            time, 
+            date, 
+            req.session.userId, 
+            flag, 
+            location
+        );
+
+        // Try syncing to Google if connected
+        if (isGoogleConnected && googleAuthToken) {
+            await syncReminderToGoogle(reminder, googleAuthToken);
         }
-    } else {
-        const errorMessage = !title ? 'Title is required' : 
-                        (title.length > 30 ? 'Title is too long (max 30 characters)' : 
-                        'Description is too long (max 300 characters)');
-        
+
+        // Return response
         if (isJson) {
-            return res.status(400).json({
-                success: false,
-                message: errorMessage
+            return res.json({
+                success: true,
+                message: 'Reminder created successfully',
+                reminderId: reminder._id,
+                googleSynced: reminder.syncStatus === 'synced'
             });
         } else {
             return res.redirect('/newtask');
         }
+    } catch (error) {
+        console.error('Error saving reminder:', error);
+        return respondError(res, isJson, 500, 'Server error creating reminder');
     }
-};
+}
 
 // Helper function to push a reminder to Google
 async function pushReminderToGoogle(reminder, authToken) {
@@ -252,37 +259,20 @@ async function pushReminderToGoogle(reminder, authToken) {
     
     const responseData = await response.json();
     
-    // Update reminder with Google ID
-    reminder.googleId = responseData.id;
-    
     return responseData;
 }
 
-// Get reminders that need to be pushed to Google
-const getRemindersForGoogleSync = async (req, res) => {
-    try {
-        const user = await User.findById(req.session.userId);
-
-        if (!user) {
-            return res.status(404).json({ success: false, message: 'User not found' });
-        }
-
-        // Filter reminders that need to be pushed to Google
-        const remindersToSync = user.reminders.filter(reminder => 
-            reminder.isLocallyCreated === true && 
-            (!reminder.googleId || reminder.syncStatus === 'needs_push')
-        );
-        
-        return res.json({
-            success: true,
-            count: remindersToSync.length,
-            reminders: remindersToSync
-        });
-    } catch (error) {
-        console.error('Error getting reminders for Google sync:', error);
-        return res.status(500).json({ success: false, message: 'Server error' });
-    }
-};
+// Extracts extended properties from Google Calendar event
+function extractExtendedProperties(event) {
+    const props = event.extendedProperties?.private || {};
+    
+    return {
+        isAudioReminderOrigin: props.audioReminderOrigin === 'true',
+        audioReminderId: props.audioReminderId || null,
+        audioReminderVersion: props.audioReminderVersion || null,
+        audioReminderFlagged: props.audioReminderFlagged === 'true'
+    };
+}
 
 // Mark reminder as complete
 const completeReminder = async (req, res) => {
@@ -334,7 +324,7 @@ const completeReminder = async (req, res) => {
             return res.redirect('/tasks?error=failed-to-complete');
         }
     }
-};
+}
 
 const flagReminder = async (req, res) => {
     console.log('reminderID:', req.body.reminderId);
@@ -359,7 +349,7 @@ const flagReminder = async (req, res) => {
         return res.redirect('/tasks');
     }
     
-};
+}
 
 // Fetch user reminders
 async function fetch(userId) {
@@ -497,7 +487,8 @@ async function saveReminderToUser(title, description, time, date, userId, flag, 
             time: time,
             isLocallyCreated: true, // Marks if it was created in AudioReminder and not Google
             syncStatus: 'needs_push', // Shows it needs to be pushed to Google
-            location: location
+            location: location,
+            lastSyncedVersion: null // Will be updated after Google s
         };
 
         const user = await User.findById(userId);
@@ -522,39 +513,184 @@ async function saveReminderToUser(title, description, time, date, userId, flag, 
 // Update reminder with Google ID
 const updateReminderGoogleId = async (req, res) => {
     try {
-    const { reminderId, googleId, syncStatus } = req.body;
-    
-    if (!reminderId || !googleId) {
-        return res.status(400).json({ success: false, message: 'Missing required fields' });
-    }
-    
-    // Find the user and update the specific reminder
-    const user = await User.findById(req.session.userId);
-    
-    if (!user) {
-        return res.status(404).json({ success: false, message: 'User not found' });
-    }
-    
-    // Find the reminder by ID
-    const reminder = user.reminders.id(reminderId);
-    
-    if (!reminder) {
-        return res.status(404).json({ success: false, message: 'Reminder not found' });
-    }
-    
-    // Update the Google ID and sync status
-    reminder.googleId = googleId;
-    reminder.syncStatus = syncStatus || 'synced';
+        const { reminderId, googleId, syncStatus, lastSyncedVersion } = req.body;
+        
+        if (!reminderId || !googleId) {
+            return res.status(400).json({ success: false, message: 'Missing required fields' });
+        }
+        
+        // Find the user and update the specific reminder
+        const user = await User.findById(req.session.userId);
+        
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+        
+        // Find the reminder by ID
+        const reminder = user.reminders.id(reminderId);
+        
+        if (!reminder) {
+            return res.status(404).json({ success: false, message: 'Reminder not found' });
+        }
+        
+        // Update the Google ID and sync status
+        reminder.googleId = googleId;
+        reminder.syncStatus = syncStatus || 'synced';
+        reminder.lastSyncedVersion = lastSyncedVersion || new Date().toISOString();
 
-    // Save the user
-    await user.save();
+        // Save the user
+        await user.save();
 
-    return res.json({ success: true, message: 'Reminder updated with Google ID' });
+        return res.json({ success: true, message: 'Reminder updated with Google ID' });
     } catch (error) {
         console.error('Error updating reminder with Google ID:', error);
         return res.status(500).json({ success: false, message: 'Server error' });
     }
-};
+}
+
+// Resolve conflict between local and Google Calendar versions
+const resolveConflict = async (req, res) => {
+    try {
+        const { reminderId, resolution, googleAuthToken } = req.body;
+        
+        if (!reminderId || !resolution) {
+            return res.status(400).json({ success: false, message: 'Missing required fields' });
+        }
+        
+        // Find the user and get the reminder
+        const user = await User.findById(req.session.userId);
+        
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+        
+        // Find the reminder by ID
+        const reminder = user.reminders.id(reminderId);
+        
+        if (!reminder) {
+            return res.status(404).json({ success: false, message: 'Reminder not found' });
+        }
+        
+        if (resolution === 'local') {
+            // Keep local version and push to Google
+            reminder.syncStatus = 'needs_push';
+            reminder.lastSyncedVersion = new Date().toISOString();
+        } else if (resolution === 'google' && googleAuthToken) {
+            // Get the Google event and update local reminder
+            const googleEvent = await fetchGoogleEvent(reminder.googleId, googleAuthToken);
+            
+            if (googleEvent) {
+                // Update reminder with Google data
+                reminder.title = googleEvent.summary;
+                reminder.description = googleEvent.description || '';
+                reminder.date = normalizeDate(googleEvent.start.dateTime || googleEvent.start.date);
+                reminder.time = extractTimeFromDateTime(googleEvent.start.dateTime);
+                reminder.flagged = googleEvent.extendedProperties?.private?.audioReminderFlagged === 'true';
+                reminder.location = googleEvent.location || '';
+                reminder.syncStatus = 'synced';
+                reminder.lastSyncedVersion = googleEvent.extendedProperties?.private?.audioReminderVersion || new Date().toISOString();
+            } else {
+                // Google event not found, mark as deleted
+                user.reminders.pull(reminder._id);
+            }
+        } else {
+            return res.status(400).json({ success: false, message: 'Invalid resolution option' });
+        }
+        
+        // Save changes
+        await user.save();
+        
+        return res.json({ 
+            success: true, 
+            message: 'Conflict resolved successfully',
+            resolution
+        });
+    } catch (error) {
+        console.error('Error resolving conflict:', error);
+        return res.status(500).json({ success: false, message: 'Server error' });
+    }
+}
+
+// Creates extended properties for Google Calendar events
+function createExtendedProperties(isAudioReminderOrigin, audioReminderId, audioReminderFlagged, version) {
+    return {
+        private: {
+            audioReminderOrigin: isAudioReminderOrigin ? 'true' : 'false',
+            audioReminderId: audioReminderId || '',
+            audioReminderFlagged: audioReminderFlagged ? 'true' : 'false',
+            audioReminderVersion: version || new Date().toISOString()
+        }
+    };
+}
+
+// Get reminders that need to be pushed to Google
+const getRemindersForGoogleSync = async (req, res) => {
+    try {
+        const user = await User.findById(req.session.userId);
+
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        // Filter reminders that need to be pushed to Google
+        const remindersToSync = user.reminders.filter(reminder => 
+            (reminder.isLocallyCreated === true || reminder.syncStatus === 'needs_push') &&
+            (!reminder.googleId || reminder.syncStatus === 'needs_push')
+        );
+        
+        return res.json({
+            success: true,
+            count: remindersToSync.length,
+            reminders: remindersToSync
+        });
+    } catch (error) {
+        console.error('Error getting reminders for Google sync:', error);
+        return res.status(500).json({ success: false, message: 'Server error' });
+    }
+}
+
+// Helper function to fetch Google event
+async function fetchGoogleEvent(eventId, authToken) {
+    try {
+        const response = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${eventId}`, {
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
+        
+        if (!response.ok) {
+            return null;
+        }
+        
+        return await response.json();
+    } catch (error) {
+        console.error('Error fetching Google event:', error);
+        return null;
+    }
+}
+
+// Helper to extract time from datetime
+function extractTimeFromDateTime(dateTimeStr) {
+    if (!dateTimeStr) return '';
+    if (!dateTimeStr.includes('T')) return ''; // All-day event
+
+    const date = new Date(dateTimeStr);
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+
+    return `${hours}:${minutes}`;
+}
+
+function respondError(res, isJson, statusCode, message) {
+    if (isJson) {
+        return res.status(statusCode).json({
+            success: false,
+            message
+        });
+    } else {
+        return res.redirect('/newtask'); // or send 500 error page if you want
+    }
+}
 
 export {
     getUpcomingReminder,
@@ -564,5 +700,6 @@ export {
     flagReminder,
     fetchImportant,
     updateReminderGoogleId,
-    getRemindersForGoogleSync
+    getRemindersForGoogleSync,
+    resolveConflict
 };

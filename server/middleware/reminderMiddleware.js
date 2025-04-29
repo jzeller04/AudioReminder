@@ -92,56 +92,6 @@ const reminderMiddleware = {
       console.error('Error in checkGoogleReminder middleware:', error);
       next();
     }
-  },
-  
-  // Middleware to track batch operations on reminders
-  trackBatchOperations: async (req, res, next) => {
-    try {
-      // For batch operations like marking multiple reminders as complete
-      const reminderIds = req.body.reminderIds;
-      
-      if (!reminderIds || !Array.isArray(reminderIds) || reminderIds.length === 0) {
-        return next(); // No reminder IDs, skip this middleware
-      }
-      
-      // Find the user
-      const user = await User.findById(req.session.userId);
-      if (!user) {
-        return next();
-      }
-      
-      // Track reminders that need to be synced
-      const googleReminders = [];
-      
-      // Process each reminder
-      for (const reminderId of reminderIds) {
-        const reminder = user.reminders.id(reminderId);
-        if (reminder && reminder.googleId) {
-          // Store Google reminder info
-          googleReminders.push({
-            id: reminder._id,
-            googleId: reminder.googleId,
-            title: reminder.title
-          });
-          
-          // Update sync status if not being deleted
-          if (req.path !== '/batch-complete') {
-            reminder.syncStatus = 'needs_push';
-          }
-        }
-      }
-      
-      // If we found Google reminders, save the changes and store info for the controller
-      if (googleReminders.length > 0) {
-        await user.save();
-        req.googleReminders = googleReminders;
-      }
-      
-      next();
-    } catch (error) {
-      console.error('Error in trackBatchOperations middleware:', error);
-      next();
-    }
   }
 };
 

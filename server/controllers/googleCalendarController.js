@@ -178,7 +178,6 @@ function isWorkspaceSpecialEvent(event) {
 }
 
 // Sync Google Calendar events
-// Sync Google Calendar events
 const syncGoogleEvents = async (req, res) => {
   try {
     const { events, googleAuthToken } = req.body;
@@ -210,6 +209,7 @@ const syncGoogleEvents = async (req, res) => {
     const processedGoogleIds = new Set();
     const addedEvents = [];
     const updatedEvents = [];
+    const conflicts = [];
     
     // Process each Google Calendar event
     for (const event of events) {
@@ -220,7 +220,7 @@ const syncGoogleEvents = async (req, res) => {
           continue;
         }
         
-        // Skip events we don't want to include
+        // Skip events we should ignore
         if (shouldSkipEvent(event)) {
           continue;
         }
@@ -234,9 +234,20 @@ const syncGoogleEvents = async (req, res) => {
           continue;
         }
         
+        // Extract extended properties
+        const extProps = event.extendedProperties?.private || {};
+        
         // Check if this is an event that originated from AudioReminder
-        const isAudioReminderOrigin = event.extendedProperties?.private?.audioReminderOrigin === "true";
-        const originalReminderId = event.extendedProperties?.private?.audioReminderId;
+        const isAudioReminderOrigin = extProps.audioReminderOrigin === "true";
+        const audioReminderId = extProps.audioReminderId;
+        const audioReminderVersion = extProps.audioReminderVersion;
+        const audioReminderFlagged = extProps.audioReminderFlagged === "true";
+        
+        // Skip events that don't originate from AudioReminder
+        if (!isAudioReminderOrigin) {
+          console.log(`Skipping non-AudioReminder event: ${event.title}`);
+          continue;
+        }
         
         // Check if we already have this event by Google ID
         const existingReminder = existingGoogleEvents.get(event.id);
@@ -244,6 +255,24 @@ const syncGoogleEvents = async (req, res) => {
         
         // If it exists in our system, update it
         if (existingReminder) {
+          // Check for conflicts
+          if (existingReminder.lastSyncedVersion && 
+              audioReminderVersion && 
+              existingReminder.lastSyncedVersion !== audioReminderVersion) {
+            
+            // Add to conflicts list
+            conflicts.push({
+              id: existingReminder._id.toString(),
+              title: existingReminder.title,
+              googleId: event.id,
+              localVersion: existingReminder.lastSyncedVersion,
+              googleVersion: audioReminderVersion
+            });
+            
+            // Skip this event for now
+            continue;
+          }
+          
           // Update existing event if needed
           let hasChanges = false;
           
@@ -284,51 +313,75 @@ const syncGoogleEvents = async (req, res) => {
             hasChanges = true;
           }
           
+          if (existingReminder.flagged !== audioReminderFlagged) {
+            existingReminder.flagged = audioReminderFlagged;
+            hasChanges = true;
+          }
+          
+          if (existingReminder.location !== (event.location || '')) {
+            existingReminder.location = event.location || '';
+            hasChanges = true;
+          }
+          
           if (hasChanges) {
             existingReminder.syncStatus = 'synced';
-            existingReminder.lastSyncedAt = new Date();
+            existingReminder.lastSyncedVersion = audioReminderVersion || new Date().toISOString();
             updatedEvents.push(existingReminder);
           }
-        } else {
-          // Check if this was an AudioReminder event that was deleted locally
-          if (isAudioReminderOrigin && originalReminderId) {
-            // This event originated in AudioReminder, but doesn't exist in our DB anymore
-            // That means the user likely deleted it deliberately from AudioReminder
+        } 
+        // If this has an audioReminderId, try to find by that ID
+        else if (audioReminderId) {
+          // Look for reminder by audioReminderId
+          const reminderByOriginalId = user.reminders.find(r => 
+            r._id.toString() === audioReminderId
+          );
+          
+          if (reminderByOriginalId) {
+            // This is our reminder that lost its googleId somehow
+            reminderByOriginalId.googleId = event.id;
+            reminderByOriginalId.syncStatus = 'synced';
+            reminderByOriginalId.lastSyncedVersion = audioReminderVersion || new Date().toISOString();
             
-            // We should delete this from Google Calendar
-            try {
-              await deleteEventFromGoogle(event.id, googleAuthToken);
-              console.log(`Deleted event ${event.id} from Google Calendar as it was previously removed from AudioReminder`);
-              continue; // Skip adding it back to our database
-            } catch (deleteError) {
-              console.error(`Failed to delete event ${event.id} from Google Calendar:`, deleteError);
-              // Continue with normal processing if delete fails
-            }
+            updatedEvents.push(reminderByOriginalId);
+          } else {
+            // Create a new reminder from the Google event - it was deleted locally
+            createNewReminderFromGoogleEvent(user, event, addedEvents);
           }
-          
+        }
+        else {
           // Create a new reminder from the Google event
-          const normalizedDate = normalizeDate(eventDate);
-          console.log('Creating new event with normalized date:', normalizedDate.toISOString());
-          
-          const reminder = {
-            title: event.title,
-            description: event.description || '',
-            date: normalizedDate,
-            time: event.time || '00:00',
-            flagged: false,
-            googleId: event.id,
-            isLocallyCreated: isAudioReminderOrigin, // Set based on extended properties
-            syncStatus: 'synced',
-            lastSyncedAt: new Date()
-          };
-          
-          // Add to user's reminders
-          user.reminders.push(reminder);
-          addedEvents.push(reminder);
+          createNewReminderFromGoogleEvent(user, event, addedEvents);
         }
       } catch (eventError) {
         console.error('Error processing event:', eventError);
       }
+    }
+    
+    // Helper function to create new reminder from Google event
+    function createNewReminderFromGoogleEvent(user, event, addedEvents) {
+      const extProps = event.extendedProperties?.private || {};
+      const isAudioReminderOrigin = extProps.audioReminderOrigin === "true";
+      const audioReminderFlagged = extProps.audioReminderFlagged === "true";
+      const audioReminderVersion = extProps.audioReminderVersion;
+      
+      const normalizedDate = normalizeDate(new Date(event.date));
+      
+      const reminder = {
+        title: event.title,
+        description: event.description || '',
+        date: normalizedDate,
+        time: event.time || '00:00',
+        flagged: audioReminderFlagged,
+        googleId: event.id,
+        isLocallyCreated: false, // This was created in Google and imported to AudioReminder
+        syncStatus: 'synced',
+        lastSyncedVersion: audioReminderVersion || new Date().toISOString(),
+        location: event.location || ''
+      };
+      
+      // Add to user's reminders
+      user.reminders.push(reminder);
+      addedEvents.push(reminder);
     }
     
     // Now handle deletions
@@ -364,7 +417,9 @@ const syncGoogleEvents = async (req, res) => {
       message: `Successfully synced Google Calendar events (${addedEvents.length} added, ${updatedEvents.length} updated, ${deletedReminders.length} deleted)`,
       added: addedEvents.length,
       updated: updatedEvents.length,
-      deleted: deletedReminders.length
+      deleted: deletedReminders.length,
+      conflicts: conflicts.length,
+      conflictDetails: conflicts
     });
   } catch (error) {
     console.error('Error syncing Google Calendar events:', error);
@@ -396,8 +451,6 @@ async function deleteEventFromGoogle(eventId, authToken) {
     return false;
   }
 }
-
-
 
 const pushRemindersToGoogle = async (req, res) => {
   try {
@@ -528,33 +581,6 @@ const pushRemindersToGoogle = async (req, res) => {
   }
 }
 
-//  ######################## Will be used soon ########################
-// eslint-disable-next-line no-unused-vars
-function resolveConflict(localReminder, googleEvent) {
-  // Compare last modified timestamps
-  const localModified = new Date(localReminder.updatedAt);
-  const googleModified = new Date(googleEvent.updated);
-  
-  // If Google event is newer, use it as source of truth
-  if (googleModified > localModified) {
-    return {
-      title: googleEvent.summary,
-      description: googleEvent.description || '',
-      date: new Date(googleEvent.start.dateTime || googleEvent.start.date),
-      time: googleEvent.start.dateTime ?? '00:00',
-      googleId: googleEvent.id,
-      syncStatus: 'synced',
-      isLocallyCreated: false
-    };
-  } 
-  
-  // If local reminder is newer or same time, use it
-  return {
-    ...localReminder,
-    syncStatus: 'needs_push' // Mark for push back to Google
-  };
-}
-
 // Helper function to format date and time for Google Calendar
 function formatDateTimeForGoogle(date, time, addMinutes = 0) {
   const dateObj = new Date(date);
@@ -590,18 +616,18 @@ const removeGoogleReminders = async (req, res) => {
       return res.status(400).json({ error: 'Google auth token not provided' });
     }
 
-    // 1. Find reminders from Google to remove
-    const googleReminders = user.reminders.filter(reminder => 
-      reminder.isLocallyCreated === false && reminder.googleId
-    );
-    
-    // 2. Find locally created reminders with Google IDs
+    // 1. Find locally created reminders with Google IDs
     const localRemindersWithGoogleId = user.reminders.filter(reminder => 
       reminder.isLocallyCreated === true && reminder.googleId
     );
+    
+    // 2. Find reminders from Google
+    const googleReminders = user.reminders.filter(reminder => 
+      reminder.isLocallyCreated === false && reminder.googleId
+    );
       
-    console.log(`Found ${googleReminders.length} Google-originated reminders to remove`);
     console.log(`Found ${localRemindersWithGoogleId.length} local reminders with Google IDs to update`);
+    console.log(`Found ${googleReminders.length} Google-originated reminders to remove`);
     
     // 3. Delete AudioReminder-originated events from Google Calendar
     const googleIds = localRemindersWithGoogleId.map(r => r.googleId);
@@ -646,7 +672,6 @@ const removeGoogleReminders = async (req, res) => {
     return res.status(500).json({ error: 'Server error removing reminders' });
   }
 }
-
 
 export { 
   syncGoogleEvents, 

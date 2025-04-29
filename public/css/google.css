@@ -183,23 +183,23 @@
   padding: 5px;
 }
 
-.google-calendar-event {
-  border-left: 4px solid #4285F4; /* Google blue */
-}
-
-.reminder-source {
-  font-size: 0.8em;
-  color: #4285F4;
-  font-style: italic;
+/* Flag styles for Google integration */
+.flagged-indicator {
+  display: flex;
+  align-items: center;
   margin-top: 4px;
+  font-size: 0.8em;
+  color: #FFA000;
 }
 
-/* High-contrast theme version */
-[data-theme="high-contrast"] .google-calendar-event {
-  border-left: 4px solid #000000;
-}
-
-[data-theme="high-contrast"] .reminder-source {
-  color: #000000;
+.flag-icon {
+  margin-right: 4px;
   font-weight: bold;
+}
+
+[data-theme="high-contrast"] .flagged-indicator {
+  color: #FFFFFF;
+  background-color: #000000;
+  padding: 2px 5px;
+  border: 1px solid #FFFFFF;
 }
