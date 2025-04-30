@@ -243,6 +243,10 @@ const syncGoogleEvents = async (req, res) => {
         const audioReminderVersion = extProps.audioReminderVersion;
         const audioReminderFlagged = extProps.audioReminderFlagged === "true";
         
+        if (isAudioReminderOrigin && audioReminderId) {
+          console.log(`Found event that originated from AudioReminder: ${event.title}`);
+        }
+        
         // Track this Google ID
         if (event.id) {
           processedGoogleIds.add(event.id);

@@ -23,7 +23,8 @@ export const parseDateString = async (req, res) => {
         success: true, 
         parsedDate: formattedDate 
         });
-    } catch (_) {
+    } catch (error) {
+        console.error('Error parsing date:', error);
         return res.status(400).json({ 
             success: false, 
             error: 'Could not parse date string' 

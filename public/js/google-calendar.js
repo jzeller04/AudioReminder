@@ -1,4 +1,4 @@
-/* global GoogleAuth, gapi, setTimeout, clearTimeout */
+/* global GoogleAuth, gapi, setTimeout, clearTimeout, speak */
 function extractTimeFromDateTime(dateTimeStr) {
   if (!dateTimeStr || !dateTimeStr.includes('T')) return '';
   try {
