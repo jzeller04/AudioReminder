@@ -1,3 +1,4 @@
+import fetch from 'node-fetch';
 import User from '../models/user.js';
 import { normalizeDate, dateToReadable, timeToTwelveSystem, formatDateTimeForGoogle, isSameDay } from '../utils/util.js';
 import path from 'path';
@@ -22,7 +23,7 @@ export const parseDateString = async (req, res) => {
         success: true, 
         parsedDate: formattedDate 
         });
-    } catch (error) {
+    } catch (err) { 
         return res.status(400).json({ 
         success: false, 
         error: 'Could not parse date string' 
@@ -383,7 +384,7 @@ async function pushReminderToGoogle(reminder, authToken) {
     
     try {
         // Use node-fetch or the global fetch in a way that won't conflict
-        const globalFetch = global.fetch || fetch;
+        const globalFetch = fetch;
         
         // Create new event in Google Calendar - no eventId reference here
         const response = await globalFetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
@@ -856,7 +857,7 @@ const getRemindersForGoogleSync = async (req, res) => {
 async function fetchGoogleEvent(eventId, authToken) {
     try {
         // Use global.fetch to avoid conflicts with other fetch functions
-        const globalFetch = global.fetch || fetch;
+        const globalFetch = fetch;
         
         const response = await globalFetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${eventId}`, {
             method: 'GET',
@@ -914,5 +915,7 @@ export {
     fetchImportant,
     updateReminderGoogleId,
     getRemindersForGoogleSync,
-    resolveConflict
+    resolveConflict,
+    syncReminderToGoogle,
+    createExtendedProperties
 };

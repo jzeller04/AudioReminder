@@ -238,8 +238,9 @@ const syncGoogleEvents = async (req, res) => {
         const extProps = event.extendedProperties?.private || {};
         
         // Check if this is an event that originated from AudioReminder
-        const isAudioReminderOrigin = extProps.audioReminderOrigin === "true";
-        const audioReminderId = extProps.audioReminderId;
+        if (isAudioReminderOrigin && audioReminderId) {
+          console.log(`Found event that originated from AudioReminder: ${event.title}`);
+        }
         const audioReminderVersion = extProps.audioReminderVersion;
         const audioReminderFlagged = extProps.audioReminderFlagged === "true";
         
@@ -358,7 +359,6 @@ const syncGoogleEvents = async (req, res) => {
     // Helper function to create new reminder from Google event
     function createNewReminderFromGoogleEvent(user, event, addedEvents) {
       const extProps = event.extendedProperties?.private || {};
-      const isAudioReminderOrigin = extProps.audioReminderOrigin === "true";
       const audioReminderFlagged = extProps.audioReminderFlagged === "true";
       const audioReminderVersion = extProps.audioReminderVersion;
       

@@ -1,5 +1,4 @@
-// Declare globals for ESLint
-/* global gapi, google */
+/* global gapi, google, setTimeout */
 
 const GoogleAPIConfig = {
   CLIENT_ID: '1009864072987-cmpm10gg8f73q21uteji2suo7eoklsml.apps.googleusercontent.com',
@@ -284,9 +283,6 @@ const GoogleAuth = {
     
     // Set authentication state
     this.isAuthenticated = true;
-    
-    // Set flag to indicate a fresh login
-    sessionStorage.setItem('justLoggedIn', 'true');
     
     // Get user info
     await this.fetchUserInfo();

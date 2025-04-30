@@ -1,14 +1,14 @@
+/* global GoogleAuth, gapi, setTimeout, clearTimeout, speak */
 function extractTimeFromDateTime(dateTimeStr) {
   if (!dateTimeStr || !dateTimeStr.includes('T')) return '';
   try {
     const date = new Date(dateTimeStr);
     return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
-  } catch (e) {
+  } catch (_) {
     return '';
   }
 }
 
-/* global GoogleAuth, gapi, setTimeout, clearTimeout */
 const GoogleCalendar = {
   // State
   isInitialized: false,
@@ -41,9 +41,9 @@ const GoogleCalendar = {
       window.addEventListener('userLoggedIn', () => {
         console.log('User logged in, fetching calendar events...');
         // Add a flag to check if this is an actual login vs page refresh
-        if (sessionStorage.getItem('justLoggedIn') === 'true') {
+        if (window.sessionStorage && window.sessionStorage.getItem('justLoggedIn') === 'true') {
           setTimeout(() => this.fetchEvents(), 1000);
-          sessionStorage.removeItem('justLoggedIn');
+          window.sessionStorage.removeItem('justLoggedIn');
         }
       });
   
@@ -218,7 +218,6 @@ const GoogleCalendar = {
       }
       
       // Format date and time for Google Calendar
-      const reminderDate = new Date(reminder.date);
       let startDateTime, endDateTime;
       let isAllDay = false;
       
@@ -325,7 +324,6 @@ const GoogleCalendar = {
       const event = existingEvent.result;
       
       // Format date and time for Google Calendar
-      const reminderDate = new Date(reminder.date);
       let startDateTime, endDateTime;
       let isAllDay = false;
       

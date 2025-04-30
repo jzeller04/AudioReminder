@@ -1,4 +1,3 @@
-// Import from server-side utilities via an API endpoint or re-implement here
 function formatTimeClient(timeStr) {
     // Simple client-side implementation - complex logic is on server
     try {
@@ -9,7 +8,8 @@ function formatTimeClient(timeStr) {
         const displayMinutes = minutes < 10 ? '0' + minutes : minutes;
         return `${displayHours}:${displayMinutes} ${ampm}`;
     } catch (error) {
-      return timeStr; // Return original if can't parse
+        console.warn("Failed to format time:", error);
+        return timeStr;
     }
 }
 
