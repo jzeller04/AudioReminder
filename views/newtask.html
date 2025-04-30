@@ -24,7 +24,6 @@
             <input type="text" id="title" name="title" placeholder="Title">
             <small id="charCount"> 0 / 30</small>
 
-       
             <div class="datetimeDiv">
                 <div class="dateDiv">
                     <label for="date" id="dateLabel">Date:</label>
@@ -83,11 +82,11 @@
 
     <script>
         document.addEventListener('focusin', (event) => {
-    const text = event.target.innerText || event.target.getAttribute('aria-label');
-    if (text && !isSpeaking) {
-        speak(text);
-    }
-});
+            const text = event.target.innerText || event.target.getAttribute('aria-label');
+            if (text && !isSpeaking) {
+                speak(text);
+            }
+        });
 
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         let recognition;
@@ -226,7 +225,6 @@
             });
         }
 
-
         function startRecognition() {
             return new Promise((resolve) => {
                 // Set the conversation mode flag to true
@@ -251,80 +249,6 @@
                     }
                 }
             });
-        }
-
-        function parseDate(input) {
-            // Try to parse common date formats (like "March 10", "March 10, 2024", "10/03/2024", etc.)
-            let parsedDate = new Date(input);
-            if (!isNaN(parsedDate.getTime())) {
-                return parsedDate.toISOString().split("T")[0]; // Extract YYYY-MM-DD
-            }
-
-            // Additional check for natural language formats (e.g., "next Monday", "next Tuesday", "tomorrow")
-            const today = new Date();
-            
-            let targetDate;
-
-            // Handle "next" + day of the week (e.g., "next Monday", "next Tuesday")
-            const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-            const nextMatch = input.match(/next\s+(Sunday|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday)/i);
-            if (nextMatch) {
-                const targetDay = daysOfWeek.indexOf(nextMatch[1]);
-                const daysToAdd = (targetDay - today.getDay() + 7) % 7;
-                if (daysToAdd === 0) {
-                    // If it's the same day, set to the next occurrence
-                    targetDate = new Date(today.setDate(today.getDate() + 7));
-                } else {
-                    targetDate = new Date(today.setDate(today.getDate() + daysToAdd));
-                }
-                return targetDate.toISOString().split("T")[0];
-            }
-
-            // Handle exact day of the week (e.g., "Tuesday")
-            const dayMatch = input.match(/(Sunday|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday)/i);
-            if (dayMatch) {
-                const targetDay = daysOfWeek.indexOf(dayMatch[1]);
-                const daysToAdd = (targetDay - today.getDay() + 7) % 7;
-                if (daysToAdd === 0) {
-                    // If it's today, move to the next occurrence of that day
-                    targetDate = new Date(today.setDate(today.getDate() + 7));
-                } else {
-                    targetDate = new Date(today.setDate(today.getDate() + daysToAdd));
-                }
-                return targetDate.toISOString().split("T")[0];
-            }
-
-            // Handle "tomorrow" command
-            if (input.match(/tomorrow/i)) {
-                targetDate = new Date(today.setDate(today.getDate() + 1));
-                return targetDate.toISOString().split("T")[0];
-            }
-
-            // Handle "today" command
-            if (input.match(/today/i)) {
-                targetDate = new Date(today);
-                return targetDate.toISOString().split("T")[0];
-            }
-
-            return ""; // If no valid date format is found
-        }
-
-        function parseTime(input) {
-            let match = input.match(/(\d{1,2}):?(\d{2})?\s?(AM|PM)?/i);
-            if (match) {
-                let hours = parseInt(match[1]);
-                let minutes = match[2] ? parseInt(match[2]) : 0;
-                let period = match[3] ? match[3].toUpperCase() : "";
-
-                if (period === "PM" && hours !== 12) {
-                    hours += 12;
-                } else if (period === "AM" && hours === 12) {
-                    hours = 0;
-                }
-
-                return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
-            }
-            return "";
         }
 
         async function promptReminder() {
@@ -529,15 +453,47 @@
             return params;
         }
 
+        async function parseDateServer(input) {
+            try {
+                const response = await fetch('/api/parse-date', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ dateString: input })
+                });
+                
+                if (!response.ok) throw new Error('Failed to parse date');
+                
+                const result = await response.json();
+                return result.parsedDate;
+            } catch (error) {
+                console.error('Error parsing date:', error);
+                return "";
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             // Get the form element
             const reminderForm = document.querySelector('form[action="/submit"]');
+            
+            // Flag to track if form is already being submitted
+            let isSubmitting = false;
 
             if (reminderForm) {
                 // Override the form submission
                 reminderForm.addEventListener('submit', async function(event) {
                     // Prevent default form submission
                     event.preventDefault();
+                    
+                    // Prevent double submission
+                    if (isSubmitting) {
+                        console.log("Form already being submitted, ignoring duplicate submission");
+                        return;
+                    }
+                    
+                    // Set submitting flag
+                    isSubmitting = true;
                     
                     try {
                         // First check if Google is connected
@@ -573,6 +529,10 @@
                                 speak("Creating reminder...");
                             }
                         }
+                        
+                        // Disable all form fields and buttons during submission
+                        const formElements = this.querySelectorAll('input, textarea, button');
+                        formElements.forEach(el => el.disabled = true);
                         
                         // Submit the form data via fetch
                         const response = await fetch('/submit', {
@@ -611,11 +571,17 @@
                         if (typeof speak === 'function') {
                             speak("Error creating reminder. Please try again.");
                         }
+                        
+                        // Reset form for retry
+                        const formElements = this.querySelectorAll('input, textarea, button');
+                        formElements.forEach(el => el.disabled = false);
+                        
+                        // Reset submitting flag
+                        isSubmitting = false;
                     }
                 });
             }
         });
-
         // Set up the page when it loads
         document.addEventListener('DOMContentLoaded', function() {
             // Initialize speech recognition
@@ -634,5 +600,7 @@
             enableTTS();
         });
     </script>
+    <script src="../js/google-auth.js"></script>
+    <script src="../js/google-calendar.js"></script>
 </body>
 </html>

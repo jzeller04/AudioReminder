@@ -1,5 +1,3 @@
-
-// Declare globals for ESLint
 /* global gapi, google */
 
 const GOOGLE_CONFIG = {

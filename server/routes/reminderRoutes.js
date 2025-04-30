@@ -9,11 +9,13 @@ import {
         completeReminder,
         flagReminder,
         updateReminderGoogleId,
-        getRemindersForGoogleSync
+        getRemindersForGoogleSync,
+        resolveConflict,
+        parseDateString
 } from '../controllers/reminderController.js';
 import { syncGoogleEvents, pushRemindersToGoogle, removeGoogleReminders } from '../controllers/googleCalendarController.js';
 import authMiddleware from '../middleware/auth.js';
-import reminderMiddleware from '../middleware/reminderMiddleware.js'; // Import new middleware
+import reminderMiddleware from '../middleware/reminderMiddleware.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -31,11 +33,14 @@ router.get('/newtask', authMiddleware.isAuthenticated, (req, res) => {
     return res.sendFile('newtask.html', { root: path.join(__dirname, '../../views') });
 });
 
+// Route for parsing date strings
+router.post('/api/parse-date', authMiddleware.isAuthenticated, parseDateString);
+
 // Submit new reminder
 router.post('/submit', express.json(), authMiddleware.isAuthenticated, createReminder);
 
 // Mark reminder as complete
-router.post('/complete-reminder', express.json(), authMiddleware.isAuthenticated, reminderMiddleware.updateSyncStatus, completeReminder);
+router.post('/complete-reminder', express.json(), authMiddleware.isAuthenticated, completeReminder);
 
 // Flag reminder - apply sync status middleware
 router.post('/markflagged', authMiddleware.isAuthenticated, reminderMiddleware.updateSyncStatus, flagReminder);
@@ -54,5 +59,8 @@ router.post('/api/update-reminder-google-id', authMiddleware.isAuthenticated, ex
 
 // Get reminders to push to Google
 router.get('/api/get-reminders-to-push', authMiddleware.isAuthenticated, getRemindersForGoogleSync);
+
+// Resolve conflicts between local and Google versions
+router.post('/api/resolve-conflict', authMiddleware.isAuthenticated, express.json(), resolveConflict);
 
 export default router;
