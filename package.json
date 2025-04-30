@@ -1,84 +1,84 @@
 {
+    "name": "audioreminder",
 
-  "name": "audioreminder",
+    "version": "0.0.0",
 
-  "version": "0.0.0",
+    "type": "module",
 
-  "type": "module",
+    "private": true,
 
-  "private": true,
+    "main": "index.js",
 
-  "main": "index.js",
+    "scripts": {
+        "start": "node app.js",
 
-  "scripts": {
+        "dev": "nodemon app.js",
 
-    "start": "node app.js",
+        "serve": "node app.js --open",
 
-    "dev": "nodemon app.js",
+        "lint": "eslint . --ext .js",
 
-    "serve": "node app.js --open",
+        "test": "vitest",
 
-    "lint": "eslint . --ext .js"
+        "test:ui": "vitest --ui"
+    },
+    "dependencies": {
+        "@google-cloud/local-auth": "^2.1.0",
 
-  },
+        "argon2": "^0.41.1",
 
-  "dependencies": {
+        "cookie-parser": "~1.4.4",
 
-    "@google-cloud/local-auth": "^2.1.0",
+        "cors": "^2.8.5",
 
-    "argon2": "^0.41.1",
+        "debug": "~2.6.9",
 
-    "cookie-parser": "~1.4.4",
+        "dependencies": "^0.0.1",
 
-    "cors": "^2.8.5",
+        "docker": "^1.0.0",
 
-    "debug": "~2.6.9",
+        "dotenv": "^16.5.0",
 
-    "dependencies": "^0.0.1",
+        "express": "^4.21.2",
 
-    "docker": "^1.0.0",
+        "express-session": "^1.18.1",
 
-    "dotenv": "^16.5.0",
+        "googleapis": "^105.0.0",
 
-    "express": "^4.21.2",
+        "http-errors": "~1.6.3",
 
-    "express-session": "^1.18.1",
+        "method-override": "^3.0.0",
 
-    "googleapis": "^105.0.0",
+        "mongodb": "^6.14.2",
 
-    "http-errors": "~1.6.3",
+        "mongoos": "^0.0.1-security",
 
-    "method-override": "^3.0.0",
+        "mongoose": "^8.12.1",
 
-    "mongodb": "^6.14.2",
+        "node": "^23.10.0",
 
-    "mongoos": "^0.0.1-security",
+        "open": "^9.1.0",
 
-    "mongoose": "^8.12.1",
+        "request": "^2.88.2"
+    },
+    "devDependencies": {
+        "@babel/preset-env": "^7.26.9",
 
-    "node": "^23.10.0",
+        "@eslint/js": "^9.24.0",
 
-    "open": "^9.1.0",
+        "@vitest/ui": "^3.1.2",
 
-    "request": "^2.88.2"
+        "babel-jest": "^29.7.0",
 
-  },
+        "eslint": "^9.0.0",
 
-  "devDependencies": {
+        "nodemon": "^3.0.1",
 
-    "@eslint/js": "^9.24.0",
+        "supertest": "^7.1.0",
 
-    "eslint": "^9.0.0",
-
-    "nodemon": "^3.0.1"
-
-  },
-
-  "engines": {
-
-    "node": ">=18.0.0"
-
-  }
-
+        "vitest": "^3.1.2"
+    },
+    "engines": {
+        "node": ">=18.0.0"
+    }
 }
-
