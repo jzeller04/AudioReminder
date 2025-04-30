@@ -17,41 +17,39 @@ const GoogleCalendar = {
   // Initialize Google Calendar functionality
   init: async function() {
     console.log('Initializing Google Calendar...');
-
+  
     // Check if Google Auth is available
     if (!window.GoogleAuth) {
       console.error('Google Auth not available');
       return false;
     }
-
+  
     try {
       // Ensure Google Auth is fully initialized
       console.log('Waiting for Google Auth to initialize...');
       await GoogleAuth.init();
       console.log('Google Auth is now ready');
-
+  
       // Initialize Calendar API
       try {
         await this.initCalendarAPI();
       } catch (error) {
         console.error('Error initializing Calendar API:', error);
       }
-
-      // Listen for auth events
+  
+      // Listen for auth events - sync only when explicitly logging in
       window.addEventListener('userLoggedIn', () => {
         console.log('User logged in, fetching calendar events...');
-        setTimeout(() => this.fetchEvents(), 1000); // Slight delay to ensure token is set
+        // Add a flag to check if this is an actual login vs page refresh
+        if (sessionStorage.getItem('justLoggedIn') === 'true') {
+          setTimeout(() => this.fetchEvents(), 1000);
+          sessionStorage.removeItem('justLoggedIn');
+        }
       });
-
+  
       this.isInitialized = true;
       console.log('Google Calendar initialized');
-
-      // Auto-fetch if user is already authenticated
-      if (GoogleAuth.isAuthenticated) {
-        console.log('User already authenticated, fetching events...');
-        setTimeout(() => this.fetchEvents(), 1000);
-      }
-
+  
       return true;
     } catch (error) {
       console.error('Error during Google Calendar initialization:', error);
@@ -430,7 +428,9 @@ const GoogleCalendar = {
         audioReminderId: event.audioReminderId,
         audioReminderVersion: event.audioReminderVersion,
         flagged: event.flagged,
-        location: event.location
+        location: event.location,
+        // Add flag to ensure database saving
+        saveToDatabase: true
       }));
       
       console.log('Sample event being sent:', formattedEvents[0]);
@@ -442,7 +442,8 @@ const GoogleCalendar = {
         },
         body: JSON.stringify({ 
           events: formattedEvents,
-          googleAuthToken: authToken
+          googleAuthToken: authToken,
+          saveToDatabase: true
         })
       });
       
@@ -454,6 +455,35 @@ const GoogleCalendar = {
       
       const result = await response.json();
       console.log('Events synced successfully:', result);
+      
+      // If there's an error with saving or no events were added, try direct save
+      if (result.error || result.added === 0) {
+        console.warn('Issue saving events to database, will try direct save');
+        
+        // Try direct API call to save specific events
+        try {
+          const saveResponse = await fetch('/api/save-google-events', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              events: formattedEvents,
+              googleAuthToken: authToken
+            })
+          });
+          
+          if (saveResponse.ok) {
+            const saveResult = await saveResponse.json();
+            console.log('Direct save result:', saveResult);
+          } else {
+            console.error('Direct save failed:', await saveResponse.text());
+          }
+        } catch (saveError) {
+          console.error('Error during direct save:', saveError);
+        }
+      }
+      
       return result;
     } catch (error) {
       console.error('Error syncing events with backend:', error);
@@ -629,7 +659,7 @@ const GoogleCalendar = {
         throw new Error('No valid auth token available');
       }
       
-      // Step 2: Call API to remove Google reminders
+      // Step 2: Call API to remove Google reminders (single operation)
       const response = await fetch('/api/remove-google-reminders', {
         method: 'POST',
         headers: {
@@ -660,14 +690,6 @@ const GoogleCalendar = {
       };
     } catch (error) {
       console.error('Error disconnecting from Google Calendar:', error);
-      
-      // Still try to sign out if there was an error
-      try {
-        await GoogleAuth.signOut();
-      } catch (signOutError) {
-        console.error('Error signing out:', signOutError);
-      }
-      
       return { 
         success: false, 
         error: error.message || 'Failed to disconnect from Google Calendar'

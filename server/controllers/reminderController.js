@@ -227,29 +227,27 @@ const createReminder = async (req, res) => {
         let googleId = null;
         // Try syncing to Google if connected - ONLY do this once
         if (isGoogleConnected && googleAuthToken) {
-            console.log(`Syncing reminder ${reminder._id} (requestId: ${requestId}) to Google Calendar`);
+            console.log(`Syncing reminder ${reminder._id} to Google Calendar`);
             try {
-                // Call Google Calendar API directly here
+                // Only create this single event in Google - avoid full sync
                 const googleEvent = await pushReminderToGoogle(reminder, googleAuthToken);
                 
                 if (googleEvent && googleEvent.id) {
-                    // Update the reminder with Google ID
-                    const updatedUser = await User.findById(req.session.userId);
-                    if (updatedUser) {
-                        const updatedReminder = updatedUser.reminders.id(reminder._id);
-                        if (updatedReminder) {
-                            updatedReminder.googleId = googleEvent.id;
-                            updatedReminder.syncStatus = 'synced';
-                            updatedReminder.lastSyncedVersion = new Date().toISOString();
-                            await updatedUser.save();
-                            
-                            googleSynced = true;
-                            googleId = googleEvent.id;
-                            
-                            console.log(`Successfully synced reminder ${reminder._id} with Google ID: ${googleId}`);
-                        }
+                // Update just this reminder with Google ID
+                const updatedUser = await User.findById(req.session.userId);
+                if (updatedUser) {
+                    const updatedReminder = updatedUser.reminders.id(reminder._id);
+                    if (updatedReminder) {
+                        updatedReminder.googleId = googleEvent.id;
+                        updatedReminder.syncStatus = 'synced';
+                        updatedReminder.lastSyncedVersion = new Date().toISOString();
+                        await updatedUser.save();
+                        
+                        googleSynced = true;
+                        googleId = googleEvent.id;
                     }
                 }
+            }
             } catch (syncError) {
                 console.error(`Failed to sync reminder ${reminder._id} with Google Calendar:`, syncError);
                 // Continue with reminder creation even if sync fails
@@ -434,60 +432,92 @@ function extractExtendedProperties(event) {
 
 // Mark reminder as complete
 const completeReminder = async (req, res) => {
-    const user = await User.findById(req.session.userId);
-    const reminder = user.reminders.id(req.body.reminderId);
-    const googleReminderInfo = {
-    isGoogleReminder: !!reminder.googleId,
-    googleId: reminder.googleId || null
-    };
-
     const reminderId = req.body.reminderId;
-    const deleteFromGoogle = req.body.deleteFromGoogle === 'true'; // Flag to indicate if we should try to delete from Google
+    const googleAuthToken = req.body.googleAuthToken;
     const isAjaxRequest = req.xhr || req.headers.accept?.includes('application/json');
     
     try {
-        // First, check if the reminder has a Google ID (if we need to delete it from Google later)
-        let googleId = null;
-        if (deleteFromGoogle) {
-            const user = await User.findById(req.session.userId);
-            if (user) {
-                const reminder = user.reminders.id(reminderId);
-                if (reminder && reminder.googleId) {
-                    googleId = reminder.googleId;
-                }
-            }
-        }
+    // First, check if the reminder has a Google ID and delete from Google if needed
+    const user = await User.findById(req.session.userId);
+    
+    if (!user) {
+        throw new Error("User not found");
+    }
+    
+    const reminder = user.reminders.id(reminderId);
+    
+    if (!reminder) {
+        throw new Error("Reminder not found");
+    }
+    
+    let googleId = null;
+    
+    // If this reminder has a Google ID, try to delete it from Google
+    if (reminder.googleId && googleAuthToken) {
+        googleId = reminder.googleId;
         
-        // Now remove the reminder from our database
-        await User.findOneAndUpdate(
-            { _id: req.session.userId },
-            { $pull: { reminders: { _id: reminderId } } }
-        );
-        
-        // If it's an AJAX request, return JSON
-        if (isAjaxRequest) {
-            return res.json({
-                success: true, 
-                message: 'Reminder marked as complete',
-                googleId: googleId
-            });
-        } else {
-            // For regular form submits, redirect back to tasks page
-            return res.redirect('/tasks');
+        try {
+        // Call API to delete from Google
+        await deleteEventFromGoogle(googleId, googleAuthToken);
+        console.log(`Successfully deleted event ${googleId} from Google Calendar`);
+        } catch (googleError) {
+        console.error('Error deleting event from Google Calendar:', googleError);
+        // Continue with deletion locally even if Google deletion fails
         }
+    }
+    
+    // Now remove the reminder from our database
+    await User.findOneAndUpdate(
+        { _id: req.session.userId },
+        { $pull: { reminders: { _id: reminderId } } }
+    );
+    
+    // If it's an AJAX request, return JSON
+    if (isAjaxRequest) {
+        return res.json({
+        success: true, 
+        message: 'Reminder marked as complete',
+        googleId: googleId
+        });
+    } else {
+        // For regular form submits, redirect back to tasks page
+        return res.redirect('/tasks');
+    }
     } catch (error) {
-        console.log('Error removing reminder:', error);
-        
-        // Handle error based on request type
-        if (isAjaxRequest) {
-            return res.status(500).json({ 
-                success: false, 
-                message: 'Error removing reminder' 
-            });
-        } else {
-            // For regular form submits, redirect back to tasks page with error
-            return res.redirect('/tasks?error=failed-to-complete');
+    console.error('Error removing reminder:', error);
+    
+    // Handle error based on request type
+    if (isAjaxRequest) {
+        return res.status(500).json({ 
+        success: false, 
+        message: 'Error removing reminder' 
+        });
+    } else {
+        // For regular form submits, redirect back to tasks page with error
+        return res.redirect('/tasks?error=failed-to-complete');
+    }
+    }
+}
+
+// Helper function to delete from Google Calendar
+async function deleteEventFromGoogle(eventId, authToken) {
+    try {
+    console.log(`Attempting to delete event ${eventId} from Google Calendar`);
+    const response = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${eventId}`, {
+        method: 'DELETE',
+        headers: {
+        'Authorization': `Bearer ${authToken}`
         }
+    });
+    
+    if (!response.ok) {
+        throw new Error(`Failed to delete event: ${response.status}`);
+    }
+    
+    return true;
+    } catch (error) {
+    console.error(`Error deleting event ${eventId} from Google:`, error);
+    throw error;
     }
 }
 

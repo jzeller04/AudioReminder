@@ -238,7 +238,7 @@ const GoogleAuth = {
   
   // Handle the authentication response
   handleAuthResponse: async function(response) {
-    if (response.error) {
+    if (response.error !== undefined) {
       console.error('Error during authentication:', response.error);
       return;
     }
@@ -270,7 +270,7 @@ const GoogleAuth = {
     // Calculate expiry time (subtract 5 minutes for safety margin)
     const expiryTime = new Date().getTime() + ((response.expires_in - 300) * 1000);
     
-    // Save token data to localStorage
+    // Create token data object from response
     const tokenData = {
       access_token: response.access_token,
       expires_in: response.expires_in,
@@ -278,17 +278,22 @@ const GoogleAuth = {
       token_type: response.token_type
     };
     
+    // Save token data to localStorage
     localStorage.setItem('googleTokenData', JSON.stringify(tokenData));
     localStorage.setItem('googleTokenExpiry', expiryTime.toString());
     
     // Set authentication state
     this.isAuthenticated = true;
     
+    // Set flag to indicate a fresh login
+    sessionStorage.setItem('justLoggedIn', 'true');
+    
     // Get user info
     await this.fetchUserInfo();
     
+    // Perform full sync ONLY when first connecting
     if (window.location.pathname.includes('/calendar') && 
-        window.GoogleCalendar && // Check if GoogleCalendar exists in window
+        window.GoogleCalendar && 
         typeof window.GoogleCalendar.syncCalendar === 'function') {
       try {
         // Show syncing message
@@ -299,7 +304,7 @@ const GoogleAuth = {
         }
         
         // Call the sync function
-        await window.GoogleCalendar.syncCalendar(); // Use window.GoogleCalendar instead
+        await window.GoogleCalendar.syncCalendar();
         
         // Show success message
         if (syncStatus) {
@@ -312,7 +317,7 @@ const GoogleAuth = {
           }
           
           // Clear status after 5 seconds
-          window.setTimeout(() => {
+          setTimeout(() => {
             syncStatus.textContent = '';
             syncStatus.className = 'sync-status';
           }, 5000);

@@ -243,15 +243,13 @@ const syncGoogleEvents = async (req, res) => {
         const audioReminderVersion = extProps.audioReminderVersion;
         const audioReminderFlagged = extProps.audioReminderFlagged === "true";
         
-        // Skip events that don't originate from AudioReminder
-        if (!isAudioReminderOrigin) {
-          console.log(`Skipping non-AudioReminder event: ${event.title}`);
-          continue;
+        // Track this Google ID
+        if (event.id) {
+          processedGoogleIds.add(event.id);
         }
         
         // Check if we already have this event by Google ID
         const existingReminder = existingGoogleEvents.get(event.id);
-        processedGoogleIds.add(event.id);
         
         // If it exists in our system, update it
         if (existingReminder) {
@@ -384,16 +382,33 @@ const syncGoogleEvents = async (req, res) => {
       addedEvents.push(reminder);
     }
     
-    // Now handle deletions
-    // Find reminders with googleId that weren't in this sync but weren't created locally
-    const deletedReminders = [];
-    for (const [googleId, reminder] of existingGoogleEvents) {
-      if (!processedGoogleIds.has(googleId) && !reminder.isLocallyCreated) {
-        // This event was imported from Google but is no longer in Google Calendar
-        // Therefore it should be removed from AudioReminder
-        deletedReminders.push(reminder._id);
+    // Create a set of all Google event IDs from the current sync
+    const currentGoogleEventIds = new Set();
+    events.forEach(event => {
+      if (event.id) {
+        currentGoogleEventIds.add(event.id);
       }
-    }
+    });
+    
+    // Check for locally stored events that were deleted from Google
+    const deletedReminders = [];
+    user.reminders.forEach(reminder => {
+      // Only check reminders with Google IDs that we're tracking
+      if (reminder.googleId && !currentGoogleEventIds.has(reminder.googleId) && reminder.syncStatus === 'synced') {
+        console.log(`Found reminder with Google ID ${reminder.googleId} that was deleted from Google Calendar`);
+        
+        // If the reminder originated from AudioReminder, mark it for re-push
+        if (reminder.isLocallyCreated) {
+          reminder.googleId = null;
+          reminder.syncStatus = 'needs_push';
+          reminder.lastSyncedVersion = new Date().toISOString();
+          updatedEvents.push(reminder);
+        } else {
+          // If the reminder originated from Google, delete it locally too
+          deletedReminders.push(reminder._id);
+        }
+      }
+    });
     
     // Remove the identified reminders
     if (deletedReminders.length > 0) {
