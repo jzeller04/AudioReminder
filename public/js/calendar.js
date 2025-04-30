@@ -1,3 +1,18 @@
+// Import from server-side utilities via an API endpoint or re-implement here
+function formatTimeClient(timeStr) {
+    // Simple client-side implementation - complex logic is on server
+    try {
+        // If timeStr is like "13:45" format
+        const [hours, minutes] = timeStr.split(':').map(Number);
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        const displayHours = hours % 12 || 12;
+        const displayMinutes = minutes < 10 ? '0' + minutes : minutes;
+        return `${displayHours}:${displayMinutes} ${ampm}`;
+    } catch (error) {
+      return timeStr; // Return original if can't parse
+    }
+}
+
 const Calendar = {
     // Stores calendar state and tasks 
     tasks: [],
@@ -34,7 +49,6 @@ const Calendar = {
         }
     },
     
-
     // Initializes calendar UI and attach task listeners
     initCalendarUI: function() {
         // Create calendar container if it doesn't exist
@@ -93,37 +107,37 @@ const Calendar = {
         console.log("Loading calendar events from server data");
         
         if (window.calendarReminders && Array.isArray(window.calendarReminders)) {
-          console.log("Found reminders:", window.calendarReminders.length);
-      
-          // Process the reminders with consistent date handling
-          this.tasks = window.calendarReminders.map(reminder => {
+            console.log("Found reminders:", window.calendarReminders.length);
+        
+            // Process the reminders with consistent date handling
+            this.tasks = window.calendarReminders.map(reminder => {
             console.log(`Processing reminder "${reminder.title || 'Untitled'}":`, reminder);
             
             let localDate;
             
             if (reminder.date) {
-              // Parse the ISO date string
-              const reminderDate = new Date(reminder.date);
-              
-              // Log date debugging information
-              console.log(`- Original date:`, reminderDate);
-              console.log(`- ISO string:`, reminderDate.toISOString());
-              console.log(`- Local string:`, reminderDate.toLocaleDateString());
-              
-              // Create a local date using only the date components to avoid timezone issues
-              localDate = new Date(
+                // Parse the ISO date string
+                const reminderDate = new Date(reminder.date);
+                
+                // Log date debugging information
+                console.log(`- Original date:`, reminderDate);
+                console.log(`- ISO string:`, reminderDate.toISOString());
+                console.log(`- Local string:`, reminderDate.toLocaleDateString());
+                
+                // Create a local date using only the date components to avoid timezone issues
+                localDate = new Date(
                 reminderDate.getFullYear(),
                 reminderDate.getMonth(),
                 reminderDate.getDate(),
                 12, 0, 0 // Set to noon to avoid day boundary issues
-              );
-              
-              console.log(`- Processed local date:`, localDate);
-              console.log(`- Local date ISO:`, localDate.toISOString());
-              console.log(`- Local date string:`, localDate.toLocaleDateString());
+            );
+                
+                console.log(`- Processed local date:`, localDate);
+                console.log(`- Local date ISO:`, localDate.toISOString());
+                console.log(`- Local date string:`, localDate.toLocaleDateString());
             } else {
-              console.warn(`Reminder "${reminder.title || 'Untitled'}" has no date!`);
-              localDate = new Date(); // Fallback to today if no date
+                console.warn(`Reminder "${reminder.title || 'Untitled'}" has no date!`);
+                localDate = new Date(); // Fallback to today if no date
             }
             
             return {
@@ -300,7 +314,7 @@ const Calendar = {
                 // Format time
                 let timeStr = 'All day';
                 if (task.time && task.time !== 'No reminder found') {
-                    timeStr = this.formatTime(task.time);
+                    timeStr = formatTimeClient(task.time);
                 }
                 
                 // Build the task HTML
@@ -328,37 +342,6 @@ const Calendar = {
                 
                 tasksList.appendChild(taskElement);
             });
-        }
-    },
-    
-    
-    // Format time twelve hour format with AM/PM
-    formatTime: function(timeStr) {
-        // Check if timeStr is already a Date object
-        if (timeStr instanceof Date) {
-            const hours = timeStr.getHours();
-            const minutes = timeStr.getMinutes();
-            const ampm = hours >= 12 ? 'PM' : 'AM';
-            
-            const displayHours = hours % 12 || 12; // Convert 0 to 12
-            const displayMinutes = minutes < 10 ? '0' + minutes : minutes;
-            
-            return `${displayHours}:${displayMinutes} ${ampm}`;
-        }
-        
-        // Otherwise, parse the time string
-        try {
-            // If timeStr is like "13:45" format
-            const [hours, minutes] = timeStr.split(':').map(Number);
-            const ampm = hours >= 12 ? 'PM' : 'AM';
-            
-            const displayHours = hours % 12 || 12; // Convert 0 to 12
-            const displayMinutes = minutes < 10 ? '0' + minutes : minutes;
-            
-            return `${displayHours}:${displayMinutes} ${ampm}`;
-        } catch (error) {
-            console.error('Error formatting time:', error);
-            return timeStr; // Return original if can't parse
         }
     },
 
@@ -459,7 +442,7 @@ const Calendar = {
         // Re-render the calendar
         this.renderCalendar();
     }
-};
+}
 
 // Initialize the calendar when the DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {

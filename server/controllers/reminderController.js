@@ -1,6 +1,5 @@
 import User from '../models/user.js';
-import { normalizeDate, dateToReadable, timeToTwelveSystem } from '../utils/util.js';
-import { formatDateTimeForGoogle } from './googleCalendarController.js';
+import { normalizeDate, dateToReadable, timeToTwelveSystem, formatDateTimeForGoogle, isSameDay } from '../utils/util.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
@@ -9,6 +8,27 @@ import mongoose from 'mongoose';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+
+// Parse date from natural language
+export const parseDateString = async (req, res) => {
+    const { dateString } = req.body;
+    
+    try {
+        // Use the utility functions from util.js
+        const parsedDate = normalizeDate(dateString);
+        const formattedDate = parsedDate.toISOString().split('T')[0]; // YYYY-MM-DD format
+        
+        return res.json({ 
+        success: true, 
+        parsedDate: formattedDate 
+        });
+    } catch (error) {
+        return res.status(400).json({ 
+        success: false, 
+        error: 'Could not parse date string' 
+        });
+    }
+}
 
 // Get upcoming reminders for homepage
 const getUpcomingReminder = async (req, res) => {
@@ -112,7 +132,7 @@ const getAllReminders = async (req, res) => {
                     <p class="reminder-date">${dateToReadable(reminder.date) || 'Missing date'}</p>
                     <p class="reminder-time">${timeToTwelveSystem(reminder.time) || 'Missing time'}</p>
                     ${reminder.googleId && reminder.isLocallyCreated !== true ? '<p class="reminder-source">From Google Calendar</p>' : ''}
-                    ${reminder.flagged ? '<p class="flag-indicator">⭐ Important</p>' : ''}
+                    ${reminder.flagged ? '<p class="flag-indicator">🚩 Important</p>' : ''}
                 </div>
                 <button class="flag-btn" data-id="${reminder._id}"${googleIdAttr}${isLocallyCreatedAttr}>${reminder.flagged ? 'Remove Flag' : 'Flag as Important'}</button>
                 <button class="complete-btn" data-id="${reminder._id}"${googleIdAttr}${isLocallyCreatedAttr}>Mark Complete</button>
@@ -132,32 +152,61 @@ async function syncReminderToGoogle(reminder, authToken) {
     try {
         const googleEvent = await pushReminderToGoogle(reminder, authToken);
 
-        // Update reminder object fields
-        if (googleEvent && googleEvent.id) {
-            reminder.googleId = googleEvent.id;
-            reminder.syncStatus = 'synced';
-            reminder.lastSyncedVersion = googleEvent.extendedProperties?.private?.audioReminderVersion || new Date().toISOString();
-        } else {
-            console.warn('Google event did not return ID.');
-            reminder.syncStatus = 'needs_push'; // fallback safety
+        // Fetch the full user document to access the embedded reminder
+        const user = await User.findById(reminder.userId || reminder._doc?.userId || reminder.owner || reminder.createdBy || reminder.user || req.session.userId);
+
+        if (!user) {
+            console.error("User not found when trying to sync reminder to Google.");
+            return { success: false, error: "User not found" };
         }
 
-        await reminder.save(); // Save updated reminder
+        // Locate the specific reminder within the user's reminders array
+        const embeddedReminder = user.reminders.id(reminder._id);
 
-        return { success: true, googleId: reminder.googleId };
+        if (!embeddedReminder) {
+            console.error("Reminder not found in user document.");
+            return { success: false, error: "Reminder not found in user document" };
+        }
+
+        // Update Google sync fields
+        if (googleEvent && googleEvent.id) {
+            embeddedReminder.googleId = googleEvent.id;
+            embeddedReminder.syncStatus = 'synced';
+            embeddedReminder.lastSyncedVersion = googleEvent.extendedProperties?.private?.audioReminderVersion || new Date().toISOString();
+        } else {
+            console.warn('Google event did not return ID. Marking reminder as needs_push.');
+            embeddedReminder.syncStatus = 'needs_push';
+        }
+
+        // Save the user document to persist changes
+        await user.save();
+
+        return {
+            success: true,
+            googleId: embeddedReminder.googleId
+        };
+
     } catch (error) {
         console.error('Failed to sync reminder to Google Calendar:', error);
 
-        reminder.syncStatus = 'needs_push';
-        await reminder.save();
+        try {
+            const user = await User.findById(req.session.userId);
+            const embeddedReminder = user?.reminders?.id(reminder._id);
+            if (embeddedReminder) {
+                embeddedReminder.syncStatus = 'needs_push';
+                await user.save();
+            }
+        } catch (saveError) {
+            console.error("Failed to mark reminder as needs_push after error:", saveError);
+        }
 
         return { success: false, error };
     }
 }
 
-
 // Create new reminder
 const createReminder = async (req, res) => {
+    const shouldSyncToGoogle = true;
     const isJson = req.is('application/json');
     
     // Grab data from request
@@ -203,7 +252,8 @@ const createReminder = async (req, res) => {
                 success: true,
                 message: 'Reminder created successfully',
                 reminderId: reminder._id,
-                googleSynced: reminder.syncStatus === 'synced'
+                googleSynced: reminder.syncStatus === 'synced',
+                googleId: reminder.googleId || null
             });
         } else {
             return res.redirect('/newtask');
@@ -276,6 +326,13 @@ function extractExtendedProperties(event) {
 
 // Mark reminder as complete
 const completeReminder = async (req, res) => {
+    const user = await User.findById(req.session.userId);
+    const reminder = user.reminders.id(req.body.reminderId);
+    const googleReminderInfo = {
+    isGoogleReminder: !!reminder.googleId,
+    googleId: reminder.googleId || null
+    };
+
     const reminderId = req.body.reminderId;
     const deleteFromGoogle = req.body.deleteFromGoogle === 'true'; // Flag to indicate if we should try to delete from Google
     const isAjaxRequest = req.xhr || req.headers.accept?.includes('application/json');
@@ -488,7 +545,7 @@ async function saveReminderToUser(title, description, time, date, userId, flag, 
             isLocallyCreated: true, // Marks if it was created in AudioReminder and not Google
             syncStatus: 'needs_push', // Shows it needs to be pushed to Google
             location: location,
-            lastSyncedVersion: null // Will be updated after Google s
+            lastSyncedVersion: new Date().toISOString()
         };
 
         const user = await User.findById(userId);
@@ -499,8 +556,9 @@ async function saveReminderToUser(title, description, time, date, userId, flag, 
         user.reminders.push(reminder);
         await user.save();
 
-        // Get the created reminder (last one added)
-        const createdReminder = user.reminders[user.reminders.length - 1];
+        // Refetch user to get live Mongoose subdoc instance
+        const updatedUser = await User.findById(userId);
+        const createdReminder = updatedUser.reminders[updatedUser.reminders.length - 1];
 
         console.log("Successfully saved reminder:", reminder);
         return createdReminder;

@@ -1,3 +1,13 @@
+function extractTimeFromDateTime(dateTimeStr) {
+  if (!dateTimeStr || !dateTimeStr.includes('T')) return '';
+  try {
+    const date = new Date(dateTimeStr);
+    return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+  } catch (e) {
+    return '';
+  }
+}
+
 /* global GoogleAuth, gapi, setTimeout, clearTimeout */
 const GoogleCalendar = {
   // State
@@ -117,7 +127,7 @@ const GoogleCalendar = {
           title: event.summary || 'Untitled Event',
           description: event.description || '',
           date: new Date(start),
-          time: this.extractTimeFromDateTime(start),
+          time: extractTimeFromDateTime(start),
           source: 'google',
           calendarId: event.organizer?.email || null,
           creator: event.creator || null,
@@ -663,18 +673,6 @@ const GoogleCalendar = {
         error: error.message || 'Failed to disconnect from Google Calendar'
       };
     }
-  },
-
-  // Helper function to extract time from date-time string
-  extractTimeFromDateTime: function(dateTimeStr) {
-    if (!dateTimeStr) return '';
-    if (!dateTimeStr.includes('T')) return ''; // All-day event
-
-    const date = new Date(dateTimeStr);
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-
-    return `${hours}:${minutes}`;
   },
   
   // Push local reminders to Google Calendar (main push function)

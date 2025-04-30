@@ -1,6 +1,6 @@
 /* global fetch */
 import User from '../models/user.js';
-import { normalizeDate } from '../utils/util.js';
+import { normalizeDate, formatDateTimeForGoogle } from '../utils/util.js';
 
 // Creates extended properties for Google Calendar events
 function createExtendedProperties(isAudioReminderOrigin, version) {
@@ -579,20 +579,6 @@ const pushRemindersToGoogle = async (req, res) => {
     console.error('Error pushing reminders to Google Calendar:', error);
     return res.status(500).json({ error: 'Server error pushing reminders' });
   }
-}
-
-// Helper function to format date and time for Google Calendar
-function formatDateTimeForGoogle(date, time, addMinutes = 0) {
-  const dateObj = new Date(date);
-  const [hours, minutes] = time.split(':').map(Number);
-  
-  dateObj.setHours(hours, minutes, 0, 0);
-  
-  if (addMinutes) {
-    dateObj.setMinutes(dateObj.getMinutes() + addMinutes);
-  }
-  
-  return dateObj.toISOString();
 }
 
 const removeGoogleReminders = async (req, res) => {
