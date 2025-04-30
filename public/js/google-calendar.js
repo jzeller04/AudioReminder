@@ -1,10 +1,12 @@
-/* global GoogleAuth, gapi, setTimeout, clearTimeout, speak */
+/* global GoogleAuth, gapi, setTimeout, clearTimeout */
 function extractTimeFromDateTime(dateTimeStr) {
   if (!dateTimeStr || !dateTimeStr.includes('T')) return '';
   try {
     const date = new Date(dateTimeStr);
     return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
-  } catch (_) {
+  } catch (error) {
+    // Ignore parsing errors and just return empty string
+    console.error('Error parsing date time:', error);
     return '';
   }
 }

@@ -23,10 +23,10 @@ export const parseDateString = async (req, res) => {
         success: true, 
         parsedDate: formattedDate 
         });
-    } catch (err) { 
+    } catch (_) {
         return res.status(400).json({ 
-        success: false, 
-        error: 'Could not parse date string' 
+            success: false, 
+            error: 'Could not parse date string' 
         });
     }
 }
@@ -917,5 +917,6 @@ export {
     getRemindersForGoogleSync,
     resolveConflict,
     syncReminderToGoogle,
-    createExtendedProperties
+    createExtendedProperties,
+    extractExtendedProperties
 };

@@ -236,11 +236,10 @@ const syncGoogleEvents = async (req, res) => {
         
         // Extract extended properties
         const extProps = event.extendedProperties?.private || {};
-        
+                
         // Check if this is an event that originated from AudioReminder
-        if (isAudioReminderOrigin && audioReminderId) {
-          console.log(`Found event that originated from AudioReminder: ${event.title}`);
-        }
+        const isAudioReminderOrigin = extProps.audioReminderOrigin === "true";
+        const audioReminderId = extProps.audioReminderId;
         const audioReminderVersion = extProps.audioReminderVersion;
         const audioReminderFlagged = extProps.audioReminderFlagged === "true";
         
