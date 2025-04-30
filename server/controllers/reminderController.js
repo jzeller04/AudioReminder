@@ -37,7 +37,7 @@ const getUpcomingReminder = async (req, res) => {
         await updateUserReminders(req.session.userId);
         
         const template = await fs.readFile(path.join(__dirname, '../../views/index.html'), 'utf8');
-        const userReminders = await fetch(req.session.userId);
+        const userReminders = await fetchUserReminders(req.session.userId);
 
         let reminderHTML;
         if (userReminders.length > 0) {
@@ -91,7 +91,7 @@ const getAllReminders = async (req, res) => {
     try {
         const template = await fs.readFile(path.join(__dirname, '../../views/tasks.html'), 'utf8');
         const importantReminders = await fetchImportant(req.session.userId);
-        const reminders = await fetch(req.session.userId);
+        const reminders = await fetchUserReminders(req.session.userId);
 
         let reminderHTML = importantReminders.map(reminder => {
             // Only show the "From Google Calendar" label for reminders not created locally
@@ -148,66 +148,11 @@ const getAllReminders = async (req, res) => {
     }
 }
 
-async function syncReminderToGoogle(reminder, authToken) {
-    try {
-        const googleEvent = await pushReminderToGoogle(reminder, authToken);
-
-        // Fetch the full user document to access the embedded reminder
-        const user = await User.findById(reminder.userId || reminder._doc?.userId || reminder.owner || reminder.createdBy || reminder.user || req.session.userId);
-
-        if (!user) {
-            console.error("User not found when trying to sync reminder to Google.");
-            return { success: false, error: "User not found" };
-        }
-
-        // Locate the specific reminder within the user's reminders array
-        const embeddedReminder = user.reminders.id(reminder._id);
-
-        if (!embeddedReminder) {
-            console.error("Reminder not found in user document.");
-            return { success: false, error: "Reminder not found in user document" };
-        }
-
-        // Update Google sync fields
-        if (googleEvent && googleEvent.id) {
-            embeddedReminder.googleId = googleEvent.id;
-            embeddedReminder.syncStatus = 'synced';
-            embeddedReminder.lastSyncedVersion = googleEvent.extendedProperties?.private?.audioReminderVersion || new Date().toISOString();
-        } else {
-            console.warn('Google event did not return ID. Marking reminder as needs_push.');
-            embeddedReminder.syncStatus = 'needs_push';
-        }
-
-        // Save the user document to persist changes
-        await user.save();
-
-        return {
-            success: true,
-            googleId: embeddedReminder.googleId
-        };
-
-    } catch (error) {
-        console.error('Failed to sync reminder to Google Calendar:', error);
-
-        try {
-            const user = await User.findById(req.session.userId);
-            const embeddedReminder = user?.reminders?.id(reminder._id);
-            if (embeddedReminder) {
-                embeddedReminder.syncStatus = 'needs_push';
-                await user.save();
-            }
-        } catch (saveError) {
-            console.error("Failed to mark reminder as needs_push after error:", saveError);
-        }
-
-        return { success: false, error };
-    }
-}
-
-// Create new reminder
 const createReminder = async (req, res) => {
-    const shouldSyncToGoogle = true;
     const isJson = req.is('application/json');
+    
+    // Create a unique identifier for this request to prevent duplicates
+    const requestId = Date.now().toString() + Math.random().toString().substring(2, 8);
     
     // Grab data from request
     const title = isJson ? req.body.title : req.body.title;
@@ -215,11 +160,11 @@ const createReminder = async (req, res) => {
     const date = isJson ? req.body.date : req.body.date;
     const time = isJson ? req.body.time : req.body.time;
     const location = isJson ? req.body.location : req.body.location;
+    const flag = req.body.flagged === true || false; // Default to false
+    
+    // Google connect info
     const isGoogleConnected = req.body.googleConnected === true;
     const googleAuthToken = req.body.googleAuthToken;
-
-    const flag = false; // Default flagged state
-
     // Validate input
     if (!title || title.length > 30) {
         const message = !title ? 'Title is required' : 'Title too long (max 30 characters)';
@@ -228,9 +173,45 @@ const createReminder = async (req, res) => {
     if (description && description.length > 300) {
         return respondError(res, isJson, 400, 'Description too long (max 300 characters)');
     }
-
     try {
-        // Save reminder locally
+        // Check if we have a very similar reminder created in the last 5 seconds
+        // This prevents duplicate submissions
+        const user = await User.findById(req.session.userId);
+        if (user) {
+            const recentReminders = user.reminders.filter(r => {
+                // Check if this is a very similar reminder created recently
+                const isSimilar = r.title === title && 
+                                r.time === time && 
+                                isSameDay(new Date(r.date), new Date(date));
+                
+                // Check if it was created in the last 5 seconds
+                const isRecent = new Date() - new Date(r.createdAt) < 5000; // 5 seconds
+                
+                return isSimilar && isRecent;
+            });
+            
+            if (recentReminders.length > 0) {
+                console.log("Prevented duplicate reminder creation");
+                
+                // Return the existing reminder instead of creating a new one
+                const existingReminder = recentReminders[0];
+                
+                if (isJson) {
+                    return res.json({
+                        success: true,
+                        message: 'Reminder already exists',
+                        reminderId: existingReminder._id,
+                        googleSynced: existingReminder.syncStatus === 'synced',
+                        googleId: existingReminder.googleId
+                    });
+                } else {
+                    return res.redirect('/newtask');
+                }
+            }
+        }
+        console.log(`Creating new reminder with requestId: ${requestId}`);
+        
+        // Save reminder locally with requestId for tracking
         const reminder = await saveReminderToUser(
             title, 
             description || "", 
@@ -238,29 +219,137 @@ const createReminder = async (req, res) => {
             date, 
             req.session.userId, 
             flag, 
-            location
+            location,
+            requestId // Pass the requestId for logging
         );
-
-        // Try syncing to Google if connected
+        // Track Google sync status
+        let googleSynced = false;
+        let googleId = null;
+        // Try syncing to Google if connected - ONLY do this once
         if (isGoogleConnected && googleAuthToken) {
-            await syncReminderToGoogle(reminder, googleAuthToken);
+            console.log(`Syncing reminder ${reminder._id} (requestId: ${requestId}) to Google Calendar`);
+            try {
+                // Call Google Calendar API directly here
+                const googleEvent = await pushReminderToGoogle(reminder, googleAuthToken);
+                
+                if (googleEvent && googleEvent.id) {
+                    // Update the reminder with Google ID
+                    const updatedUser = await User.findById(req.session.userId);
+                    if (updatedUser) {
+                        const updatedReminder = updatedUser.reminders.id(reminder._id);
+                        if (updatedReminder) {
+                            updatedReminder.googleId = googleEvent.id;
+                            updatedReminder.syncStatus = 'synced';
+                            updatedReminder.lastSyncedVersion = new Date().toISOString();
+                            await updatedUser.save();
+                            
+                            googleSynced = true;
+                            googleId = googleEvent.id;
+                            
+                            console.log(`Successfully synced reminder ${reminder._id} with Google ID: ${googleId}`);
+                        }
+                    }
+                }
+            } catch (syncError) {
+                console.error(`Failed to sync reminder ${reminder._id} with Google Calendar:`, syncError);
+                // Continue with reminder creation even if sync fails
+            }
         }
-
-        // Return response
+        // Return response based on format
         if (isJson) {
             return res.json({
                 success: true,
                 message: 'Reminder created successfully',
                 reminderId: reminder._id,
-                googleSynced: reminder.syncStatus === 'synced',
-                googleId: reminder.googleId || null
+                googleSynced,
+                googleId,
+                requestId // Include the requestId in the response for tracking
             });
         } else {
             return res.redirect('/newtask');
         }
     } catch (error) {
-        console.error('Error saving reminder:', error);
+        console.error(`Error creating reminder (requestId: ${requestId}):`, error);
         return respondError(res, isJson, 500, 'Server error creating reminder');
+    }
+}
+
+async function syncReminderToGoogle(reminder, authToken) {
+    try {
+        // Push to Google Calendar
+        const googleEvent = await pushReminderToGoogle(reminder, authToken);
+        
+        // Safety check - make sure we have the user ID
+        const userId = reminder.userId || 
+                    (reminder._doc && reminder._doc.userId) || 
+                    reminder.owner || 
+                    reminder.user;
+                    
+        if (!userId) {
+            console.error("No user ID available for reminder:", reminder._id);
+            return { success: false, error: "User ID not found" };
+        }
+
+        // Find the user and the reminder in the database
+        const user = await User.findById(userId);
+        
+        if (!user) {
+            console.error(`User not found with ID: ${userId}`);
+            return { success: false, error: "User not found" };
+        }
+        
+        // Find the reminder in the user's reminders array
+        const embeddedReminder = user.reminders.id(reminder._id);
+        
+        if (!embeddedReminder) {
+            console.error(`Reminder not found in user's reminders: ${reminder._id}`);
+            return { success: false, error: "Reminder not found in user document" };
+        }
+        
+        // Update the reminder with Google Calendar info
+        if (googleEvent && googleEvent.id) {
+            console.log(`Updating reminder ${reminder._id} with Google ID: ${googleEvent.id}`);
+            embeddedReminder.googleId = googleEvent.id;
+            embeddedReminder.syncStatus = 'synced';
+            embeddedReminder.lastSyncedVersion = new Date().toISOString();
+            
+            // Save the changes
+            await user.save();
+            
+            return {
+                success: true,
+                googleId: googleEvent.id
+            };
+        } else {
+            console.error("No Google event ID returned");
+            return { success: false, error: "No Google event ID received" };
+        }
+    } catch (error) {
+        console.error('Failed to sync reminder to Google Calendar:', error);
+
+        // Try to mark reminder as needing push
+        try {
+            // Get the user ID from the reminder
+            const userId = reminder.userId || 
+                        (reminder._doc && reminder._doc.userId) || 
+                        reminder.owner || 
+                        reminder.user;
+            
+            if (userId) {
+                const user = await User.findById(userId);
+                if (user) {
+                    const reminderToUpdate = user.reminders.id(reminder._id);
+                    if (reminderToUpdate) {
+                        reminderToUpdate.syncStatus = 'needs_push';
+                        await user.save();
+                    }
+                }
+            }
+        } catch (saveError) {
+            console.error("Failed to mark reminder as needs_push after error:", saveError);
+        }
+
+        return { success: false, error: error.message };
     }
 }
 
@@ -283,7 +372,8 @@ async function pushReminderToGoogle(reminder, authToken) {
             private: {
                 audioReminderOrigin: "true",
                 audioReminderVersion: new Date().toISOString(),
-                audioReminderId: reminder._id.toString()
+                audioReminderId: reminder._id.toString(),
+                audioReminderFlagged: reminder.flagged ? "true" : "false"
             }
         }
     };
@@ -293,23 +383,41 @@ async function pushReminderToGoogle(reminder, authToken) {
         event.location = reminder.location;
     }
     
-    // Create new event in Google Calendar
-    const response = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
-        method: 'POST',
-        headers: {
-            'Authorization': `Bearer ${authToken}`,
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(event)
-    });
-    
-    if (!response.ok) {
-        throw new Error(`API request failed with status ${response.status}`);
+    try {
+        // Use node-fetch or the global fetch in a way that won't conflict
+        const globalFetch = global.fetch || fetch;
+        
+        // Create new event in Google Calendar - no eventId reference here
+        const response = await globalFetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${authToken}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(event)
+        });
+        
+        // Handle response
+        if (!response.ok) {
+            let errorText = `Status: ${response.status}`;
+            try {
+                const responseText = await response.text();
+                if (responseText) {
+                    errorText = responseText;
+                }
+            } catch (e) {
+                // If text() isn't available
+                console.log("Couldn't get response text:", e);
+            }
+            throw new Error(`API request failed: ${errorText}`);
+        }
+        
+        const responseData = await response.json();
+        return responseData;
+    } catch (error) {
+        console.error('Error creating Google Calendar event:', error);
+        throw error;
     }
-    
-    const responseData = await response.json();
-    
-    return responseData;
 }
 
 // Extracts extended properties from Google Calendar event
@@ -409,8 +517,14 @@ const flagReminder = async (req, res) => {
 }
 
 // Fetch user reminders
-async function fetch(userId) {
+async function fetchUserReminders(userId) {
     try {
+        // Safety check to ensure userId is a valid MongoDB ObjectId
+        if (!userId || typeof userId !== 'string' || userId.includes('http')) {
+            console.error('Invalid userId provided to fetchUserReminders function:', userId);
+            return [];
+        }
+
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         
@@ -418,37 +532,38 @@ async function fetch(userId) {
         nextWeek.setDate(today.getDate() + 6);
         nextWeek.setHours(23, 59, 59, 999);
 
+        // Make sure we're using a valid ObjectId for the query
         const user = await User.findById(userId, {reminders: 1});
 
         if (!user || !user.reminders) {
-        return [];
+            return [];
         }
 
         // Filter relevant reminders
         const reminders = user.reminders.filter(reminder => {
-        const reminderDate = new Date(reminder.date);
-        return reminderDate >= today && reminderDate <= nextWeek && reminder.flagged == false;
+            const reminderDate = new Date(reminder.date);
+            return reminderDate >= today && reminderDate <= nextWeek && reminder.flagged == false;
         });
 
         // Sort reminders by date and time
         reminders.sort((a, b) => {
-        // First compare by date
-        const dateA = new Date(a.date);
-        const dateB = new Date(b.date);
-        
-        if (dateA.getTime() !== dateB.getTime()) {
-            return dateA - dateB;
-        }
-        
-        // If same date, compare by time
-        const [hoursA, minutesA] = a.time.split(':').map(Number);
-        const [hoursB, minutesB] = b.time.split(':').map(Number);
-        
-        if (hoursA !== hoursB) {
-            return hoursA - hoursB;
-        }
-        
-        return minutesA - minutesB;
+            // First compare by date
+            const dateA = new Date(a.date);
+            const dateB = new Date(b.date);
+            
+            if (dateA.getTime() !== dateB.getTime()) {
+                return dateA - dateB;
+            }
+            
+            // If same date, compare by time
+            const [hoursA, minutesA] = a.time.split(':').map(Number);
+            const [hoursB, minutesB] = b.time.split(':').map(Number);
+            
+            if (hoursA !== hoursB) {
+                return hoursA - hoursB;
+            }
+            
+            return minutesA - minutesB;
         });
         
         console.log("Fetched and sorted reminders:", reminders.length);
@@ -528,12 +643,12 @@ async function updateUserReminders(userId) {
 }
 
 // Save reminder to user
-async function saveReminderToUser(title, description, time, date, userId, flag, location) {
+async function saveReminderToUser(title, description, time, date, userId, flag, location, requestId = null) {
     try {
         // Store date in UTC to avoid timezone issues
         const normalizedDate = normalizeDate(date);
 
-        console.log("Saving reminder with normalized date:", normalizedDate.toISOString());
+        console.log(`Saving reminder with normalized date: ${normalizedDate.toISOString()} (requestId: ${requestId || 'none'})`);
 
         // Create reminder
         const reminder = {
@@ -545,7 +660,8 @@ async function saveReminderToUser(title, description, time, date, userId, flag, 
             isLocallyCreated: true, // Marks if it was created in AudioReminder and not Google
             syncStatus: 'needs_push', // Shows it needs to be pushed to Google
             location: location,
-            lastSyncedVersion: new Date().toISOString()
+            lastSyncedVersion: new Date().toISOString(),
+            _requestId: requestId // Store the requestId for tracking
         };
 
         const user = await User.findById(userId);
@@ -556,14 +672,13 @@ async function saveReminderToUser(title, description, time, date, userId, flag, 
         user.reminders.push(reminder);
         await user.save();
 
-        // Refetch user to get live Mongoose subdoc instance
-        const updatedUser = await User.findById(userId);
-        const createdReminder = updatedUser.reminders[updatedUser.reminders.length - 1];
-
-        console.log("Successfully saved reminder:", reminder);
+        // Get the created reminder (last one added)
+        const createdReminder = user.reminders[user.reminders.length - 1];
+        
+        console.log(`Successfully saved reminder: ${createdReminder._id} (requestId: ${requestId || 'none'})`);
         return createdReminder;
     } catch (error) {
-        console.error("Failed to save reminder:", error);
+        console.error(`Failed to save reminder (requestId: ${requestId || 'none'}):`, error);
         throw error;
     }
 }
@@ -710,19 +825,29 @@ const getRemindersForGoogleSync = async (req, res) => {
 // Helper function to fetch Google event
 async function fetchGoogleEvent(eventId, authToken) {
     try {
-        const response = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${eventId}`, {
+        // Use global.fetch to avoid conflicts with other fetch functions
+        const globalFetch = global.fetch || fetch;
+        
+        const response = await globalFetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${eventId}`, {
+            method: 'GET',
             headers: {
                 'Authorization': `Bearer ${authToken}`
             }
         });
         
         if (!response.ok) {
-            return null;
+            let errorText = `Status: ${response.status}`;
+            try {
+                errorText = await response.text();
+            } catch (e) {
+                console.log("Couldn't get response text:", e);
+            }
+            throw new Error(`API request failed: ${errorText}`);
         }
         
         return await response.json();
     } catch (error) {
-        console.error('Error fetching Google event:', error);
+        console.error(`Error fetching Google event ${eventId}:`, error);
         return null;
     }
 }

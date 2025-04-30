@@ -24,7 +24,6 @@
             <input type="text" id="title" name="title" placeholder="Title">
             <small id="charCount"> 0 / 30</small>
 
-       
             <div class="datetimeDiv">
                 <div class="dateDiv">
                     <label for="date" id="dateLabel">Date:</label>
@@ -482,12 +481,24 @@
         document.addEventListener('DOMContentLoaded', function() {
             // Get the form element
             const reminderForm = document.querySelector('form[action="/submit"]');
+            
+            // Flag to track if form is already being submitted
+            let isSubmitting = false;
 
             if (reminderForm) {
                 // Override the form submission
                 reminderForm.addEventListener('submit', async function(event) {
                     // Prevent default form submission
                     event.preventDefault();
+                    
+                    // Prevent double submission
+                    if (isSubmitting) {
+                        console.log("Form already being submitted, ignoring duplicate submission");
+                        return;
+                    }
+                    
+                    // Set submitting flag
+                    isSubmitting = true;
                     
                     try {
                         // First check if Google is connected
@@ -524,6 +535,10 @@
                             }
                         }
                         
+                        // Disable all form fields and buttons during submission
+                        const formElements = this.querySelectorAll('input, textarea, button');
+                        formElements.forEach(el => el.disabled = true);
+                        
                         // Submit the form data via fetch
                         const response = await fetch('/submit', {
                             method: 'POST',
@@ -540,37 +555,6 @@
                         const result = await response.json();
                         console.log('Reminder created:', result);
                         
-                        if (isGoogleConnected && googleAuthToken) {
-                            try {
-                                const reminderDateTime = new Date(`${reminderData.date}T${reminderData.time || "00:00"}:00`);
-                                const createResult = await GoogleCalendar.createEvent({
-                                    title: reminderData.title,
-                                    description: reminderData.description,
-                                    date: reminderData.date,
-                                    time: reminderData.time,
-                                    location: reminderData.location,
-                                    _id: result.id  // Assuming server responds with created reminder ID
-                                });
-
-                                if (createResult.success) {
-                                    console.log('Reminder also created in Google Calendar:', createResult.eventId);
-                                    if (typeof speak === 'function') {
-                                        speak("Reminder added to Google Calendar.");
-                                    }
-                                } else {
-                                    console.error('Failed to create Google Calendar event:', createResult.error);
-                                    if (typeof speak === 'function') {
-                                        speak("Reminder created, but could not add to Google Calendar.");
-                                    }
-                                }
-                            } catch (error) {
-                                console.error('Error creating Google Calendar event:', error);
-                                if (typeof speak === 'function') {
-                                    speak("Reminder created, but an error occurred while adding to Google Calendar.");
-                                }
-                            }
-                        }
-
                         // Provide feedback about creation
                         if (typeof speak === 'function') {
                             if (result.googleSynced) {
@@ -592,11 +576,17 @@
                         if (typeof speak === 'function') {
                             speak("Error creating reminder. Please try again.");
                         }
+                        
+                        // Reset form for retry
+                        const formElements = this.querySelectorAll('input, textarea, button');
+                        formElements.forEach(el => el.disabled = false);
+                        
+                        // Reset submitting flag
+                        isSubmitting = false;
                     }
                 });
             }
         });
-
         // Set up the page when it loads
         document.addEventListener('DOMContentLoaded', function() {
             // Initialize speech recognition
