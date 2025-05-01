@@ -523,11 +523,7 @@
                         
                         // Provide audio feedback
                         if (typeof speak === 'function') {
-                            if (isGoogleConnected && googleAuthToken) {
-                                speak("Creating reminder and adding to Google Calendar...");
-                            } else {
-                                speak("Creating reminder...");
-                            }
+                            speak("Creating reminder...");
                         }
                         
                         // Disable all form fields and buttons during submission

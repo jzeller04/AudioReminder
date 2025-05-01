@@ -203,6 +203,18 @@ const syncGoogleEvents = async (req, res) => {
         existingGoogleEvents.set(reminder.googleId, reminder);
       });
     
+    // Track all reminders by a combination of title+date+time for duplicate detection
+    const reminderKeys = new Map();
+    user.reminders.forEach(reminder => {
+      // Create a unique key using title, date, and time
+      const dateStr = reminder.date instanceof Date ? 
+                      reminder.date.toISOString().split('T')[0] : 
+                      new Date(reminder.date).toISOString().split('T')[0];
+      const timeStr = reminder.time || '00:00';
+      const key = `${reminder.title.toLowerCase()}_${dateStr}_${timeStr}`;
+      reminderKeys.set(key, reminder);
+    });
+    
     console.log(`Found ${existingGoogleEvents.size} existing Google events in database`);
     
     // Track Google IDs we process in this sync
@@ -210,6 +222,9 @@ const syncGoogleEvents = async (req, res) => {
     const addedEvents = [];
     const updatedEvents = [];
     const conflicts = [];
+    
+    // Current date for checking past-due events
+    const now = new Date();
     
     // Process each Google Calendar event
     for (const event of events) {
@@ -243,6 +258,63 @@ const syncGoogleEvents = async (req, res) => {
         const audioReminderVersion = extProps.audioReminderVersion;
         const audioReminderFlagged = extProps.audioReminderFlagged === "true";
         
+        // Critical fix: Check if this reminder is in the past and should be skipped for sync
+        let isPastDue = false;
+        if (eventDate < now) {
+          // Check time if available
+          if (event.time) {
+            const [hours, minutes] = event.time.split(':').map(Number);
+            const fullDateTime = new Date(eventDate);
+            fullDateTime.setHours(hours, minutes, 0, 0);
+            
+            if (fullDateTime < now) {
+              isPastDue = true;
+              console.log(`Event "${event.title}" is past due, skipping for sync`);
+              
+              // If this is a Google-created event that we're seeing for the first time, 
+              // still add it to the calendar for historical purposes but mark it specially
+              const existingReminder = existingGoogleEvents.get(event.id);
+              if (!existingReminder && !isAudioReminderOrigin) {
+                console.log(`Adding past-due Google event "${event.title}" for historical purposes only`);
+                // Will continue processing this event for historical purposes only
+              } else if (existingReminder) {
+                // Skip updating if it's already in our system
+                if (event.id) {
+                  processedGoogleIds.add(event.id);
+                }
+                continue;
+              } else {
+                // Skip processing if it's a past-due AudioReminder-originated event not in our system
+                continue;
+              }
+            }
+          } else {
+            // All-day event in the past
+            isPastDue = true;
+            
+            // Skip unless it's a Google-created event we're seeing for the first time
+            const existingReminder = existingGoogleEvents.get(event.id);
+            if (!existingReminder && !isAudioReminderOrigin) {
+              console.log(`Adding past-due all-day Google event "${event.title}" for historical purposes only`);
+              // Will continue processing this event for historical purposes only
+            } else if (existingReminder) {
+              // Skip updating if it's already in our system
+              if (event.id) {
+                processedGoogleIds.add(event.id);
+              }
+              continue;
+            } else {
+              // Skip processing if it's a past-due AudioReminder-originated event not in our system
+              continue;
+            }
+          }
+        }
+        
+        // Create a composite key to check for duplicates
+        const dateStr = eventDate.toISOString().split('T')[0];
+        const timeStr = event.time || '00:00';
+        const eventKey = `${event.title.toLowerCase()}_${dateStr}_${timeStr}`;
+        
         if (isAudioReminderOrigin && audioReminderId) {
           console.log(`Found event that originated from AudioReminder: ${event.title}`);
         }
@@ -255,8 +327,15 @@ const syncGoogleEvents = async (req, res) => {
         // Check if we already have this event by Google ID
         const existingReminder = existingGoogleEvents.get(event.id);
         
+        // Check for duplicate by title, date and time
+        const duplicateReminder = reminderKeys.get(eventKey);
+        
         // If it exists in our system, update it
         if (existingReminder) {
+          if (isPastDue && !isAudioReminderOrigin) {
+            // Do not update past-due reminders from Google unless they originated from AudioReminder
+            continue;
+          }
           // Check for conflicts
           if (existingReminder.lastSyncedVersion && 
               audioReminderVersion && 
@@ -345,14 +424,25 @@ const syncGoogleEvents = async (req, res) => {
             reminderByOriginalId.lastSyncedVersion = audioReminderVersion || new Date().toISOString();
             
             updatedEvents.push(reminderByOriginalId);
-          } else {
+          } else if (!duplicateReminder && !isPastDue) {
             // Create a new reminder from the Google event - it was deleted locally
+            // But ONLY if it's not a duplicate and not past due
             createNewReminderFromGoogleEvent(user, event, addedEvents);
           }
         }
-        else {
-          // Create a new reminder from the Google event
+        else if (!duplicateReminder && !isPastDue) {
+          // Create a new reminder from the Google event ONLY if:
+          // 1. It's not a duplicate, AND
+          // 2. Either it's not past due OR it's a Google-created event (for historical purposes)
           createNewReminderFromGoogleEvent(user, event, addedEvents);
+        } else if (duplicateReminder && !duplicateReminder.googleId) {
+          // It's a duplicate by title and date, but doesn't have a Google ID
+          // Update the Google ID
+          console.log(`Found duplicate event by title and date: ${event.title} on ${dateStr}`);
+          duplicateReminder.googleId = event.id;
+          duplicateReminder.syncStatus = 'synced';
+          duplicateReminder.lastSyncedVersion = audioReminderVersion || new Date().toISOString();
+          updatedEvents.push(duplicateReminder);
         }
       } catch (eventError) {
         console.error('Error processing event:', eventError);
@@ -379,6 +469,14 @@ const syncGoogleEvents = async (req, res) => {
         lastSyncedVersion: audioReminderVersion || new Date().toISOString(),
         location: event.location || ''
       };
+      
+      // Create a key for this new reminder
+      const dateStr = normalizedDate.toISOString().split('T')[0];
+      const timeStr = event.time || '00:00';
+      const key = `${event.title.toLowerCase()}_${dateStr}_${timeStr}`;
+      
+      // Add to title+date map to prevent future duplicates
+      reminderKeys.set(key, reminder);
       
       // Add to user's reminders
       user.reminders.push(reminder);
@@ -479,10 +577,33 @@ const pushRemindersToGoogle = async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
     
+    // Get Google auth token from client
+    const authToken = req.body.googleAuthToken;
+    if (!authToken) {
+      return res.status(400).json({ error: 'Google auth token not provided' });
+    }
+
+    // Check if reminders with googleId still exist on Google
+    for (const reminder of user.reminders) {
+      if (reminder.googleId) {
+        const checkResponse = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${reminder.googleId}`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${authToken}`
+          }
+        });
+
+        if (checkResponse.status === 404) {
+          console.log(`Google event ${reminder.googleId} not found. Resetting reminder ${reminder._id}`);
+          reminder.googleId = null;
+          reminder.syncStatus = 'needs_push';
+        }
+      }
+    }
+
     // Find reminders that need to be pushed to Google
     const remindersToPush = user.reminders.filter(reminder => 
-      (reminder.isLocallyCreated === true || reminder.syncStatus === 'needs_push') &&
-      (reminder.googleId === null || reminder.syncStatus === 'needs_push')
+      reminder.syncStatus === 'needs_push'
     );
     
     console.log(`Found ${remindersToPush.length} reminders to push to Google Calendar`);
@@ -492,12 +613,6 @@ const pushRemindersToGoogle = async (req, res) => {
         message: 'No reminders need syncing to Google Calendar',
         pushed: 0 
       });
-    }
-    
-    // Get Google auth token from client
-    const authToken = req.body.googleAuthToken;
-    if (!authToken) {
-      return res.status(400).json({ error: 'Google auth token not provided' });
     }
     
     // For each reminder that needs pushing

@@ -118,12 +118,22 @@ const getAllReminders = async (req, res) => {
         const reminders = await fetchUserReminders(req.session.userId);
 
         let reminderHTML = importantReminders.map(reminder => {
-            // Only show the "From Google Calendar" label for reminders not created locally
-            const googleClass = reminder.googleId && reminder.isLocallyCreated !== true ? ' google-calendar-event' : '';
+            // Only show the appropriate Google Calendar label
+            const googleClass = reminder.googleId ? ' google-calendar-event' : '';
             const googleIdAttr = reminder.googleId ? ` data-google-id="${reminder.googleId}"` : '';
             const isLocallyCreatedAttr = ` data-is-locally-created="${reminder.isLocallyCreated === true}"`;
             // Add flagged class for styling
             const flaggedClass = reminder.flagged ? ' flagged-reminder' : '';
+            
+            // Determine the appropriate Google label
+            let googleLabel = '';
+            if (reminder.googleId) {
+                if (reminder.isLocallyCreated === true) {
+                    googleLabel = '<p class="reminder-source"></p>';
+                } else {
+                    googleLabel = '<p class="reminder-source">Google Calendar</p>';
+                }
+            }
             
             return `<div class="reminder-item${googleClass}${flaggedClass}"> 
                 <div class="reminder-content">
@@ -133,7 +143,7 @@ const getAllReminders = async (req, res) => {
                     <p class="reminder-flagged" data-flagged="${reminder.flagged}"></p>
                     <p class="reminder-date">${dateToReadable(reminder.date) || 'Missing date'}</p>
                     <p class="reminder-time">${timeToTwelveSystem(reminder.time) || 'Missing time'}</p>
-                    ${reminder.googleId && reminder.isLocallyCreated !== true ? '<p class="reminder-source">From Google Calendar</p>' : ''}
+                    ${googleLabel}
                     ${reminder.flagged ? '<p class="flag-indicator">🚩 Important</p>' : ''}
                 </div>
                 <button class="flag-btn" data-id="${reminder._id}"${googleIdAttr}${isLocallyCreatedAttr}>${reminder.flagged ? 'Remove Flag' : 'Flag as Important'}</button>
@@ -141,11 +151,21 @@ const getAllReminders = async (req, res) => {
             </div>`;
         }).join('') + reminders.map(reminder => {
             // Same modifications for regular reminders
-            const googleClass = reminder.googleId && reminder.isLocallyCreated !== true ? ' google-calendar-event' : '';
+            const googleClass = reminder.googleId ? ' google-calendar-event' : '';
             const googleIdAttr = reminder.googleId ? ` data-google-id="${reminder.googleId}"` : '';
             const isLocallyCreatedAttr = ` data-is-locally-created="${reminder.isLocallyCreated === true}"`;
             // Add flagged class for styling
             const flaggedClass = reminder.flagged ? ' flagged-reminder' : '';
+            
+            // Determine the appropriate Google label
+            let googleLabel = '';
+            if (reminder.googleId) {
+                if (reminder.isLocallyCreated === true) {
+                    googleLabel = '<p class="reminder-source"></p>';
+                } else {
+                    googleLabel = '<p class="reminder-source">Google Calendar</p>';
+                }
+            }
             
             return `<div class="reminder-item${googleClass}${flaggedClass}"> 
                 <div class="reminder-content">
@@ -155,7 +175,7 @@ const getAllReminders = async (req, res) => {
                     <p class="reminder-flagged" data-flagged="${reminder.flagged}"></p>
                     <p class="reminder-date">${dateToReadable(reminder.date) || 'Missing date'}</p>
                     <p class="reminder-time">${timeToTwelveSystem(reminder.time) || 'Missing time'}</p>
-                    ${reminder.googleId && reminder.isLocallyCreated !== true ? '<p class="reminder-source">From Google Calendar</p>' : ''}
+                    ${googleLabel}
                     ${reminder.flagged ? '<p class="flag-indicator">🚩 Important</p>' : ''}
                 </div>
                 <button class="flag-btn" data-id="${reminder._id}"${googleIdAttr}${isLocallyCreatedAttr}>${reminder.flagged ? 'Remove Flag' : 'Flag as Important'}</button>
@@ -579,11 +599,12 @@ async function fetchUserReminders(userId) {
             return [];
         }
 
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
+        // Get current date and time
+        const now = new Date();
         
-        const nextWeek = new Date(today);
-        nextWeek.setDate(today.getDate() + 6);
+        // Create next week boundary
+        const nextWeek = new Date(now);
+        nextWeek.setDate(now.getDate() + 6);
         nextWeek.setHours(23, 59, 59, 999);
 
         // Make sure we're using a valid ObjectId for the query
@@ -593,10 +614,39 @@ async function fetchUserReminders(userId) {
             return [];
         }
 
-        // Filter relevant reminders
+        // Filter relevant reminders (not flagged, not overdue)
         const reminders = user.reminders.filter(reminder => {
+            // First check that this is not a flagged reminder
+            if (reminder.flagged === true) {
+                return false;
+            }
+            
+            // Get reminder date
             const reminderDate = new Date(reminder.date);
-            return reminderDate >= today && reminderDate <= nextWeek && reminder.flagged == false;
+            
+            // If the reminder has a time
+            if (reminder.time) {
+                // Create full datetime for the reminder
+                const [hours, minutes] = reminder.time.split(':').map(Number);
+                const reminderDateTime = new Date(reminderDate);
+                reminderDateTime.setHours(hours, minutes, 0, 0);
+                
+                // If the reminder datetime is in the past, filter it out
+                if (reminderDateTime < now) {
+                    return false;
+                }
+            } else {
+                // For all-day reminders with no specific time, keep only if the date is today or in the future
+                const today = new Date(now);
+                today.setHours(0, 0, 0, 0);
+                
+                if (reminderDate < today) {
+                    return false;
+                }
+            }
+            
+            // Keep reminders within the next week
+            return reminderDate <= nextWeek;
         });
 
         // Sort reminders by date and time
@@ -610,8 +660,8 @@ async function fetchUserReminders(userId) {
             }
             
             // If same date, compare by time
-            const [hoursA, minutesA] = a.time.split(':').map(Number);
-            const [hoursB, minutesB] = b.time.split(':').map(Number);
+            const [hoursA, minutesA] = a.time ? a.time.split(':').map(Number) : [0, 0];
+            const [hoursB, minutesB] = b.time ? b.time.split(':').map(Number) : [0, 0];
             
             if (hoursA !== hoursB) {
                 return hoursA - hoursB;
@@ -630,49 +680,80 @@ async function fetchUserReminders(userId) {
 
 async function fetchImportant(userId) {
     try {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
+        // Get current date and time
+        const now = new Date();
         
-        const nextWeek = new Date(today);
-        nextWeek.setDate(today.getDate() + 6);
+        // Create next week boundary
+        const nextWeek = new Date(now);
+        nextWeek.setDate(now.getDate() + 6);
         nextWeek.setHours(23, 59, 59, 999);
         
         const user = await User.findById(userId, {reminders: 1});
         
         if (!user || !user.reminders) {
-        return [];
+            return [];
         }
         
-        // Filter relevant reminders
+        // Filter important reminders that are not overdue
         const reminders = user.reminders.filter(reminder => {
-        const reminderDate = new Date(reminder.date);
-        return reminderDate >= today && reminderDate <= nextWeek && reminder.flagged == true;
+            // First check that this is a flagged reminder
+            if (reminder.flagged !== true) {
+                return false;
+            }
+            
+            // Get reminder date
+            const reminderDate = new Date(reminder.date);
+            
+            // If the reminder has a time
+            if (reminder.time) {
+                // Create full datetime for the reminder
+                const [hours, minutes] = reminder.time.split(':').map(Number);
+                const reminderDateTime = new Date(reminderDate);
+                reminderDateTime.setHours(hours, minutes, 0, 0);
+                
+                // If the reminder datetime is in the past, filter it out
+                if (reminderDateTime < now) {
+                    return false;
+                }
+            } else {
+                // For all-day reminders with no specific time, keep only if the date is today or in the future
+                const today = new Date(now);
+                today.setHours(0, 0, 0, 0);
+                
+                if (reminderDate < today) {
+                    return false;
+                }
+            }
+            
+            // Keep reminders within the next week
+            return reminderDate <= nextWeek;
         });
         
         // Sort reminders by date and time
         reminders.sort((a, b) => {
-        // First compare by date
-        const dateA = new Date(a.date);
-        const dateB = new Date(b.date);
-        
-        if (dateA.getTime() !== dateB.getTime()) {
-            return dateA - dateB;
-        }
-        
-        // If same date, compare by time
-        const [hoursA, minutesA] = a.time.split(':').map(Number);
-        const [hoursB, minutesB] = b.time.split(':').map(Number);
-        
-        if (hoursA !== hoursB) {
-            return hoursA - hoursB;
-        }
-        
-        return minutesA - minutesB;
+            // First compare by date
+            const dateA = new Date(a.date);
+            const dateB = new Date(b.date);
+            
+            if (dateA.getTime() !== dateB.getTime()) {
+                return dateA - dateB;
+            }
+            
+            // If same date, compare by time
+            const [hoursA, minutesA] = a.time ? a.time.split(':').map(Number) : [0, 0];
+            const [hoursB, minutesB] = b.time ? b.time.split(':').map(Number) : [0, 0];
+            
+            if (hoursA !== hoursB) {
+                return hoursA - hoursB;
+            }
+            
+            return minutesA - minutesB;
         });
-        console.log("Fetched and sorted reminders:", reminders.length);
+        
+        console.log("Fetched and sorted important reminders:", reminders.length);
         return reminders;
     } catch (error) {
-        console.error('Error fetching reminders:', error);
+        console.error('Error fetching important reminders:', error);
         return [];
     }
 }
