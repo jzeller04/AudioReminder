@@ -111,49 +111,53 @@ const Calendar = {
         
             // Process the reminders with consistent date handling
             this.tasks = window.calendarReminders.map(reminder => {
-            console.log(`Processing reminder "${reminder.title || 'Untitled'}":`, reminder);
-            
-            let localDate;
-            
-            if (reminder.date) {
-                // Parse the ISO date string
-                const reminderDate = new Date(reminder.date);
+                console.log(`Processing reminder "${reminder.title || 'Untitled'}":`, reminder);
                 
-                // Log date debugging information
-                console.log(`- Original date:`, reminderDate);
-                console.log(`- ISO string:`, reminderDate.toISOString());
-                console.log(`- Local string:`, reminderDate.toLocaleDateString());
+                let localDate;
                 
-                // Create a local date using only the date components to avoid timezone issues
-                localDate = new Date(
-                reminderDate.getFullYear(),
-                reminderDate.getMonth(),
-                reminderDate.getDate(),
-                12, 0, 0 // Set to noon to avoid day boundary issues
-            );
+                if (reminder.date) {
+                    // Parse the ISO date string
+                    const reminderDate = new Date(reminder.date);
+                    
+                    // Log date debugging information
+                    console.log(`- Original date:`, reminderDate);
+                    console.log(`- ISO string:`, reminderDate.toISOString());
+                    console.log(`- Local string:`, reminderDate.toLocaleDateString());
+                    
+                    // Create a local date using only the date components to avoid timezone issues
+                    localDate = new Date(
+                        reminderDate.getFullYear(),
+                        reminderDate.getMonth(),
+                        reminderDate.getDate(),
+                        12, 0, 0 // Set to noon to avoid day boundary issues
+                    );
+                    
+                    console.log(`- Processed local date:`, localDate);
+                    console.log(`- Local date ISO:`, localDate.toISOString());
+                    console.log(`- Local date string:`, localDate.toLocaleDateString());
+                } else {
+                    console.warn(`Reminder "${reminder.title || 'Untitled'}" has no date!`);
+                    localDate = new Date(); // Fallback to today if no date
+                }
                 
-                console.log(`- Processed local date:`, localDate);
-                console.log(`- Local date ISO:`, localDate.toISOString());
-                console.log(`- Local date string:`, localDate.toLocaleDateString());
-            } else {
-                console.warn(`Reminder "${reminder.title || 'Untitled'}" has no date!`);
-                localDate = new Date(); // Fallback to today if no date
-            }
+                return {
+                    id: reminder._id,
+                    title: reminder.title || '',
+                    description: reminder.description || '',
+                    date: localDate,
+                    time: reminder.time || '',
+                    googleId: reminder.googleId || null,
+                    isGoogleEvent: !!reminder.googleId,
+                    syncStatus: reminder.syncStatus || 'synced',
+                    location: reminder.location || ''
+                };
+            });
             
-            return {
-                id: reminder._id,
-                title: reminder.title || '',
-                description: reminder.description || '',
-                date: localDate,
-                time: reminder.time || '',
-                googleId: reminder.googleId || null,
-                isGoogleEvent: !!reminder.googleId,
-                syncStatus: reminder.syncStatus || 'synced'
-            };
-        });
+            // No filtering is needed here - we want to see all reminders in the calendar
+            // including past ones for reference
         } else {
-        console.log("No reminders found or invalid data format");
-        this.tasks = [];
+            console.log("No reminders found or invalid data format");
+            this.tasks = [];
         }
         
         // Render the calendar with the loaded tasks
@@ -323,13 +327,23 @@ const Calendar = {
                     <div class="task-title">${task.title}</div>
                 `;
                 
-                // Add Google indicator if it's a Google event
+                // Add Google indicator based on whether it's from Google or synced to Google
                 if (task.isGoogleEvent || task.googleId) {
-                    taskHtml += `
-                        <div class="google-indicator">
-                            <span class="google-icon">G</span> Google Calendar
-                        </div>
-                    `;
+                    if (task.isLocallyCreated === true) {
+                        // This was created in AudioReminder and synced to Google
+                        taskHtml += `
+                            <div class="google-indicator">
+                                <span class="google-icon">G</span> Synced with Google
+                            </div>
+                        `;
+                    } else {
+                        // This was imported from Google Calendar
+                        taskHtml += `
+                            <div class="google-indicator">
+                                <span class="google-icon">G</span> From Google Calendar
+                            </div>
+                        `;
+                    }
                 }
                 
                 taskElement.innerHTML = taskHtml;
@@ -423,20 +437,97 @@ const Calendar = {
         
         console.log("Merging Google Calendar events:", googleEvents.length);
         
-        // Remove existing Google events from our tasks
-        this.tasks = this.tasks.filter(task => !task.isGoogleEvent && !task.googleId);
+        // Create a helper function to check if two events are duplicates based on title and date
+        const areDuplicate = (event1, event2) => {
+            // Convert dates to string format for comparison (YYYY-MM-DD)
+            const date1 = event1.date instanceof Date ? 
+                event1.date.toISOString().split('T')[0] : 
+                new Date(event1.date).toISOString().split('T')[0];
+            
+            const date2 = event2.date instanceof Date ? 
+                event2.date.toISOString().split('T')[0] : 
+                new Date(event2.date).toISOString().split('T')[0];
+            
+            // Check if title and date match
+            return event1.title.toLowerCase() === event2.title.toLowerCase() && date1 === date2;
+        };
         
-        // Process Google events to add proper markers
-        const processedGoogleEvents = googleEvents.map(event => {
-            return {
+        // Filter out Google events that already exist in our tasks by matching ID
+        const existingGoogleIds = new Set(this.tasks
+            .filter(task => task.googleId)
+            .map(task => task.googleId));
+        
+        // Also track events by title+date to avoid duplicates
+        const existingTitleDatePairs = new Map();
+        this.tasks.forEach(task => {
+            if (task.title && task.date) {
+                const dateStr = task.date instanceof Date ? 
+                    task.date.toISOString().split('T')[0] : 
+                    new Date(task.date).toISOString().split('T')[0];
+                
+                existingTitleDatePairs.set(`${task.title.toLowerCase()}_${dateStr}`, task);
+            }
+        });
+        
+        // Remove existing Google events that match the new ones by ID
+        this.tasks = this.tasks.filter(task => {
+            // Keep all non-Google events
+            if (!task.googleId && !task.isGoogleEvent) {
+                return true;
+            }
+            
+            // For Google events, keep them if they're not in the new set
+            // This will be updated with new data
+            return !googleEvents.some(ge => ge.id === task.googleId || ge.googleId === task.googleId);
+        });
+        
+        // Process Google events to add proper markers and filter out duplicates
+        const processedGoogleEvents = [];
+        
+        for (const event of googleEvents) {
+            // Skip events that already exist by title+date
+            if (event.title && event.date) {
+                const dateStr = event.date instanceof Date ? 
+                    event.date.toISOString().split('T')[0] : 
+                    new Date(event.date).toISOString().split('T')[0];
+                
+                const key = `${event.title.toLowerCase()}_${dateStr}`;
+                
+                if (existingTitleDatePairs.has(key)) {
+                    const existingTask = existingTitleDatePairs.get(key);
+                    
+                    // If the existing task doesn't have a Google ID but this one does,
+                    // update the existing task with the Google ID
+                    if (!existingTask.googleId && (event.id || event.googleId)) {
+                        existingTask.googleId = event.id || event.googleId;
+                        existingTask.isGoogleEvent = true;
+                        existingTask.syncStatus = 'synced';
+                    }
+                    
+                    // Skip adding this event since it already exists
+                    continue;
+                }
+            }
+            
+            // Process the event
+            processedGoogleEvents.push({
                 ...event,
                 isGoogleEvent: true,
                 googleId: event.id || event.googleId,
                 source: 'google'
-            };
-        });
+            });
+            
+            // Add to the title+date map to prevent future duplicates
+            if (event.title && event.date) {
+                const dateStr = event.date instanceof Date ? 
+                    event.date.toISOString().split('T')[0] : 
+                    new Date(event.date).toISOString().split('T')[0];
+                
+                existingTitleDatePairs.set(`${event.title.toLowerCase()}_${dateStr}`, event);
+            }
+        }
         
-        // Add the Google events to our tasks
+        // Add the processed Google events to our tasks
         this.tasks = [...this.tasks, ...processedGoogleEvents];
         
         // Re-render the calendar

@@ -118,12 +118,22 @@ const getAllReminders = async (req, res) => {
         const reminders = await fetchUserReminders(req.session.userId);
 
         let reminderHTML = importantReminders.map(reminder => {
-            // Only show the "From Google Calendar" label for reminders not created locally
-            const googleClass = reminder.googleId && reminder.isLocallyCreated !== true ? ' google-calendar-event' : '';
+            // Only show the appropriate Google Calendar label
+            const googleClass = reminder.googleId ? ' google-calendar-event' : '';
             const googleIdAttr = reminder.googleId ? ` data-google-id="${reminder.googleId}"` : '';
             const isLocallyCreatedAttr = ` data-is-locally-created="${reminder.isLocallyCreated === true}"`;
             // Add flagged class for styling
             const flaggedClass = reminder.flagged ? ' flagged-reminder' : '';
+            
+            // Determine the appropriate Google label
+            let googleLabel = '';
+            if (reminder.googleId) {
+                if (reminder.isLocallyCreated === true) {
+                    googleLabel = '<p class="reminder-source">Synced with Google</p>';
+                } else {
+                    googleLabel = '<p class="reminder-source">From Google Calendar</p>';
+                }
+            }
             
             return `<div class="reminder-item${googleClass}${flaggedClass}"> 
                 <div class="reminder-content">
@@ -133,7 +143,7 @@ const getAllReminders = async (req, res) => {
                     <p class="reminder-flagged" data-flagged="${reminder.flagged}"></p>
                     <p class="reminder-date">${dateToReadable(reminder.date) || 'Missing date'}</p>
                     <p class="reminder-time">${timeToTwelveSystem(reminder.time) || 'Missing time'}</p>
-                    ${reminder.googleId && reminder.isLocallyCreated !== true ? '<p class="reminder-source">From Google Calendar</p>' : ''}
+                    ${googleLabel}
                     ${reminder.flagged ? '<p class="flag-indicator">🚩 Important</p>' : ''}
                 </div>
                 <button class="flag-btn" data-id="${reminder._id}"${googleIdAttr}${isLocallyCreatedAttr}>${reminder.flagged ? 'Remove Flag' : 'Flag as Important'}</button>
@@ -141,11 +151,21 @@ const getAllReminders = async (req, res) => {
             </div>`;
         }).join('') + reminders.map(reminder => {
             // Same modifications for regular reminders
-            const googleClass = reminder.googleId && reminder.isLocallyCreated !== true ? ' google-calendar-event' : '';
+            const googleClass = reminder.googleId ? ' google-calendar-event' : '';
             const googleIdAttr = reminder.googleId ? ` data-google-id="${reminder.googleId}"` : '';
             const isLocallyCreatedAttr = ` data-is-locally-created="${reminder.isLocallyCreated === true}"`;
             // Add flagged class for styling
             const flaggedClass = reminder.flagged ? ' flagged-reminder' : '';
+            
+            // Determine the appropriate Google label
+            let googleLabel = '';
+            if (reminder.googleId) {
+                if (reminder.isLocallyCreated === true) {
+                    googleLabel = '<p class="reminder-source">Synced with Google</p>';
+                } else {
+                    googleLabel = '<p class="reminder-source">From Google Calendar</p>';
+                }
+            }
             
             return `<div class="reminder-item${googleClass}${flaggedClass}"> 
                 <div class="reminder-content">
@@ -155,7 +175,7 @@ const getAllReminders = async (req, res) => {
                     <p class="reminder-flagged" data-flagged="${reminder.flagged}"></p>
                     <p class="reminder-date">${dateToReadable(reminder.date) || 'Missing date'}</p>
                     <p class="reminder-time">${timeToTwelveSystem(reminder.time) || 'Missing time'}</p>
-                    ${reminder.googleId && reminder.isLocallyCreated !== true ? '<p class="reminder-source">From Google Calendar</p>' : ''}
+                    ${googleLabel}
                     ${reminder.flagged ? '<p class="flag-indicator">🚩 Important</p>' : ''}
                 </div>
                 <button class="flag-btn" data-id="${reminder._id}"${googleIdAttr}${isLocallyCreatedAttr}>${reminder.flagged ? 'Remove Flag' : 'Flag as Important'}</button>
