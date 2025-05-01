@@ -375,7 +375,7 @@ const Calendar = {
         
         // Add time information
         if (task.time) {
-            details += `Time: ${this.formatTime(task.time)}\n`;
+            details += `Time: ${formatTimeClient(task.time)}\n`;
         }
         
         // Add description if available
