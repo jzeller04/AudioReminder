@@ -39,19 +39,41 @@ const getUpcomingReminder = async (req, res) => {
         await updateUserReminders(req.session.userId);
         
         const template = await fs.readFile(path.join(__dirname, '../../views/index.html'), 'utf8');
+        
+        // Get both flagged and unflagged reminders
         const userReminders = await fetchUserReminders(req.session.userId);
+        const importantReminders = await fetchImportant(req.session.userId);
+        
+        // Combine and sort all reminders by date and time
+        const allReminders = [...importantReminders, ...userReminders].sort((a, b) => {
+            // First compare by date
+            const dateA = new Date(a.date);
+            const dateB = new Date(b.date);
+            
+            if (dateA.getTime() !== dateB.getTime()) {
+                return dateA - dateB;
+            }
+            
+            // If same date, compare by time
+            const [hoursA, minutesA] = a.time.split(':').map(Number);
+            const [hoursB, minutesB] = b.time.split(':').map(Number);
+            
+            if (hoursA !== hoursB) {
+                return hoursA - hoursB;
+            }
+            
+            return minutesA - minutesB;
+        });
 
         let reminderHTML;
-        if (userReminders.length > 0) {
-            const reminder = userReminders[0];
-            const flaggedClass = reminder.flagged ? ' flagged-reminder' : '';
+        if (allReminders.length > 0) {
+            const reminder = allReminders[0];
             
             reminderHTML =
-                `<div class="reminder-item${flaggedClass}"> 
+                `<div class="reminder-item"> 
                     <div class="reminder-content">
                         <p class="reminder-title">${reminder.title || 'Missing title'}</p>
                         <p class="reminder-description">${reminder.description || ''}</p>
-                        <p class="reminder-flagged">${reminder.flagged || ''}</p>
                         <p class="reminder-date">${dateToReadable(reminder.date) || 'Missing date'}</p>
                         <p class="reminder-time">${timeToTwelveSystem(reminder.time) || 'Missing time'}</p>
                         ${reminder.flagged ? '<p class="flag-indicator">🚩 Important</p>' : ''}
@@ -76,7 +98,7 @@ const getUpcomingReminder = async (req, res) => {
             const theme = user.preferences.highContrast;
             const themeScript = `<script>
                 localStorage.setItem('theme', '${theme}');
-                document.body.classList.add('${theme}');
+                document.documentElement.setAttribute('data-theme', '${theme}');
             </script>`;
             finalHTML = finalHTML.replace('</body>', `${themeScript}</body>`);
         }
