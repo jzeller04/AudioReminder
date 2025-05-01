@@ -1,4 +1,3 @@
-/* global areDuplicate, existingGoogleIds */
 function formatTimeClient(timeStr) {
     // Simple client-side implementation - complex logic is on server
     try {
@@ -330,21 +329,11 @@ const Calendar = {
                 
                 // Add Google indicator based on whether it's from Google or synced to Google
                 if (task.isGoogleEvent || task.googleId) {
-                    if (task.isLocallyCreated === true) {
-                        // This was created in AudioReminder and synced to Google
                         taskHtml += `
                             <div class="google-indicator">
-                                <span class="google-icon">G</span> Synced with Google
+                                <span class="google-icon">Synced with Google</span>
                             </div>
                         `;
-                    } else {
-                        // This was imported from Google Calendar
-                        taskHtml += `
-                            <div class="google-indicator">
-                                <span class="google-icon">G</span> From Google Calendar
-                            </div>
-                        `;
-                    }
                 }
                 
                 taskElement.innerHTML = taskHtml;
@@ -439,7 +428,7 @@ const Calendar = {
         console.log("Merging Google Calendar events:", googleEvents.length);
         
         // Create a helper function to check if two events are duplicates based on title and date
-        const areDuplicate = (event1, event2) => {
+        const _areDuplicate = (event1, event2) => {
             // Convert dates to string format for comparison (YYYY-MM-DD)
             const date1 = event1.date instanceof Date ? 
                 event1.date.toISOString().split('T')[0] : 
@@ -454,7 +443,7 @@ const Calendar = {
         };
         
         // Filter out Google events that already exist in our tasks by matching ID
-        const existingGoogleIds = new Set(this.tasks
+        const _existingGoogleIds = new Set(this.tasks
             .filter(task => task.googleId)
             .map(task => task.googleId));
         

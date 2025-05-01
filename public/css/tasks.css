@@ -16,7 +16,7 @@ h1 {
   justify-content: center;
 }
 
-#newtaskButton, #homeButton, #readRemindersButton, #stopTTSButton {
+#newreminderButton, #homeButton, #readRemindersButton, #stopTTSButton {
   border-radius: 50px;
   font-size: 40px;
   font-weight: bold;
@@ -30,7 +30,7 @@ h1 {
   width: 20%;
 }
 
-#newtaskButton:hover, #homeButton:hover, #readRemindersButton:hover, #stopTTSButton:hover {
+#newreminderButton:hover, #homeButton:hover, #readRemindersButton:hover, #stopTTSButton:hover {
   cursor: pointer;
 }
 
@@ -43,7 +43,7 @@ h1 {
   align-items: center;
 }
 
-.task-content {
+.reminder-content {
   flex: 1;
 }
 
@@ -109,7 +109,7 @@ hr {
     color: var(--heading-color);
   }
 
-  & #newtaskButton, & #homeButton, & #readRemindersButton, & #stopTTSButton {
+  & #newreminderButton, & #homeButton, & #readRemindersButton, & #stopTTSButton {
     background-color: var(--primary-btn);
     border: 6px solid var(--primary-btn);
     box-shadow: 1px 2px 6px var(--shadow-color);
@@ -117,7 +117,7 @@ hr {
     color: var(--text-color);
   }
 
-  & #newtaskButton:hover, & #homeButton:hover, & #readRemindersButton:hover, & #stopTTSButton:hover {
+  & #newreminderButton:hover, & #homeButton:hover, & #readRemindersButton:hover, & #stopTTSButton:hover {
     background-color: var(--bg-color);
     border: 6px solid var(--primary-btn);
     color: var(--primary-btn);
@@ -183,7 +183,7 @@ hr {
     color: var(--heading-color);
   }
 
-  & #newtaskButton, & #homeButton, & #readRemindersButton, & #stopTTSButton {
+  & #newreminderButton, & #homeButton, & #readRemindersButton, & #stopTTSButton {
     background-color: var(--primary-btn);
     border: 6px solid var(--primary-btn);
     box-shadow: 1px 2px 6px var(--shadow-color);
@@ -191,7 +191,7 @@ hr {
     color: var(--text-color);
   }
 
-  & #newtaskButton:hover, & #homeButton:hover, & #readRemindersButton:hover, & #stopTTSButton:hover {
+  & #newreminderButton:hover, & #homeButton:hover, & #readRemindersButton:hover, & #stopTTSButton:hover {
     background-color: var(--bg-color);
     border: 6px solid var(--primary-btn);
     color: var(--primary-btn);

@@ -129,9 +129,9 @@ const getAllReminders = async (req, res) => {
             let googleLabel = '';
             if (reminder.googleId) {
                 if (reminder.isLocallyCreated === true) {
-                    googleLabel = '<p class="reminder-source">Synced with Google</p>';
+                    googleLabel = '<p class="reminder-source"></p>';
                 } else {
-                    googleLabel = '<p class="reminder-source">From Google Calendar</p>';
+                    googleLabel = '<p class="reminder-source">Google Calendar</p>';
                 }
             }
             
@@ -161,9 +161,9 @@ const getAllReminders = async (req, res) => {
             let googleLabel = '';
             if (reminder.googleId) {
                 if (reminder.isLocallyCreated === true) {
-                    googleLabel = '<p class="reminder-source">Synced with Google</p>';
+                    googleLabel = '<p class="reminder-source"></p>';
                 } else {
-                    googleLabel = '<p class="reminder-source">From Google Calendar</p>';
+                    googleLabel = '<p class="reminder-source">Google Calendar</p>';
                 }
             }
             
