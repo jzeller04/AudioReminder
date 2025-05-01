@@ -441,11 +441,13 @@ const Calendar = {
             // Check if title and date match
             return event1.title.toLowerCase() === event2.title.toLowerCase() && date1 === date2;
         };
+        console.log('Duplicate check:', areDuplicate(sampleEvent1, sampleEvent2));
         
         // Filter out Google events that already exist in our tasks by matching ID
         const _existingGoogleIds = new Set(this.tasks
             .filter(task => task.googleId)
             .map(task => task.googleId));
+        console.log('Existing Google IDs:', existingGoogleIds.size);
         
         // Also track events by title+date to avoid duplicates
         const existingTitleDatePairs = new Map();
