@@ -199,16 +199,136 @@
             }
 
             // Handling voice commands
-            function handleVoiceCommand(command) {
-                if (command.includes("open home") || command.includes("home")) {
-                    location.href = "/";
-                } else if (command.includes("help")){
-
-                speak("You can say yadayadayada")
-                } else {
-                    console.log("Unknown command:", command);
-                }
+          // Replace your existing handleVoiceCommand function with this enhanced version
+function handleVoiceCommand(command) {
+    // Navigation commands
+    if (command.includes("open home") || command.includes("go home") || command.includes("home")) {
+        speak("Going to home page").then(() => location.href = "/");
+    } 
+    // Theme control commands
+    else if (command.includes("high contrast") || command.includes("dark mode")) {
+        const themeToggle = document.getElementById('theme-toggle');
+        if (command.includes("on") || command.includes("enable")) {
+            if (!themeToggle.checked) {
+                themeToggle.click();
+                speak("High contrast mode enabled");
+            } else {
+                speak("High contrast mode is already enabled");
             }
+        } else if (command.includes("off") || command.includes("disable")) {
+            if (themeToggle.checked) {
+                themeToggle.click();
+                speak("High contrast mode disabled");
+            } else {
+                speak("High contrast mode is already disabled");
+            }
+        } else {
+            // Toggle if no specific state requested
+            themeToggle.click();
+            speak(`High contrast mode ${themeToggle.checked ? 'enabled' : 'disabled'}`);
+        }
+    }
+    // Push-to-talk control
+    else if (command.includes("push to talk") || command.includes("push-to-talk")) {
+        const pushToTalkToggle = document.getElementById('push-to-talk-toggle');
+        if (command.includes("on") || command.includes("enable")) {
+            if (!pushToTalkToggle.checked) {
+                pushToTalkToggle.click();
+                speak("Push to talk mode enabled");
+            } else {
+                speak("Push to talk mode is already enabled");
+            }
+        } else if (command.includes("off") || command.includes("disable")) {
+            if (pushToTalkToggle.checked) {
+                pushToTalkToggle.click();
+                speak("Push to talk mode disabled");
+            } else {
+                speak("Push to talk mode is already disabled");
+            }
+        } else {
+            // Toggle if no specific state requested
+            pushToTalkToggle.click();
+            speak(`Push to talk mode ${pushToTalkToggle.checked ? 'enabled' : 'disabled'}`);
+        }
+    }
+    // Volume control
+    else if (command.includes("volume") || command.includes("sound level")) {
+        const volumeSlider = document.getElementById('volume');
+        if (command.includes("up") || command.includes("increase")) {
+            const newVolume = Math.min(100, parseInt(volumeSlider.value) + 20);
+            volumeSlider.value = newVolume;
+            volumeSlider.dispatchEvent(new Event('input'));
+            speak(`Volume increased to ${newVolume} percent`);
+        } else if (command.includes("down") || command.includes("decrease")) {
+            const newVolume = Math.max(0, parseInt(volumeSlider.value) - 20);
+            volumeSlider.value = newVolume;
+            volumeSlider.dispatchEvent(new Event('input'));
+            speak(`Volume decreased to ${newVolume} percent`);
+        } else if (command.includes("max") || command.includes("full")) {
+            volumeSlider.value = 100;
+            volumeSlider.dispatchEvent(new Event('input'));
+            speak("Volume set to maximum");
+        } else if (command.includes("mute") || command.includes("zero")) {
+            volumeSlider.value = 0;
+            volumeSlider.dispatchEvent(new Event('input'));
+            speak("Volume muted");
+        } else {
+            // Read current volume
+            speak(`Current volume is ${volumeSlider.value} percent`);
+        }
+    }
+    // Speech speed control
+    else if (command.includes("speed") || command.includes("rate") || command.includes("fast") || command.includes("slow")) {
+        const speedSlider = document.getElementById('speech-speed');
+        if (command.includes("up") || command.includes("increase") || command.includes("faster")) {
+            const newSpeed = Math.min(2, parseFloat(speedSlider.value) + 0.3).toFixed(1);
+            speedSlider.value = newSpeed;
+            speedSlider.dispatchEvent(new Event('input'));
+            speak(`Speech speed increased to ${newSpeed} times normal`);
+        } else if (command.includes("down") || command.includes("decrease") || command.includes("slower")) {
+            const newSpeed = Math.max(0.5, parseFloat(speedSlider.value) - 0.3).toFixed(1);
+            speedSlider.value = newSpeed;
+            speedSlider.dispatchEvent(new Event('input'));
+            speak(`Speech speed decreased to ${newSpeed} times normal`);
+        } else if (command.includes("normal") || command.includes("default")) {
+            speedSlider.value = 1.0;
+            speedSlider.dispatchEvent(new Event('input'));
+            speak("Speech speed set to normal");
+        } else {
+            // Read current speed
+            speak(`Current speech speed is ${speedSlider.value} times normal`);
+        }
+    }
+    // Help command
+    else if (command.includes("help") || command.includes("commands") || command.includes("what can i say")) {
+        const helpText = "Here are the available commands: " +
+            "Say 'go home' to return to the home page. " +
+            "Say 'enable high contrast' or 'disable high contrast' to change the theme. " +
+            "Say 'enable push to talk' or 'disable push to talk' to change that setting. " +
+            "Say 'volume up' or 'volume down' to adjust the volume. " +
+            "Say 'speech faster' or 'speech slower' to adjust the speech rate. " +
+            "Say 'repeat' to hear the current settings. " +
+            "Say 'help' to hear this message again.";
+        speak(helpText);
+    }
+    // Repeat current settings
+    else if (command.includes("repeat") || command.includes("current settings") || command.includes("read settings")) {
+        const themeToggle = document.getElementById('theme-toggle');
+        const pushToTalkToggle = document.getElementById('push-to-talk-toggle');
+        const volumeSlider = document.getElementById('volume');
+        const speedSlider = document.getElementById('speech-speed');
+        
+        const settingsText = `Current settings: High contrast mode is ${themeToggle.checked ? 'on' : 'off'}. ` +
+            `Push to talk is ${pushToTalkToggle.checked ? 'on' : 'off'}. ` +
+            `Volume is at ${volumeSlider.value} percent. ` +
+            `Speech speed is ${speedSlider.value} times normal.`;
+        
+        speak(settingsText);
+    }
+    else {
+        speak("Sorry, I didn't understand that command. Say 'help' for a list of available commands.");
+    }
+}
         </script>
 
         <script>

@@ -182,51 +182,73 @@
             }
             
             function getMonthlySchedule() {
-                // Get the current month and year
-                const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
-                                    'July', 'August', 'September', 'October', 'November', 'December'];
-                const currentMonth = monthNames[Calendar.selectedDate.getMonth()];
-                const currentYear = Calendar.selectedDate.getFullYear();
-                
-                // Filter the tasks for the current month
-                const tasksForMonth = Calendar.tasks.filter(task => {
-                    const taskDate = task.date instanceof Date ? task.date : new Date(task.date);
-                    return taskDate.getMonth() === Calendar.selectedDate.getMonth() && 
-                            taskDate.getFullYear() === Calendar.selectedDate.getFullYear();
-                });
+    // First check if Calendar and tasks exist
+    if (!window.Calendar || !window.Calendar.tasks) {
+        speak("Calendar data is not available. Please try refreshing the page.");
+        return;
+    }
 
-                if (tasksForMonth.length === 0) {
-                    speak("You have no tasks for " + currentMonth + " " + currentYear + ".");
-                } else {
-                    speak("Here is your schedule for " + currentMonth + " " + currentYear + ":");
-                    
-                    // Group tasks by day for better organization
-                    const tasksByDay = {};
-                    tasksForMonth.forEach(task => {
-                        const taskDate = task.date instanceof Date ? task.date : new Date(task.date);
-                        const day = taskDate.getDate();
-                        
-                        if (!tasksByDay[day]) {
-                            tasksByDay[day] = [];
-                        }
-                        tasksByDay[day].push(task);
-                    });
-
-                    // Loop through days with tasks
-                    for (const day in tasksByDay) {
-                        const dayTasks = tasksByDay[day];
-                        const dayOrdinal = getOrdinal(day);
-                        
-                        speak(`On the ${dayOrdinal}:`);
-                        
-                        // Loop through tasks for this day
-                        dayTasks.forEach((task, index) => {
-                            const taskTime = task.time ? Calendar.formatTime(task.time) : "all day";
-                            speak(`Task ${index + 1}: ${task.title} at ${taskTime}.`);
-                        });
-                    }
-                }
+    // Get the current month and year
+    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
+                       'July', 'August', 'September', 'October', 'November', 'December'];
+    const currentMonth = monthNames[new Date().getMonth()]; // Use current date if selectedDate isn't available
+    const currentYear = new Date().getFullYear();
+    
+    try {
+        // Safely filter tasks for the current month
+        const tasksForMonth = window.Calendar.tasks.filter(task => {
+            if (!task.date) return false;
+            
+            let taskDate;
+            try {
+                taskDate = task.date instanceof Date ? task.date : new Date(task.date);
+                if (isNaN(taskDate.getTime())) return false; // Invalid date
+            } catch (e) {
+                return false; // Date parsing failed
             }
+            
+            return taskDate.getMonth() === new Date().getMonth() && 
+                   taskDate.getFullYear() === new Date().getFullYear();
+        });
+
+        if (tasksForMonth.length === 0) {
+            speak("You have no tasks for " + currentMonth + " " + currentYear + ".");
+        } else {
+            speak("Here is your schedule for " + currentMonth + " " + currentYear + ":");
+            
+            // Group tasks by day
+            const tasksByDay = {};
+            tasksForMonth.forEach(task => {
+                const taskDate = task.date instanceof Date ? task.date : new Date(task.date);
+                const day = taskDate.getDate();
+                
+                if (!tasksByDay[day]) {
+                    tasksByDay[day] = [];
+                }
+                tasksByDay[day].push(task);
+            });
+
+            // Speak tasks by day
+            for (const day in tasksByDay) {
+                const dayTasks = tasksByDay[day];
+                const dayOrdinal = getOrdinal(day);
+                
+                speak(`On the ${dayOrdinal}:`);
+                
+                dayTasks.forEach((task, index) => {
+                    const taskTime = task.time ? 
+                        (typeof task.time === 'string' ? task.time : Calendar.formatTime(task.time)) : 
+                        "all day";
+                    speak(`Task ${index + 1}: ${task.title} at ${taskTime}.`);
+                });
+            }
+        }
+    } catch (error) {
+        console.error("Error getting schedule:", error);
+        speak("Sorry, I couldn't retrieve your schedule. Please try again.");
+    }
+}
+
 
             // Helper function to get ordinal (1st, 2nd, 3rd, etc.)
             function getOrdinal(n) {
@@ -248,8 +270,23 @@
                     const pageTitle = document.title;
                     speak("page").then(() => speak("You are currently on the " + pageTitle + " page."));
                 } else if (command.includes("help")) {
-                    speak("help").then(() => speak("You can navigate by saying Schedule to see this months schedule, Previous to see the past month, Next to see the next month, Add Event to set a reminder, Home to go back to home, 'Page' to hear what page you are currently on, or 'Help' to repeat these options."));
-                } else if (command.includes("what's my schedule") || command.includes("schedule")) {
+                    speak("help").then(() => speak("Available commands: Schedule, Previous, Next, Add Event, Home, Page, Help. For Google Calendar: Connect Google, Sync Google, Disconnect Google.")); 
+                               } 
+                             else if (command.includes("connect google") || command.includes("login google")) {
+            speak("Connecting Google Calendar").then(() => {
+                const btn = document.getElementById('google-signin-btn');
+                if (btn) btn.click();
+            });
+        } else if (command.includes("sync google") || command.includes("synchronize google")) {
+            speak("Syncing Google Calendar").then(() => {
+                const btn = document.getElementById('sync-calendar-btn');
+                if (btn) btn.click();
+            });
+        } else if (command.includes("disconnect google") || command.includes("logout google") || command.includes("sign out google")) {
+            speak("Disconnecting Google Calendar").then(() => {
+                const btn = document.getElementById('google-signout-btn');
+                if (btn) btn.click();
+            });}else if (command.includes("what's my schedule") || command.includes("schedule")) {
                     speak("getting schedule").then(() => getMonthlySchedule());
                 } else {
                     console.log("Unknown command:", command);

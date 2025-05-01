@@ -286,7 +286,6 @@
             const title = await startRecognition();
             return await confirmInput("title", title, promptTitle);
         }
-
         async function promptDate() {
             let formattedDate = "";
             while (!formattedDate) {
@@ -298,6 +297,78 @@
                 }
             }
             return await confirmInput("date", formattedDate, promptDate);
+        }
+        function parseDate(input) {
+            // Try to parse common date formats (like "March 10", "March 10, 2024", "10/03/2024", etc.)
+            let parsedDate = new Date(input);
+            if (!isNaN(parsedDate.getTime())) {
+                return parsedDate.toISOString().split("T")[0]; // Extract YYYY-MM-DD
+            }
+
+            // Additional check for natural language formats (e.g., "next Monday", "next Tuesday", "tomorrow")
+            const today = new Date();
+            
+            let targetDate;
+
+            // Handle "next" + day of the week (e.g., "next Monday", "next Tuesday")
+            const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+            const nextMatch = input.match(/next\s+(Sunday|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday)/i);
+            if (nextMatch) {
+                const targetDay = daysOfWeek.indexOf(nextMatch[1]);
+                const daysToAdd = (targetDay - today.getDay() + 7) % 7;
+                if (daysToAdd === 0) {
+                    // If it's the same day, set to the next occurrence
+                    targetDate = new Date(today.setDate(today.getDate() + 7));
+                } else {
+                    targetDate = new Date(today.setDate(today.getDate() + daysToAdd));
+                }
+                return targetDate.toISOString().split("T")[0];
+            }
+
+            // Handle exact day of the week (e.g., "Tuesday")
+            const dayMatch = input.match(/(Sunday|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday)/i);
+            if (dayMatch) {
+                const targetDay = daysOfWeek.indexOf(dayMatch[1]);
+                const daysToAdd = (targetDay - today.getDay() + 7) % 7;
+                if (daysToAdd === 0) {
+                    // If it's today, move to the next occurrence of that day
+                    targetDate = new Date(today.setDate(today.getDate() + 7));
+                } else {
+                    targetDate = new Date(today.setDate(today.getDate() + daysToAdd));
+                }
+                return targetDate.toISOString().split("T")[0];
+            }
+
+            // Handle "tomorrow" command
+            if (input.match(/tomorrow/i)) {
+                targetDate = new Date(today.setDate(today.getDate() + 1));
+                return targetDate.toISOString().split("T")[0];
+            }
+
+            // Handle "today" command
+            if (input.match(/today/i)) {
+                targetDate = new Date(today);
+                return targetDate.toISOString().split("T")[0];
+            }
+
+            return ""; // If no valid date format is found
+        }
+        function parseTime(input) {
+            let match = input.match(/(\d{1,2}):?(\d{2})?\s?(AM|PM)?/i);
+            if (match) {
+                let hours = parseInt(match[1]);
+                let minutes = match[2] ? parseInt(match[2]) : 0;
+                let period = match[3] ? match[3].toUpperCase() : "";
+
+                if (period === "PM" && hours !== 12) {
+                    hours += 12;
+                } else if (period === "AM" && hours === 12) {
+                    hours = 0;
+                }
+
+                return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+            }
+            return "";
         }
 
         async function promptTime() {
@@ -320,30 +391,39 @@
         }
 
         async function promptUserForInputs() {
-            // Get title with confirmation
-            const title = await promptTitle();
-            document.getElementById("title").value = title;
-            document.getElementById("title").dispatchEvent(new Event("input"));
-            
-            // Get date with confirmation
-            const formattedDate = await promptDate();
-            document.getElementById("date").value = formattedDate;
-            document.getElementById("date").dispatchEvent(new Event("change"));
-            
-            // Get time with confirmation
-            const formattedTime = await promptTime();
-            document.getElementById("time").value = formattedTime;
-            document.getElementById("time").dispatchEvent(new Event("change"));
-            
-            // Get memo with confirmation
-            const memo = await promptMemo();
-            document.getElementById("memo").value = memo;
-            document.getElementById("memo").dispatchEvent(new Event("input"));
+    // Get title with confirmation
+    const title = await promptTitle();
+    document.getElementById("title").value = title;
+    document.getElementById("title").dispatchEvent(new Event("input"));
+    
+    // Get date with confirmation
+    const formattedDate = await promptDate();
+    document.getElementById("date").value = formattedDate;
+    document.getElementById("date").dispatchEvent(new Event("change"));
+    
+    // Get time with confirmation
+    const formattedTime = await promptTime();
+    document.getElementById("time").value = formattedTime;
+    document.getElementById("time").dispatchEvent(new Event("change"));
+    
+    // Get location with confirmation
+    const location = await promptLocation();
+    document.getElementById("location").value = location;
+    document.getElementById("location").dispatchEvent(new Event("input"));
+    
+    // Get memo with confirmation
+    const memo = await promptMemo();
+    document.getElementById("memo").value = memo;
+    document.getElementById("memo").dispatchEvent(new Event("input"));
 
-            await speak("Reminder has been set. You can now save it by saying save reminder, clear it by saying clear reminder, cancel it by saying cancel, or have it read back to you by saying read reminder.");
-            listenForFinalCommand();
-        }
-
+    await speak("Reminder has been set. You can now save it by saying save reminder, clear it by saying clear reminder, cancel it by saying cancel, or have it read back to you by saying read reminder.");
+    listenForFinalCommand();
+}
+async function promptLocation() {
+    await speak("What is the location for your reminder?");
+    const location = await startRecognition();
+    return await confirmInput("location", location, promptLocation);
+}
         async function listenForFinalCommand() {
             const command = await startRecognition();
             await speak(`You said: ${command}`);
@@ -381,44 +461,46 @@
         }
 
         async function readReminder() {
-            const title = document.getElementById("title").value || "No title";
-            const date = document.getElementById("date").value || "No date";
-            const time = document.getElementById("time").value || "No time";
-            const memo = document.getElementById("memo").value || "No description";
+        const title = document.getElementById("title").value || "No title";
+        const date = document.getElementById("date").value || "No date";
+        const time = document.getElementById("time").value || "No time";
+        const location = document.getElementById("location").value || "No location";
+        const memo = document.getElementById("memo").value || "No description";
 
-            // Convert military time to 12-hour format
-            function convertTo12Hour(timeStr) {
-                if (timeStr === "No time") return timeStr;
-                let [hours, minutes] = timeStr.split(":").map(Number);
-                let period = hours >= 12 ? "PM" : "AM";
-                hours = hours % 12 || 12; // Convert 0 to 12 for midnight
-                return `${hours}:${String(minutes).padStart(2, "0")} ${period}`;
-            }
-
-            const formattedTime = convertTo12Hour(time);
-            const reminderText = `Your reminder is titled: ${title}. Scheduled for ${date} at ${formattedTime}. Description: ${memo}.`;
-            await speak(reminderText);
-            // Keep listening for more commands after reading
-            await speak("Would you like to do anything else?");
-            listenForFinalCommand();
+        // Convert military time to 12-hour format
+        function convertTo12Hour(timeStr) {
+            if (timeStr === "No time") return timeStr;
+            let [hours, minutes] = timeStr.split(":").map(Number);
+            let period = hours >= 12 ? "PM" : "AM";
+            hours = hours % 12 || 12; // Convert 0 to 12 for midnight
+            return `${hours}:${String(minutes).padStart(2, "0")} ${period}`;
         }
+
+        const formattedTime = convertTo12Hour(time);
+        const reminderText = `Your reminder is titled: ${title}. Scheduled for ${date} at ${formattedTime}. Location: ${location}. Description: ${memo}.`;
+        await speak(reminderText);
+        // Keep listening for more commands after reading
+        await speak("Would you like to do anything else?");
+        listenForFinalCommand();
+}
 
         async function clearReminder() {
-            document.getElementById("title").value = "";
-            document.getElementById("date").value = "";
-            document.getElementById("time").value = "";
-            document.getElementById("memo").value = "";
+    document.getElementById("title").value = "";
+    document.getElementById("date").value = "";
+    document.getElementById("time").value = "";
+    document.getElementById("location").value = "";
+    document.getElementById("memo").value = "";
 
-            // Ask if the user wants to redo the reminder
-            await speak("The reminder has been cleared. Would you like to redo it?");
-            const command = await startRecognition();
-            
-            if (command.toLowerCase().includes("yes")) {
-                await promptUserForInputs(); // Restart the reminder input process
-            } else {
-                await speak("Okay. Let me know if you need anything else.");
-            }
-        }
+    // Ask if the user wants to redo the reminder
+    await speak("The reminder has been cleared. Would you like to redo it?");
+    const command = await startRecognition();
+    
+    if (command.toLowerCase().includes("yes")) {
+        await promptUserForInputs(); // Restart the reminder input process
+    } else {
+        await speak("Okay. Let me know if you need anything else.");
+    }
+}
 
         // Function to handle voice commands when not in conversation mode
         async function handleVoiceCommand(command) {
