@@ -427,28 +427,6 @@ const Calendar = {
         
         console.log("Merging Google Calendar events:", googleEvents.length);
         
-        // Create a helper function to check if two events are duplicates based on title and date
-        const _areDuplicate = (event1, event2) => {
-            // Convert dates to string format for comparison (YYYY-MM-DD)
-            const date1 = event1.date instanceof Date ? 
-                event1.date.toISOString().split('T')[0] : 
-                new Date(event1.date).toISOString().split('T')[0];
-            
-            const date2 = event2.date instanceof Date ? 
-                event2.date.toISOString().split('T')[0] : 
-                new Date(event2.date).toISOString().split('T')[0];
-            
-            // Check if title and date match
-            return event1.title.toLowerCase() === event2.title.toLowerCase() && date1 === date2;
-        };
-        console.log('Duplicate check:', _areDuplicate(event1, event2));
-        
-        // Filter out Google events that already exist in our tasks by matching ID
-        const _existingGoogleIds = new Set(this.tasks
-            .filter(task => task.googleId)
-            .map(task => task.googleId));
-        console.log('Existing Google IDs:', _existingGoogleIds.size);
-        
         // Also track events by title+date to avoid duplicates
         const existingTitleDatePairs = new Map();
         this.tasks.forEach(task => {
