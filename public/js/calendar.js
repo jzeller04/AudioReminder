@@ -1,3 +1,4 @@
+/* global areDuplicate, existingGoogleIds */
 function formatTimeClient(timeStr) {
     // Simple client-side implementation - complex logic is on server
     try {
