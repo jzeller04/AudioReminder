@@ -59,7 +59,7 @@ Cristian Hernandez
 - TTS/STT
 - Voice Command UX
 
-Grace Wilson
+Austin Wilson
 - Frontend
 - HTML Elements
 
